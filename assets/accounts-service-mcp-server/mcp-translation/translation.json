@@ -1,0 +1,880 @@
+{
+    "mcpTranslationVersion": "0.1",
+    "target": {
+        "ordId": "sap.btp:apiResource:accounts-service:v1",
+        "type": "openapi-v3"
+    },
+    "serverInfo": {
+        "name": "sap.mcp/accounts_service",
+        "title": "accounts_service",
+        "version": "1.0.0",
+        "description": "MCP server for the accounts_service service."
+    },
+    "tools": [
+        {
+            "name": "createDirectory",
+            "title": "createDirectory",
+            "description": "Directories allow you to organize and manage your subaccounts according to your technical and business needs.\nA directory can contain one or more subaccounts and directories. The maximum number of directory levels allowed in a global account is 5.\nUsing directories to group subaccounts is optional.\nIf you have directories in your account model, you can still create subaccounts directly under your global account.\n\nRequired scope: $XSAPPNAME.global-account.account-directory.create",
+            "openApiType": {
+                "path": "/accounts/v1/directories",
+                "method": "post",
+                "operationId": "createDirectory",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "parentGUID",
+                        "description": "The unique ID of the directory's parent entity.\n You can create the directory directly under a global account or another directory.",
+                        "in": "query",
+                        "newParameterName": "parentguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "getDirectory",
+            "title": "getDirectory",
+            "description": "Get details for a specified directory.<br/><br/>Required scope: $XSAPPNAME.global-account.account-directory.read",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}",
+                "method": "get",
+                "operationId": "getDirectory",
+                "parameters": [
+                    {
+                        "name": "directoryGUID",
+                        "description": "The GUID of the directory for which to get details.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    },
+                    {
+                        "name": "expand",
+                        "description": "Whether to get the contents of the directory, for example the subaccounts it contains.",
+                        "in": "query",
+                        "newParameterName": "expand"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "deleteDirectory",
+            "title": "deleteDirectory",
+            "description": "Delete the directory, including its subdirectories, subaccounts, and their content.<br/><br/>Required scope: $XSAPPNAME.global-account.account-directory.delete",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}",
+                "method": "delete",
+                "operationId": "deleteDirectory",
+                "parameters": [
+                    {
+                        "name": "directoryGUID",
+                        "description": "The GUID of the directory to delete.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    },
+                    {
+                        "name": "forceDelete",
+                        "description": "Specifies whether to delete the directory and all its content, including subdirectories, subaccounts, and data contained within (default is false). Content refers to any entity or data, such as applications, service instances, spaces, active subscriptions, brokers, platform, and members, depending on the type of subaccount (Neo or multi-environment).  When set to false, the request fails if the directory contains subdirectories and subaccounts, even if they are empty. When set to true, all content in the directory is permanently deleted. The deletion may take a while depending on the amount of content in your subaccounts.",
+                        "in": "query",
+                        "newParameterName": "forcedelete"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "updateDirectory",
+            "title": "updateDirectory",
+            "description": "Update the properties of a directory.\nYou can update its display name, description, and assigned labels.<br/><br/>Required scope: $XSAPPNAME.account-directory.update",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}",
+                "method": "patch",
+                "operationId": "updateDirectory",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "directoryGUID",
+                        "description": "The GUID of the directory to update.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "updateDirectoryFeatures",
+            "title": "updateDirectoryFeatures",
+            "description": "Global account admins can enable additional features in a directory or remove features that are already enabled.\n\nBy default, all directories provide the following basic features: (1) group and filter subaccounts, (2) monitor usage and costs, and (3) set custom properties and tags. Optionally, you can allow a directory to also manage its own entitlements and its user authorizations.\n\nAll existing subaccounts and subdirectories in the directory implicitly inherit the capabilities of the enabled features in this directory.\n\nNOTE: The user authorizations management feature must be applied in combination with the entitlement management feature. In other words, if the directory has both entitlement and user authorization management enable, you cannot disable just the entitlement management feature without also disabling user authorization management. Likewise, if a directory has only the default features enabled, you cannot enable user authorization management without also enabling entitlement management.\n\nNOTE: Your multi-level account hierarchy can have more than one directory enabled with user authorization and/or entitlement management; however, only one directory in any directory path can have these features enabled. In other words, other directories above or below this directory in the same path can only have the default features specified. If you are not sure which features to enable, we recommend that you set only the default features, and then add features later on as they are needed.\n\nRequired scope: $XSAPPNAME.account-directory.update",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}/changeDirectoryFeatures",
+                "method": "patch",
+                "operationId": "updateDirectoryFeatures",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "directoryGUID",
+                        "description": "The GUID of the directory to update directory features.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "getDirectoryCustomProperties",
+            "title": "getDirectoryCustomProperties",
+            "description": "Get all the custom properties that are assigned as key-value pairs to a given directory.\n\nNOTE: This API is deprecated. Custom properties are now called labels. The \"customProperties\" field supports only single values per key and is now replaced by the string array \"labels\", which supports multiple values per key. This API returns only the first value of any label key that has multiple values assigned to it. Use instead: GET /accounts/v1/directories/{directoryGUID}/labels\n\nRequired scope: $XSAPPNAME.global-account.account-directory.read",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}/customProperties",
+                "method": "get",
+                "operationId": "getDirectoryCustomProperties",
+                "parameters": [
+                    {
+                        "name": "directoryGUID",
+                        "description": "The unique ID of the directory for which to get custom properties.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "getDirectoryLabels",
+            "title": "getDirectoryLabels",
+            "description": "Get all the user-defined labels, that are assigned as key-value pairs to a given directory. \n\nRequired scope: $XSAPPNAME.global-account.account-directory.read",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}/labels",
+                "method": "get",
+                "operationId": "getDirectoryLabels",
+                "parameters": [
+                    {
+                        "name": "directoryGUID",
+                        "description": "The GUID of the directory.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "createDirectoryLabels",
+            "title": "createDirectoryLabels",
+            "description": "Assign user-defined labels to a given directory. Labels are specified as key-value pairs.\n\nRequired scope: $XSAPPNAME.global-account.account-directory.update",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}/labels",
+                "method": "put",
+                "operationId": "createDirectoryLabels",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "directoryGUID",
+                        "description": "The GUID of the directory.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "deleteDirectoryLabels",
+            "title": "deleteDirectoryLabels",
+            "description": "Remove all user-defined labels that are assigned to a given directory.\n\nTo remove specific labels, use instead: PUT /accounts/v1/directories/{directoryGUID}/labels\n\nRequired scope: $XSAPPNAME.global-account.account-directory.update",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}/labels",
+                "method": "delete",
+                "operationId": "deleteDirectoryLabels",
+                "parameters": [
+                    {
+                        "name": "directoryGUID",
+                        "description": "The GUID of the directory",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "getDirectorySettings",
+            "title": "getDirectorySettings",
+            "description": "Get directory settings for a specified directory.<br/><br/>Required scope: $XSAPPNAME.account-directory.read",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}/settings",
+                "method": "get",
+                "operationId": "getDirectorySettings",
+                "parameters": [
+                    {
+                        "name": "directoryGUID",
+                        "description": "The GUID of the directory.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    },
+                    {
+                        "name": "keys",
+                        "description": "Keys for the property. Limited to 255 characters.",
+                        "in": "query",
+                        "newParameterName": "keys"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "createOrUpdateDirectorySettings",
+            "title": "createOrUpdateDirectorySettings",
+            "description": "Create or update directory settings for a specified directory.<br/><br/>Required scope: $XSAPPNAME.account-directory.update",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}/settings",
+                "method": "put",
+                "operationId": "createOrUpdateDirectorySettings",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "directoryGUID",
+                        "description": "The GUID of the directory.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "deleteDirectorySettings",
+            "title": "deleteDirectorySettings",
+            "description": "Delete directory settings for a specified directory.<br/><br/>Required scope: $XSAPPNAME.account-directory.update",
+            "openApiType": {
+                "path": "/accounts/v1/directories/{directoryGUID}/settings",
+                "method": "delete",
+                "operationId": "deleteDirectorySettings",
+                "parameters": [
+                    {
+                        "name": "directoryGUID",
+                        "description": "The GUID of the directory.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    },
+                    {
+                        "name": "keys",
+                        "description": "Keys for the property. Limited to 255 characters.",
+                        "in": "query",
+                        "newParameterName": "keys"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "getGlobalAccount",
+            "title": "getGlobalAccount",
+            "description": "Get information for a specified global account.<br/><br/>Required scopes: $XSAPPNAME.global-account.read",
+            "openApiType": {
+                "path": "/accounts/v1/globalAccount",
+                "method": "get",
+                "operationId": "getGlobalAccount",
+                "parameters": [
+                    {
+                        "name": "expand",
+                        "description": "If true, returns the structure of the global account including all its children, such as subaccounts and directories, in the account model. The structure content may vary from user to user and depends on users\u00e2\u0080\u0099 authorizations.",
+                        "in": "query",
+                        "newParameterName": "expand"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "updateGlobalAccount",
+            "title": "updateGlobalAccount",
+            "description": "Update the display name and/or description of the global account.<br/><br/>Required scope: $XSAPPNAME.global-account.update",
+            "openApiType": {
+                "path": "/accounts/v1/globalAccount",
+                "method": "patch",
+                "operationId": "updateGlobalAccount",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "getGlobalAccountCustomProperties",
+            "title": "getGlobalAccountCustomProperties",
+            "description": "Get all the custom properties that are assigned as key-value pairs to a given global account.\n\nNOTE: This API is deprecated. Custom properties are now called labels. The \"customProperties\" field supports only single values per key and is now replaced by the \"labels\" field, which is string array that supports multiple values per key. This API returns only the first value of any label key that has multiple values assigned to it. Use instead: GET /accounts/v1/globalAccount/labels\n\nRequired scope: $XSAPPNAME.global-account.read\n",
+            "openApiType": {
+                "path": "/accounts/v1/globalAccount/customProperties",
+                "method": "get",
+                "operationId": "getGlobalAccountCustomProperties",
+                "parameters": [],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "getSubaccounts",
+            "title": "getSubaccounts",
+            "description": "Get information for all subaccounts in the global account and those under directories, if they exist.<br/><br/>Required scopes:\n* When derivedAuthorizations is empty, then $XSAPPNAME.global-account.subaccount.read\n* When derivedAuthorizations=any, then requires any valid token from XSUAA.",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts",
+                "method": "get",
+                "operationId": "getSubaccounts",
+                "parameters": [
+                    {
+                        "name": "directoryGUID",
+                        "description": "Returns only the subaccounts in a given directory. Provide the unique ID of the directory.",
+                        "in": "query",
+                        "newParameterName": "directoryguid"
+                    },
+                    {
+                        "name": "derivedAuthorizations",
+                        "description": "The range of authorizations for which to return information.\n* any: Returns all global accounts for which the user has authorizations on any of the accounts' entities, such as its subaccounts (for example, user is a subaccount admin) or spaces (for example, user is a Cloud Foundry space manager).\n* (empty value): Returns all subaccounts for which the user has explicit authorization ($XSAPPNAME.global-account.subaccount.read) on the global account or directory.",
+                        "in": "query",
+                        "newParameterName": "derivedauthorizations"
+                    },
+                    {
+                        "name": "labelSelector",
+                        "description": "Get all existing subaccounts that match or don't match one or more user-defined labels. Specify the key-value pair of the label using either the equals (=) or not equals operator (!=). Keys, values, and operator must be URL encoded. Use the AND operand to include more than one label in the query. You can specify only a single value per key. Parameter does not support label keys or values that include space, =, or ! characters. Usage example where the keys \"my-key-1\" and \"my-key-2\" have the values \"my-value-1\" and \"my-value-2\" , respectively: my-key-1%3Dmy-value-1%20AND%20my-key-2%3Dmy-value-2",
+                        "in": "query",
+                        "newParameterName": "labelselector"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "createSubaccount",
+            "title": "createSubaccount",
+            "description": "Create a subaccount in a global account or directory.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.create",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts",
+                "method": "post",
+                "operationId": "createSubaccount",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "subaccountAdmin",
+                        "description": "To prevent errors, special characters must be URL encoded. For example, the e-mail \"name+dev_user@example.com\" must be encoded as: name%2Bdev_user@example.com. You can add users only from the same user base as you (example: sap.default or custom identity provider).",
+                        "in": "query",
+                        "newParameterName": "subaccountadmin"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "cloneNeoSubaccount",
+            "title": "cloneNeoSubaccount",
+            "description": "Create a clone of an existing Neo-based subaccount in a given global account.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.create",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/clone/{sourceSubaccountGUID}",
+                "method": "post",
+                "operationId": "cloneNeoSubaccount",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "sourceSubaccountGUID",
+                        "description": "The GUID of the Neo subaccount to clone.",
+                        "in": "path",
+                        "newParameterName": "sourcesubaccountguid"
+                    },
+                    {
+                        "name": "subaccountAdmin",
+                        "description": "To prevent errors, special characters must be URL encoded. For example, the e-mail \"name+dev_user@example.com\" must be encoded as: name%2Bdev_user@example.com. You can add users only from the same user base as you (example: sap.default or custom identity provider).",
+                        "in": "query",
+                        "newParameterName": "subaccountadmin"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "moveSubaccounts",
+            "title": "moveSubaccounts",
+            "description": "Move several subaccounts at once to a different directory or out of a directory to the global account.<br/><br/>Required scopes for source directory:\n$XSAPPNAME.global-account.subaccount.read,\n$XSAPPNAME.global-account.subaccount.delete.\n\n\nRequired scopes for target directory:\n$XSAPPNAME.global-account.subaccount.create",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/move",
+                "method": "post",
+                "operationId": "moveSubaccounts",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "getSubaccount",
+            "title": "getSubaccount",
+            "description": "Get information for a specified subaccount.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.read",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}",
+                "method": "get",
+                "operationId": "getSubaccount",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    },
+                    {
+                        "name": "derivedAuthorizations",
+                        "description": "The range of authorizations for which to return information.\n* any: Returns all global accounts for which the user has authorizations on any of the accounts' entities, such as its subaccounts (for example, user is a subaccount admin) or spaces (for example, user is a Cloud Foundry space manager).\n* (empty value): Returns all subaccounts for which the user has explicit authorization ($XSAPPNAME.global-account.subaccount.read) on the global account or directory.",
+                        "in": "query",
+                        "newParameterName": "derivedauthorizations"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "deleteSubaccount",
+            "title": "deleteSubaccount",
+            "description": "Delete the subaccount and its content.</br><br/>Required scope: $XSAPPNAME.global-account.subaccount.delete",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}",
+                "method": "delete",
+                "operationId": "deleteSubaccount",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount for which to get details.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    },
+                    {
+                        "name": "forceDelete",
+                        "description": "Specifies whether to delete the subaccount if it contains content (default is false). Content refers to any entity or data, such as applications, service instances, spaces, active subscriptions, brokers, platform, and members, depending on the type of subaccount (Neo or multi-environment). When set to false, the request fails if the subaccount is not empty. When set to true, all content in the subaccount is permanently deleted. Depending on the amount of content in the subaccount, it may take several hours for the subaccount to be deleted. After the subaccount is deleted, it may take a few more days for some related services to be deleted. You won't be charged for any continued usage of these services in the subaccount during the deletion cleanup. Force deletion is allowed only if the subaccount \"usedForProduction\" field is not set to \"USED_FOR_PRODUCTION\" and the \"Enable subaccount force deletion\" option is enabled in the global account settings.",
+                        "in": "query",
+                        "newParameterName": "forcedelete"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "updateSubaccount",
+            "title": "updateSubaccount",
+            "description": "Update a subaccount in the global account.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.update",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}",
+                "method": "patch",
+                "operationId": "updateSubaccount",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount to update.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "getSubaccountCustomProperties",
+            "title": "getSubaccountCustomProperties",
+            "description": " Get all the user-defined custom properties that are assigned as key-value pairs to a given subaccount.\n\nNOTE: This API is deprecated. Custom properties are now called labels. The \"customProperties\" field supports only single values per key and is now replaced by the string array \"labels\", which supports multiple values per key. This API returns only the first value of any label key that has multiple values assigned to it. Use instead: GET /accounts/v1/subaccounts/{subaccountGUID}/labels\n Required scope: $XSAPPNAME.global-account.subaccount.read",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/customProperties",
+                "method": "get",
+                "operationId": "getSubaccountCustomProperties",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "Unique ID of the subaccount.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "getSubaccountLabels",
+            "title": "getSubaccountLabels",
+            "description": "Get all the user-defined labels that are assigned as key-value pairs to a given subaccount. \n\nRequired scope: $XSAPPNAME.global-account.subaccount.read",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/labels",
+                "method": "get",
+                "operationId": "getSubaccountLabels",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "createSubaccountLabels",
+            "title": "createSubaccountLabels",
+            "description": "Assign user-defined labels to a given subaccount. Labels are specified as key-value pairs. \n\nRequired scope: $XSAPPNAME.global-account.subaccount.update",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/labels",
+                "method": "put",
+                "operationId": "createSubaccountLabels",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "subaccountGUID",
+                        "description": "Unique ID of the subaccount.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "deleteSubaccountLabels",
+            "title": "deleteSubaccountLabels",
+            "description": "Remove all user-defined labels that are assigned to a given subaccount.\n\nTo remove specific labels, use instead: PUT /accounts/v1/subaccounts/{subaccountGUID}/labels\n\nRequired scope: $XSAPPNAME.global-account.subaccount.update",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/labels",
+                "method": "delete",
+                "operationId": "deleteSubaccountLabels",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "moveSubaccount",
+            "title": "moveSubaccount",
+            "description": "Move a subaccount to a different directory or out of a directory to the global account.<br/><br/>Required scopes for source directory:\n$XSAPPNAME.global-account.subaccount.read,\n$XSAPPNAME.global-account.subaccount.delete.\n\n\nRequired scopes for target directory:\n$XSAPPNAME.global-account.subaccount.create",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/move",
+                "method": "post",
+                "operationId": "moveSubaccount",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The unique ID of the subaccount to move.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "getServiceManagementBinding",
+            "title": "getServiceManagementBinding",
+            "description": "View the details of an existing Service Manager binding that was created as the result of the *POST /accounts/v1/subaccounts/{subaccountGUID}/serviceManagementBinding* API call for a specified subaccount to access and work with the Service Management APIs.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.read",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/serviceManagementBinding",
+                "method": "get",
+                "operationId": "getServiceManagementBinding",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount for which to get the binding.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "createServiceManagementBinding",
+            "title": "createServiceManagementBinding",
+            "description": "Use this API to create a service instance and binding for a specified subaccount to get credentials to access Service Manager APIs.<br><br> We create this instance and binding for you directly in your subaccount, and as such, they are not associated with or restricted to any specific environment.<br> The instance and binding created with this API have generic names:<br> - ServiceManagementAccessInstance<br> - ServiceManagementAccessBinding\n\n  **Tip**\n To view the created instance and binding, use the GET /accounts/v1/subaccounts/{subaccountGUID}/serviceManagementBinding API.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.update",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/serviceManagementBinding",
+                "method": "post",
+                "operationId": "createServiceManagementBinding",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount for which to create a binding to access Service Manager.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "deleteServiceManagementBindingOfSubaccount",
+            "title": "deleteServiceManagementBindingOfSubaccount",
+            "description": "Delete an existing Service Manager instance and binding that were created as the result of the *POST/accounts/v1/subaccounts/{subaccountGUID}/serviceManagementBinding* API call for a specified subaccount to access and work with the Service Management APIs.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.update",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/serviceManagementBinding",
+                "method": "delete",
+                "operationId": "deleteServiceManagementBindingOfSubaccount",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount for which to delete this instance and binding.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "getSubaccountSettings",
+            "title": "getSubaccountSettings",
+            "description": "Get subaccount settings for a specified subaccount.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.read",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/settings",
+                "method": "get",
+                "operationId": "getSubaccountSettings",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    },
+                    {
+                        "name": "keys",
+                        "description": "Keys for the property. Limited to 255 characters.",
+                        "in": "query",
+                        "newParameterName": "keys"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "createOrUpdateSubaccountSettings",
+            "title": "createOrUpdateSubaccountSettings",
+            "description": "Create or update subaccount settings for a specified subaccount.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.update",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/settings",
+                "method": "put",
+                "operationId": "createOrUpdateSubaccountSettings",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "deleteSubaccountSettings",
+            "title": "deleteSubaccountSettings",
+            "description": "Delete subaccount settings for a specified subaccount.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.update",
+            "openApiType": {
+                "path": "/accounts/v1/subaccounts/{subaccountGUID}/settings",
+                "method": "delete",
+                "operationId": "deleteSubaccountSettings",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    },
+                    {
+                        "name": "keys",
+                        "description": "Keys for the property. Limited to 255 characters.",
+                        "in": "query",
+                        "newParameterName": "keys"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "getAllServiceManagerBindingsVTwo",
+            "title": "getAllServiceManagerBindingsVTwo",
+            "description": "View all Service Manager bindings.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.read",
+            "openApiType": {
+                "path": "/accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings",
+                "method": "get",
+                "operationId": "getAllServiceManagerBindingsVTwo",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount for which to get the bindings.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "createServiceManagerBindingVTwo",
+            "title": "createServiceManagerBindingVTwo",
+            "description": "Use this API to create a service instance and associated bindings for a specified subaccount to get credentials to access Service Manager APIs.<br><br> We create this instance and bindings for you directly in your subaccount, and as such, they are not associated with or restricted to any specific environment.<br> The instance created with this API has a generic name:<br> - ServiceManagementAccessInstance<br><br> You can create more than one binding associated with the created service instance.<br> This has many benefits, for example if you need to use credentials rotation.<br><br>There are two types of service bindings you can create, depending on the credentials type:<br> - Binding with Basic credentials<br> - Binding with mTLS credentials<br><br> The binding with Basic credentials is a default type that you get without specifying any parameters in the *CreateServiceManagerBindingRequestPayload* object. If you wish to use the mTLS type, specify parameters.<br> For example: {\n \"credential-type\": \"x509\",\n \"x509\": {\n \"key-length\": 2048,\n \"validity\": 7,\n \"validity-type\": \"DAYS\"\n }\n\n  **Tip**\n To view the created instance and bindings, use the *GET /accounts/accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings/{bindingName}* API.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.update",
+            "openApiType": {
+                "path": "/accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings",
+                "method": "post",
+                "operationId": "createServiceManagerBindingVTwo",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount for which to create a binding to access Service Manager.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "getServiceManagerBindingVTwo",
+            "title": "getServiceManagerBindingVTwo",
+            "description": "View the details of an existing Service Manager binding.<br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.read",
+            "openApiType": {
+                "path": "/accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings/{bindingName}",
+                "method": "get",
+                "operationId": "getServiceManagerBindingVTwo",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount for which to get the binding.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    },
+                    {
+                        "name": "bindingName",
+                        "description": "The name of the binding for which to get details.",
+                        "in": "path",
+                        "newParameterName": "bindingname"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "deleteServiceManagerBindingVTwo",
+            "title": "deleteServiceManagerBindingVTwo",
+            "description": "Delete an existing Service Manager binding. <br/><br/>Required scope: $XSAPPNAME.global-account.subaccount.update",
+            "openApiType": {
+                "path": "/accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings/{bindingName}",
+                "method": "delete",
+                "operationId": "deleteServiceManagerBindingVTwo",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The GUID of the subaccount for which to delete this binding.",
+                        "in": "path",
+                        "newParameterName": "subaccountguid"
+                    },
+                    {
+                        "name": "bindingName",
+                        "description": "The name of the binding to delete.",
+                        "in": "path",
+                        "newParameterName": "bindingname"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "getStatus",
+            "title": "getStatus",
+            "description": "Get information for a specified job, including its ID and its current status.<br/><br/>Required scope: $XSAPPNAME.job.read",
+            "openApiType": {
+                "path": "/jobs-management/v1/jobs/{jobInstanceIdOrUniqueId}/status",
+                "method": "get",
+                "operationId": "getStatus",
+                "parameters": [
+                    {
+                        "name": "jobInstanceIdOrUniqueId",
+                        "description": "ID of the job for which to get status",
+                        "in": "path",
+                        "newParameterName": "jobinstanceidoruniqueid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        }
+    ]
+}

@@ -1,0 +1,4096 @@
+{
+  "_meta": {
+    "sap.ord/ordId": {
+      "ordId": "customer.mcpbuilder.btp:apiResource:provisioning-service_MCP:v1"
+    },
+    "sap.mcpbuilder/translation": {
+      "ordId": "customer.mcpbuilder.btp:apiResource:provisioning-service_MCP:v1"
+    },
+    "sap.ord/originalApiResourceOrdId": "sap.btp:apiResource:provisioning-service:v1"
+  },
+  "$schema": "https://pages.github.tools.sap/CPA/mcp-protocol/spec-v1/mcp-server-card-spec.schema.json",
+  "remotes": [],
+  "capabilities": {
+    "tools": {},
+    "prompts": {}
+  },
+  "supportedProtocolVersions": [
+    "2025-11-25"
+  ],
+  "name": "sap.mcp/provisioning_service",
+  "title": "provisioning_service",
+  "version": "1.0.0",
+  "description": "MCP server for the provisioning_service service.",
+  "tools": [
+    {
+      "name": "getStatus",
+      "title": "getStatus",
+      "description": "Get information for a specified job, including its ID and its current status.<br/><br/>Required scope: $XSAPPNAME.job.read",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "jobinstanceidoruniqueid"
+        ],
+        "properties": {
+          "jobinstanceidoruniqueid": {
+            "type": "string",
+            "description": "ID of the job for which to get status"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "customParams": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object"
+                    }
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "A description of the exit status of a job when it ends."
+                  },
+                  "jobParams": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "identifying": {
+                          "type": "boolean"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "STRING",
+                            "DATE",
+                            "LONG",
+                            "DOUBLE"
+                          ]
+                        },
+                        "value": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The current state of the job. \n* <b>IN_PROGRESS:</b> The job is being executed.\n* <b>COMPLETED:</b> The job has completed.\n* <b>FAILED:</b> The job failed and did not complete. The job can be restarted.",
+                    "enum": [
+                      "IN_PROGRESS",
+                      "COMPLETED",
+                      "FAILED"
+                    ]
+                  },
+                  "statusDetails": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object"
+                    }
+                  }
+                },
+                "required": [
+                  "description",
+                  "status"
+                ],
+                "description": "Ok (HTTP 200)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Not Found (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "getAvailableEnvironments",
+      "title": "getAvailableEnvironments",
+      "description": "Get all the available environments for a specified subaccount.<br/>This includes the environments, such as Cloud Foundry, which are available by default to all subaccounts, and those restricted environments, such as Kyma, which are offered in the product catalog as service entitlements and whose plans have been assigned by a global account admin to the subaccount.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.read ",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "authorization"
+        ],
+        "properties": {
+          "authorization": {
+            "type": "string",
+            "description": "Access token to work with this API group."
+          },
+          "x_id_token": {
+            "type": "string",
+            "description": "Security token that contains authentication declarations of an end user by the authorization server (SAP Identity and Authentication Service)."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "availableEnvironments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "allowAdditionalEnvironmentInstance": {
+                          "type": "boolean",
+                          "description": "Whether the user can use this broker for creating a second CF environment"
+                        },
+                        "availabilityLevel": {
+                          "type": "string",
+                          "description": "The availability level of the environment broker."
+                        },
+                        "createSchema": {
+                          "type": "string",
+                          "description": "The create schema of the environment broker."
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Description of the service plan for the available environment."
+                        },
+                        "environmentType": {
+                          "type": "string",
+                          "description": "The type of environment that is available (for example: cloudfoundry)."
+                        },
+                        "landscapeLabel": {
+                          "type": "string",
+                          "description": "The landscape label of the environment broker."
+                        },
+                        "planName": {
+                          "type": "string",
+                          "description": "Name of the service plan for the available environment."
+                        },
+                        "planUpdatable": {
+                          "type": "boolean",
+                          "description": "Specifies if the consumer can change the plan of an existing instance of the environment."
+                        },
+                        "serviceDescription": {
+                          "type": "string",
+                          "description": "The short description of the service."
+                        },
+                        "serviceDisplayName": {
+                          "type": "string",
+                          "description": "The display name of the service."
+                        },
+                        "serviceDocumentationUrl": {
+                          "type": "string",
+                          "description": "The URL of the documentation link for the service."
+                        },
+                        "serviceImageUrl": {
+                          "type": "string",
+                          "description": "The URL of the image for the service."
+                        },
+                        "serviceLongDescription": {
+                          "type": "string",
+                          "description": "The long description of the service."
+                        },
+                        "serviceName": {
+                          "type": "string",
+                          "description": "Name of the service offered in the catalog of the corresponding environment broker (for example, cloudfoundry)."
+                        },
+                        "serviceSupportUrl": {
+                          "type": "string",
+                          "description": "The URL of the support link for the service."
+                        },
+                        "technicalKey": {
+                          "type": "string",
+                          "description": "Technical key of the corresponding environment broker."
+                        },
+                        "updateSchema": {
+                          "type": "string",
+                          "description": "The update schema of the environment broker."
+                        }
+                      }
+                    }
+                  }
+                },
+                "description": "OK (HTTP 200)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Forbidden (HTTP 403)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Tenant Not Found (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "getEnvironmentInstances",
+      "title": "getEnvironmentInstances",
+      "description": "Get all environment instances of a subaccount.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.read",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "authorization"
+        ],
+        "properties": {
+          "authorization": {
+            "type": "string",
+            "description": "Access token to work with this API group."
+          },
+          "x_id_token": {
+            "type": "string",
+            "description": "Security token that contains authentication declarations of an end user by the authorization server (SAP Identity and Authentication Service)."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "environmentInstances": {
+                    "type": "array",
+                    "description": "List of all the environment instances",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "brokerId": {
+                          "type": "string",
+                          "description": "The ID of the associated environment broker."
+                        },
+                        "commercialType": {
+                          "type": "string",
+                          "description": "The commercial type of the environment broker."
+                        },
+                        "createdBy": {
+                          "type": "string",
+                          "description": "Details about the user that created this environment instance."
+                        },
+                        "createdDate": {
+                          "type": "string",
+                          "description": "The date the environment instance was created. Dates and times are in UTC format.",
+                          "format": "date-time"
+                        },
+                        "customLabels": {
+                          "type": "object",
+                          "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field).",
+                          "additionalProperties": {
+                            "type": "array",
+                            "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field).",
+                            "items": {
+                              "type": "string",
+                              "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field)."
+                            }
+                          }
+                        },
+                        "dashboardUrl": {
+                          "type": "string",
+                          "description": "The URL of the service dashboard, which is a web-based management user interface for the service instances."
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "The description of the environment instance."
+                        },
+                        "environmentType": {
+                          "type": "string",
+                          "description": "Type of the environment instance that is used.",
+                          "enum": [
+                            "cloudfoundry",
+                            "kubernetes",
+                            "neo"
+                          ],
+                          "example": "cloudfoundry"
+                        },
+                        "globalAccountGUID": {
+                          "type": "string",
+                          "description": "The GUID of the global account that is associated with the environment instance."
+                        },
+                        "id": {
+                          "type": "string",
+                          "description": "Automatically generated unique identifier for the environment instance."
+                        },
+                        "labels": {
+                          "type": "string",
+                          "description": "Broker-specified key-value pairs that specify attributes of an environment instance."
+                        },
+                        "landscapeLabel": {
+                          "type": "string",
+                          "description": "The name of the landscape within the logged-in region on which the environment instance is created."
+                        },
+                        "modifiedBy": {
+                          "type": "string",
+                          "description": "Details about the user that last modified this environment instance."
+                        },
+                        "modifiedDate": {
+                          "type": "string",
+                          "description": "The last date the environment instance was last modified. Dates and times are in UTC format.",
+                          "format": "date-time"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the environment instance."
+                        },
+                        "operation": {
+                          "type": "string",
+                          "description": "An identifier that represents the last operation. This ID is returned by the environment brokers."
+                        },
+                        "parameters": {
+                          "type": "string",
+                          "description": "Configuration parameters for the environment instance."
+                        },
+                        "planId": {
+                          "type": "string",
+                          "description": "ID of the service plan for the environment instance in the corresponding service broker's catalog."
+                        },
+                        "planName": {
+                          "type": "string",
+                          "description": "Name of the service plan for the environment instance in the corresponding service broker's catalog."
+                        },
+                        "platformId": {
+                          "type": "string",
+                          "description": "ID of the platform for the environment instance in the corresponding service broker's catalog."
+                        },
+                        "serviceId": {
+                          "type": "string",
+                          "description": "ID of the service for the environment instance in the corresponding service broker's catalog."
+                        },
+                        "serviceName": {
+                          "type": "string",
+                          "description": "Name of the service for the environment instance in the corresponding service broker's catalog."
+                        },
+                        "state": {
+                          "type": "string",
+                          "description": "Current state of the environment instance.",
+                          "enum": [
+                            "CREATING",
+                            "UPDATING",
+                            "DELETING",
+                            "OK",
+                            "CREATION_FAILED",
+                            "DELETION_FAILED",
+                            "UPDATE_FAILED"
+                          ],
+                          "example": "CREATING"
+                        },
+                        "stateMessage": {
+                          "type": "string",
+                          "description": "Information about the current state of the environment instance."
+                        },
+                        "subaccountGUID": {
+                          "type": "string",
+                          "description": "The GUID of the subaccount associated with the environment instance."
+                        },
+                        "tenantId": {
+                          "type": "string",
+                          "description": "The ID of the tenant that owns the environment instance."
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "The last provisioning operation on the environment instance.\n* <b>Provision:</b> Environment instance created.\n* <b>Update:</b> Environment instance changed.\n* <b>Deprovision:</b> Environment instance deleted.",
+                          "enum": [
+                            "Provision",
+                            "Update",
+                            "Deprovision"
+                          ],
+                          "example": "Provision"
+                        }
+                      }
+                    }
+                  }
+                },
+                "description": "OK (HTTP 200)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "User is unauthorized for this operation (HTTP 403)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Subaccount does not exist (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "createEnvironmentInstance",
+      "title": "createEnvironmentInstance",
+      "description": "Create an environment instance, such as a Cloud Foundry org, in a subaccount.<br/>To see which environments are available to the subaccount, use the API:  GET /provisioning/v1/availableEnvironments<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.create",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "object",
+            "description": "",
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "The description of the environment instance."
+              },
+              "environmentType": {
+                "type": "string",
+                "description": "Type of the environment instance that is used. Must match the type of the environment instance broker (for example: cloudfoundry). Use GET /provisioning/v1/availableEnvironments to view the valid values."
+              },
+              "landscapeLabel": {
+                "type": "string",
+                "description": "The name of the landscape within the logged-in region on which to create the environment instance. Only required only if the region has multiple landscapes. To see which landscapes are available for this environment, use the GET /provisioning/v1/availableEnvironments API."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the created environment instance."
+              },
+              "origin": {
+                "type": "string",
+                "description": "The origin of the user in case of a custom IdP configuration. This parameter is only required if the OAuth 2.0 client credentials grant flow is used, a user parameter is provided and the target environment supports custom IdP, otherwise it is ignored."
+              },
+              "parameters": {
+                "type": "object",
+                "description": "If needed, you can pass environment-specific configuration parameters using a valid embedded JSON object.\nFor a list of supported configuration parameters, see the documentation of the particular environment offering.\nIn this example, additional configuration parameters 'id' and 'email' are specified: \n{ \n\"instance_name\": \"myOrg\" \n} ",
+                "additionalProperties": {
+                  "type": "object",
+                  "description": "If needed, you can pass environment-specific configuration parameters using a valid embedded JSON object.\nFor a list of supported configuration parameters, see the documentation of the particular environment offering.\nIn this example, additional configuration parameters 'id' and 'email' are specified: \n{ \n\"instance_name\": \"myOrg\" \n} "
+                }
+              },
+              "planName": {
+                "type": "string",
+                "description": "Name of the service plan for the environment instance. Must match the name in the corresponding service broker's catalog. (for example: standard)"
+              },
+              "serviceName": {
+                "type": "string",
+                "description": "The name of service offered in the catalog of the corresponding environment broker. (for example: cloudfoundry)"
+              },
+              "technicalKey": {
+                "type": "string",
+                "description": "Technical key of the corresponding environment broker."
+              },
+              "user": {
+                "type": "string",
+                "description": "The e-mail of the user that owns the environment instance. In some environments, this user might be assigned as the initial admin of the provisioned environment. For example, for a Cloud Foundry environment, this user is assigned to the Org Manager role. This parameter is required only when OAuth 2.0 client credentials grant flow is used, otherwise it is ignored."
+              }
+            },
+            "required": [
+              "environmentType",
+              "planName",
+              "serviceName"
+            ]
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "ID of the created environment instance"
+                  }
+                },
+                "description": "Service Binding already exists and the requested parameters are identical to the existing Service Binding. Only valid in synchronous operations (HTTP 200)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "ID of the created environment instance"
+                  }
+                },
+                "description": "Accepted (HTTP 202)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Broker was not found, or, plan and service are not part of the broker catalog, or, service and plan are not allowed for the subaccount license type (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Tenant does not exist (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "deleteEnvironmentInstances",
+      "title": "deleteEnvironmentInstances",
+      "description": "Delete all environment instances, including their data in the environment relating to the subaccount. \nThe deletion may take a while depending on the amount of content in your environment instance.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.delete",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "environmentInstances": {
+                    "type": "array",
+                    "description": "List of all the environment instances",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "brokerId": {
+                          "type": "string",
+                          "description": "The ID of the associated environment broker."
+                        },
+                        "commercialType": {
+                          "type": "string",
+                          "description": "The commercial type of the environment broker."
+                        },
+                        "createdDate": {
+                          "type": "string",
+                          "description": "The date the environment instance was created. Dates and times are in UTC format.",
+                          "format": "date-time"
+                        },
+                        "customLabels": {
+                          "type": "object",
+                          "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field).",
+                          "additionalProperties": {
+                            "type": "array",
+                            "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field).",
+                            "items": {
+                              "type": "string",
+                              "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field)."
+                            }
+                          }
+                        },
+                        "dashboardUrl": {
+                          "type": "string",
+                          "description": "The URL of the service dashboard, which is a web-based management user interface for the service instances."
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "The description of the environment instance."
+                        },
+                        "environmentType": {
+                          "type": "string",
+                          "description": "Type of the environment instance that is used.",
+                          "enum": [
+                            "cloudfoundry",
+                            "kubernetes",
+                            "neo"
+                          ],
+                          "example": "cloudfoundry"
+                        },
+                        "globalAccountGUID": {
+                          "type": "string",
+                          "description": "The GUID of the global account that is associated with the environment instance."
+                        },
+                        "id": {
+                          "type": "string",
+                          "description": "Automatically generated unique identifier for the environment instance."
+                        },
+                        "labels": {
+                          "type": "string",
+                          "description": "Broker-specified key-value pairs that specify attributes of an environment instance."
+                        },
+                        "landscapeLabel": {
+                          "type": "string",
+                          "description": "The name of the landscape within the logged-in region on which the environment instance is created."
+                        },
+                        "modifiedDate": {
+                          "type": "string",
+                          "description": "The last date the environment instance was last modified. Dates and times are in UTC format.",
+                          "format": "date-time"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the environment instance."
+                        },
+                        "operation": {
+                          "type": "string",
+                          "description": "An identifier that represents the last operation. This ID is returned by the environment brokers."
+                        },
+                        "parameters": {
+                          "type": "string",
+                          "description": "Configuration parameters for the environment instance."
+                        },
+                        "planId": {
+                          "type": "string",
+                          "description": "ID of the service plan for the environment instance in the corresponding service broker's catalog."
+                        },
+                        "planName": {
+                          "type": "string",
+                          "description": "Name of the service plan for the environment instance in the corresponding service broker's catalog."
+                        },
+                        "platformId": {
+                          "type": "string",
+                          "description": "ID of the platform for the environment instance in the corresponding service broker's catalog."
+                        },
+                        "serviceId": {
+                          "type": "string",
+                          "description": "ID of the service for the environment instance in the corresponding service broker's catalog."
+                        },
+                        "serviceName": {
+                          "type": "string",
+                          "description": "Name of the service for the environment instance in the corresponding service broker's catalog."
+                        },
+                        "state": {
+                          "type": "string",
+                          "description": "Current state of the environment instance.",
+                          "enum": [
+                            "CREATING",
+                            "UPDATING",
+                            "DELETING",
+                            "OK",
+                            "CREATION_FAILED",
+                            "DELETION_FAILED",
+                            "UPDATE_FAILED"
+                          ],
+                          "example": "CREATING"
+                        },
+                        "stateMessage": {
+                          "type": "string",
+                          "description": "Information about the current state of the environment instance."
+                        },
+                        "subaccountGUID": {
+                          "type": "string",
+                          "description": "The GUID of the subaccount associated with the environment instance."
+                        },
+                        "tenantId": {
+                          "type": "string",
+                          "description": "The ID of the tenant that owns the environment instance."
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "The last provisioning operation on the environment instance.\n* <b>Provision:</b> Environment instance created.\n* <b>Update:</b> Environment instance changed.\n* <b>Deprovision:</b> Environment instance deleted.",
+                          "enum": [
+                            "Provision",
+                            "Update",
+                            "Deprovision"
+                          ],
+                          "example": "Provision"
+                        }
+                      }
+                    }
+                  }
+                },
+                "description": "Accepted (HTTP 202)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Not Found (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Conflict (HTTP 409)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "getEnvironmentInstance",
+      "title": "getEnvironmentInstance",
+      "description": "Get the details of a specific environment instance in a subaccount.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.read",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "environmentinstanceid"
+        ],
+        "properties": {
+          "environmentinstanceid": {
+            "type": "string",
+            "description": "The ID of the environment instance to view."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "brokerId": {
+                    "type": "string",
+                    "description": "The ID of the associated environment broker."
+                  },
+                  "commercialType": {
+                    "type": "string",
+                    "description": "The commercial type of the environment broker."
+                  },
+                  "createdBy": {
+                    "type": "string",
+                    "description": "Details about the user that created this environment instance."
+                  },
+                  "createdDate": {
+                    "type": "string",
+                    "description": "The date the environment instance was created. Dates and times are in UTC format.",
+                    "format": "date-time"
+                  },
+                  "customLabels": {
+                    "type": "object",
+                    "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field).",
+                    "additionalProperties": {
+                      "type": "array",
+                      "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field).",
+                      "items": {
+                        "type": "string",
+                        "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field)."
+                      }
+                    }
+                  },
+                  "dashboardUrl": {
+                    "type": "string",
+                    "description": "The URL of the service dashboard, which is a web-based management user interface for the service instances."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The description of the environment instance."
+                  },
+                  "environmentType": {
+                    "type": "string",
+                    "description": "Type of the environment instance that is used.",
+                    "enum": [
+                      "cloudfoundry",
+                      "kubernetes",
+                      "neo"
+                    ],
+                    "example": "cloudfoundry"
+                  },
+                  "globalAccountGUID": {
+                    "type": "string",
+                    "description": "The GUID of the global account that is associated with the environment instance."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Automatically generated unique identifier for the environment instance."
+                  },
+                  "labels": {
+                    "type": "string",
+                    "description": "Broker-specified key-value pairs that specify attributes of an environment instance."
+                  },
+                  "landscapeLabel": {
+                    "type": "string",
+                    "description": "The name of the landscape within the logged-in region on which the environment instance is created."
+                  },
+                  "modifiedBy": {
+                    "type": "string",
+                    "description": "Details about the user that last modified this environment instance."
+                  },
+                  "modifiedDate": {
+                    "type": "string",
+                    "description": "The last date the environment instance was last modified. Dates and times are in UTC format.",
+                    "format": "date-time"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the environment instance."
+                  },
+                  "operation": {
+                    "type": "string",
+                    "description": "An identifier that represents the last operation. This ID is returned by the environment brokers."
+                  },
+                  "parameters": {
+                    "type": "string",
+                    "description": "Configuration parameters for the environment instance."
+                  },
+                  "planId": {
+                    "type": "string",
+                    "description": "ID of the service plan for the environment instance in the corresponding service broker's catalog."
+                  },
+                  "planName": {
+                    "type": "string",
+                    "description": "Name of the service plan for the environment instance in the corresponding service broker's catalog."
+                  },
+                  "platformId": {
+                    "type": "string",
+                    "description": "ID of the platform for the environment instance in the corresponding service broker's catalog."
+                  },
+                  "serviceId": {
+                    "type": "string",
+                    "description": "ID of the service for the environment instance in the corresponding service broker's catalog."
+                  },
+                  "serviceName": {
+                    "type": "string",
+                    "description": "Name of the service for the environment instance in the corresponding service broker's catalog."
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Current state of the environment instance.",
+                    "enum": [
+                      "CREATING",
+                      "UPDATING",
+                      "DELETING",
+                      "OK",
+                      "CREATION_FAILED",
+                      "DELETION_FAILED",
+                      "UPDATE_FAILED"
+                    ],
+                    "example": "CREATING"
+                  },
+                  "stateMessage": {
+                    "type": "string",
+                    "description": "Information about the current state of the environment instance."
+                  },
+                  "subaccountGUID": {
+                    "type": "string",
+                    "description": "The GUID of the subaccount associated with the environment instance."
+                  },
+                  "tenantId": {
+                    "type": "string",
+                    "description": "The ID of the tenant that owns the environment instance."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The last provisioning operation on the environment instance.\n* <b>Provision:</b> Environment instance created.\n* <b>Update:</b> Environment instance changed.\n* <b>Deprovision:</b> Environment instance deleted.",
+                    "enum": [
+                      "Provision",
+                      "Update",
+                      "Deprovision"
+                    ],
+                    "example": "Provision"
+                  }
+                },
+                "description": "OK (HTTP 200)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "No environment instance found for the specified environmentInstanceId (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "deleteEnvironmentInstance",
+      "title": "deleteEnvironmentInstance",
+      "description": "Delete a specific environment instance, including all its data in the environment relating to the subaccount. \nThe deletion may take a while depending on the amount of content in your environment instance.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.delete",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "environmentinstanceid"
+        ],
+        "properties": {
+          "environmentinstanceid": {
+            "type": "string",
+            "description": "ID of the environment instance to delete"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "brokerId": {
+                    "type": "string",
+                    "description": "The ID of the associated environment broker."
+                  },
+                  "commercialType": {
+                    "type": "string",
+                    "description": "The commercial type of the environment broker."
+                  },
+                  "createdDate": {
+                    "type": "string",
+                    "description": "The date the environment instance was created. Dates and times are in UTC format.",
+                    "format": "date-time"
+                  },
+                  "customLabels": {
+                    "type": "object",
+                    "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field).",
+                    "additionalProperties": {
+                      "type": "array",
+                      "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field).",
+                      "items": {
+                        "type": "string",
+                        "description": "Custom labels that are defined by a user and assigned as key-value pairs in a JSON array to the environment instance. \nExample:\n{\n  \"Cost Center\": [\"19700626\"],\n  \"Department\": [\"Sales\"],\n  \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n  \"EMEA\":[]\n}\nNOTE: Custom labels apply only to SAP BTP. They are not the same labels that might be defined by your environment broker (see \"labels\" field)."
+                      }
+                    }
+                  },
+                  "dashboardUrl": {
+                    "type": "string",
+                    "description": "The URL of the service dashboard, which is a web-based management user interface for the service instances."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The description of the environment instance."
+                  },
+                  "environmentType": {
+                    "type": "string",
+                    "description": "Type of the environment instance that is used.",
+                    "enum": [
+                      "cloudfoundry",
+                      "kubernetes",
+                      "neo"
+                    ],
+                    "example": "cloudfoundry"
+                  },
+                  "globalAccountGUID": {
+                    "type": "string",
+                    "description": "The GUID of the global account that is associated with the environment instance."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Automatically generated unique identifier for the environment instance."
+                  },
+                  "labels": {
+                    "type": "string",
+                    "description": "Broker-specified key-value pairs that specify attributes of an environment instance."
+                  },
+                  "landscapeLabel": {
+                    "type": "string",
+                    "description": "The name of the landscape within the logged-in region on which the environment instance is created."
+                  },
+                  "modifiedDate": {
+                    "type": "string",
+                    "description": "The last date the environment instance was last modified. Dates and times are in UTC format.",
+                    "format": "date-time"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the environment instance."
+                  },
+                  "operation": {
+                    "type": "string",
+                    "description": "An identifier that represents the last operation. This ID is returned by the environment brokers."
+                  },
+                  "parameters": {
+                    "type": "string",
+                    "description": "Configuration parameters for the environment instance."
+                  },
+                  "planId": {
+                    "type": "string",
+                    "description": "ID of the service plan for the environment instance in the corresponding service broker's catalog."
+                  },
+                  "planName": {
+                    "type": "string",
+                    "description": "Name of the service plan for the environment instance in the corresponding service broker's catalog."
+                  },
+                  "platformId": {
+                    "type": "string",
+                    "description": "ID of the platform for the environment instance in the corresponding service broker's catalog."
+                  },
+                  "serviceId": {
+                    "type": "string",
+                    "description": "ID of the service for the environment instance in the corresponding service broker's catalog."
+                  },
+                  "serviceName": {
+                    "type": "string",
+                    "description": "Name of the service for the environment instance in the corresponding service broker's catalog."
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Current state of the environment instance.",
+                    "enum": [
+                      "CREATING",
+                      "UPDATING",
+                      "DELETING",
+                      "OK",
+                      "CREATION_FAILED",
+                      "DELETION_FAILED",
+                      "UPDATE_FAILED"
+                    ],
+                    "example": "CREATING"
+                  },
+                  "stateMessage": {
+                    "type": "string",
+                    "description": "Information about the current state of the environment instance."
+                  },
+                  "subaccountGUID": {
+                    "type": "string",
+                    "description": "The GUID of the subaccount associated with the environment instance."
+                  },
+                  "tenantId": {
+                    "type": "string",
+                    "description": "The ID of the tenant that owns the environment instance."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The last provisioning operation on the environment instance.\n* <b>Provision:</b> Environment instance created.\n* <b>Update:</b> Environment instance changed.\n* <b>Deprovision:</b> Environment instance deleted.",
+                    "enum": [
+                      "Provision",
+                      "Update",
+                      "Deprovision"
+                    ],
+                    "example": "Provision"
+                  }
+                },
+                "description": "Accepted (HTTP 202)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "No environment instance found for the specified environmentInstanceId (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Conflict (HTTP 409)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "updateEnvironmentInstance",
+      "title": "updateEnvironmentInstance",
+      "description": "Update an environment instance.<br/>To see which environments are provisioned for the subaccount, use the API:  GET /provisioning/v1/environments<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.delete",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "body",
+          "environmentinstanceid"
+        ],
+        "properties": {
+          "body": {
+            "type": "object",
+            "description": "",
+            "properties": {
+              "parameters": {
+                "type": "object",
+                "description": "If needed, you can pass environment-specific configuration parameters using a valid embedded JSON object.\nFor a list of supported configuration parameters, see the documentation of the particular environment offering.\nIn this example, additional configuration parameter 'instance_name' is specified: \n{ \n\"instance_name\": \"myOrg\" \n} ",
+                "additionalProperties": {
+                  "type": "object",
+                  "description": "If needed, you can pass environment-specific configuration parameters using a valid embedded JSON object.\nFor a list of supported configuration parameters, see the documentation of the particular environment offering.\nIn this example, additional configuration parameter 'instance_name' is specified: \n{ \n\"instance_name\": \"myOrg\" \n} "
+                }
+              },
+              "planName": {
+                "type": "string",
+                "description": "Name of the service plan for the environment instance. Must match the name in the corresponding service broker's catalog. (for example: Subscription)"
+              }
+            },
+            "required": [
+              "planName"
+            ]
+          },
+          "environmentinstanceid": {
+            "type": "string",
+            "description": "ID of the environment instance to update"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "description": "Accepted (HTTP 202)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Parameters don't match the broker update schema definition (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Tenant does not exist (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "getAllEnvironmentInstanceBindings",
+      "title": "getAllEnvironmentInstanceBindings",
+      "description": "Get all environment instance bindings for a given environment \ninstance.<br/>The list includes metadata of each binding.<br/>To get\ncredentials and additional binding details, run Get an environment\ninstance binding API and specify the binding ID.<br/><br/>Required\nscope: $XSAPPNAME.subaccount.environment.read",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "environmentinstanceid"
+        ],
+        "properties": {
+          "environmentinstanceid": {
+            "type": "string",
+            "description": "The ID of the environment instance for which to get bindings."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "description": "OK (HTTP 200)",
+                "properties": {
+                  "bindings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "bindingId": {
+                          "type": "string",
+                          "description": "The binding ID for the specified environment instance."
+                        },
+                        "createdBy": {
+                          "type": "string",
+                          "description": "The entity that created the binding."
+                        },
+                        "createdDate": {
+                          "type": "string",
+                          "description": "When the binding was created"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "description": "Expiry date for the binding."
+                        },
+                        "instanceId": {
+                          "type": "string",
+                          "description": "The environment instance ID associated with the binding."
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "No environment instance binding found for the specified environment instance ID. (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "createEnvironmentInstanceBinding",
+      "title": "createEnvironmentInstanceBinding",
+      "description": "Create an environment instance binding.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.create",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "body",
+          "environmentinstanceid"
+        ],
+        "properties": {
+          "body": {
+            "type": "object",
+            "description": "",
+            "properties": {
+              "parameters": {
+                "type": "object",
+                "description": "If needed, you can pass configuration parameters for the Service Binding.<br>Service Brokers must ensure that the client has provided valid configuration parameters and values for the operation.",
+                "additionalProperties": {
+                  "type": "object",
+                  "description": "If needed, you can pass configuration parameters for the Service Binding.<br>Service Brokers must ensure that the client has provided valid configuration parameters and values for the operation."
+                }
+              }
+            }
+          },
+          "environmentinstanceid": {
+            "type": "string",
+            "description": "The ID of the environment instance for which to create a binding."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "description": "Accepted (HTTP 202)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Broker not found, service or plan not in broker catalog or not allowed for subaccount license type (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Tenant does not exist (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "getEnvironmentInstanceBinding",
+      "title": "getEnvironmentInstanceBinding",
+      "description": "Get the details of a specific environment instance binding.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.read",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "environmentinstanceid",
+          "bindingid"
+        ],
+        "properties": {
+          "environmentinstanceid": {
+            "type": "string",
+            "description": "The ID of the associated environment instance."
+          },
+          "bindingid": {
+            "type": "string",
+            "description": "The ID of the environment instance binding"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "credentials": {
+                        "type": "object",
+                        "description": "A free-form hash of credentials that can be used by applications or users to access the service. MUST be returned if the service broker supports generation of credentials.",
+                        "additionalProperties": {
+                          "type": "object",
+                          "description": "A free-form hash of credentials that can be used by applications or users to access the service. MUST be returned if the service broker supports generation of credentials."
+                        }
+                      },
+                      "endpoints": {
+                        "type": "array",
+                        "description": "All network endpoints that the application uses to connect to the service instance.",
+                        "items": {
+                          "type": "object",
+                          "description": "All network endpoints that the application uses to connect to the service instance."
+                        }
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "description": "An optional object containing metadata about this service binding. This metadata is mainly used to manage the service binding itself and does not contain any data needed to connect to the service instance.",
+                        "additionalProperties": {
+                          "type": "object",
+                          "description": "An optional object containing metadata about this service binding. This metadata is mainly used to manage the service binding itself and does not contain any data needed to connect to the service instance."
+                        }
+                      },
+                      "parameters": {
+                        "type": "object",
+                        "description": "Configuration parameters for the Service Binding.",
+                        "additionalProperties": {
+                          "type": "object",
+                          "description": "Configuration parameters for the Service Binding."
+                        }
+                      },
+                      "route_service_url": {
+                        "type": "string",
+                        "description": "A URL to which the environment proxies requests for the address sent with bind_resource.route in the request body."
+                      },
+                      "syslog_drain_url": {
+                        "type": "string",
+                        "description": "A URL to which logs are streamed."
+                      },
+                      "volume_mounts": {
+                        "type": "array",
+                        "description": "An array of configurations for remote storage devices to be mounted into an application container filesystem.",
+                        "items": {
+                          "type": "object",
+                          "description": "An array of configurations for remote storage devices to be mounted into an application container filesystem."
+                        }
+                      }
+                    },
+                    "required": [
+                      "credentials",
+                      "parameters"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "bindingId": {
+                        "type": "string",
+                        "description": "The binding ID for the specified environment instance."
+                      },
+                      "createdBy": {
+                        "type": "string",
+                        "description": "The entity that created the binding."
+                      },
+                      "createdDate": {
+                        "type": "string",
+                        "description": "When the binding was created"
+                      },
+                      "expiresAt": {
+                        "type": "string",
+                        "description": "Expiry date for the binding."
+                      },
+                      "instanceId": {
+                        "type": "string",
+                        "description": "The environment instance ID associated with the binding."
+                      }
+                    }
+                  }
+                ],
+                "description": "Returns either 'GetEnvironmentInstanceBindingResponse' if the binding is active or 'EnvironmentInstanceBindingMetadata' if the binding has expired. (HTTP 200)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "No environment instance binding found for the specified environment instance ID (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "deleteEnvironmentInstanceBinding",
+      "title": "deleteEnvironmentInstanceBinding",
+      "description": "Delete an environment instance binding.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.delete",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "environmentinstanceid",
+          "bindingid"
+        ],
+        "properties": {
+          "environmentinstanceid": {
+            "type": "string",
+            "description": "The ID of the environment instance for which the binding is to be deleted."
+          },
+          "bindingid": {
+            "type": "string",
+            "description": "The ID of the binding to delete."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "bindingId": {
+                    "type": "string",
+                    "description": "The ID of the binding to delete."
+                  },
+                  "planId": {
+                    "type": "string",
+                    "description": "The plan ID of the associated environment instance."
+                  },
+                  "serviceId": {
+                    "type": "string",
+                    "description": "The associated environment instance ID."
+                  }
+                },
+                "description": "The binding was successfully deleted (HTTP 200)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "No binding exists with the provided ID (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "The binding has expired on the environment broker side, but metadata still exists. It will be deleted from the provisioning database (HTTP 410)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "getEnvironmentInstanceLabels",
+      "title": "getEnvironmentInstanceLabels",
+      "description": "Get all the custom labels that are assigned as key-value pairs to a given environment instance. \nNOTE: These custom labels are user-defined and apply only to SAP BTP. They are not the same labels that might be defined by your environment broker; this API does not retrieve the broker-defined labels that may exist. \nRequired scope: $XSAPPNAME.subaccount.environment.read",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "environmentinstanceid"
+        ],
+        "properties": {
+          "environmentinstanceid": {
+            "type": "string",
+            "description": "The ID of the environment instance."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "description": "OK (HTTP 200)",
+                "properties": {
+                  "labels": {
+                    "type": "object",
+                    "description": "User-defined labels that are assigned as key-value pairs in a JSON array to the entity.\n\nExample: {\n\n   \"Cost Center\": [\"19700626\"],\n\n   \"Department\": [\"Sales\"],\n\n   \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n\n   \"EMEA\":[]\n\n}"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "No environment instance found for the specified environmentInstanceId (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "createEnvironmentInstanceLabels",
+      "title": "createEnvironmentInstanceLabels",
+      "description": "Create and assign custom labels to a given environment instance. Labels are specified as key-value pairs. \nNOTE: These custom labels are user-defined and apply only to SAP BTP. They are not the same labels that might be defined by your environment broker; this API does not update broker-defined labels that may exist. \nRequired scope: $XSAPPNAME.subaccount.environment.create",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "body",
+          "environmentinstanceid"
+        ],
+        "properties": {
+          "body": {
+            "type": "object",
+            "description": "",
+            "properties": {
+              "labels": {
+                "type": "object",
+                "description": "Labels as key-value pairs in JSON format. An entity is allowed up to 10 labels. The key of each label is mandatory and is limited to 63 characters. Standard labels can have any name (key) that you define, with only a single optional value assigned per key. To define a special type of label, called tags, specify the key with the name 'tags' and associate up to 10 values per tag in the array. The key 'tags' (in any casing variation) can only be used once per entity. Note that label values (not keys) are case-sensitive -- be careful not to create duplicate variants of the same value with a different casing (example: \"myValue\" and \"MyValue\").\n\nFor example: {\n\n\"Cost Center\":\"2624061970\"\n\n\"Department\":\"Sales\"\n\n\"tags\": [\"Green\", \"Pharma\", \"Audited\"]\n\n}"
+              }
+            }
+          },
+          "environmentinstanceid": {
+            "type": "string",
+            "description": "The ID of the environment instance."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "description": "OK (HTTP 200)",
+                "properties": {
+                  "labels": {
+                    "type": "object",
+                    "description": "User-defined labels that are assigned as key-value pairs in a JSON array to the entity.\n\nExample: {\n\n   \"Cost Center\": [\"19700626\"],\n\n   \"Department\": [\"Sales\"],\n\n   \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n\n   \"EMEA\":[]\n\n}"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "No environment instance found for the specified environmentInstanceId (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "deleteEnvironmentInstanceLabels",
+      "title": "deleteEnvironmentInstanceLabels",
+      "description": "Remove all user-defined labels that are assigned to a given environment instance. \nTo remove specific labels, use instead: PUT /provisioning/v1/environments/{environmentInstanceId}/labels\nNOTE: This API applies only to custom labels that are defined by users for SAP BTP. Any labels that might be defined by your environment broker are not removed by this API.\nRequired scope: $XSAPPNAME.subaccount.environment.delete",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "environmentinstanceid"
+        ],
+        "properties": {
+          "environmentinstanceid": {
+            "type": "string",
+            "description": "The ID of the environment instance."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "description": "OK (HTTP 200)",
+                "properties": {
+                  "labels": {
+                    "type": "object",
+                    "description": "User-defined labels that are assigned as key-value pairs in a JSON array to the entity.\n\nExample: {\n\n   \"Cost Center\": [\"19700626\"],\n\n   \"Department\": [\"Sales\"],\n\n   \"Contacts\": [\"name1@example.com\",\"name2@example.com\"],\n\n   \"EMEA\":[]\n\n}"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "No environment instance found for the specified environmentInstanceId (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "getSubaccountQuota",
+      "title": "getSubaccountQuota",
+      "description": "Get the plans and quota assignments for a subaccount.<br/><br/>Required scope: $XSAPPNAME.subaccount.entitlement.read",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "quotas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "consumedQuota": {
+                          "type": "integer",
+                          "description": "The quantity of consumed quota. The service owner can provide a value for the consumed quota if it is different from the provisioned quota calculation.",
+                          "format": "int64"
+                        },
+                        "globalAccountGUID": {
+                          "type": "string",
+                          "description": "Unique ID of the global account associated with the subaccount."
+                        },
+                        "globalAccountId": {
+                          "type": "string",
+                          "description": "The ID of the associated global account."
+                        },
+                        "plan": {
+                          "type": "string",
+                          "description": "The name of the plan of the provisioned quota."
+                        },
+                        "provisioningMethod": {
+                          "type": "string",
+                          "enum": [
+                            "SERVICE_BROKER",
+                            "NONE_REQUIRED",
+                            "COMMERCIAL_SOLUTION_SCRIPT",
+                            "GLOBAL_COMMERCIAL_SOLUTION_SCRIPT",
+                            "GLOBAL_QUOTA_DOMAIN_DB",
+                            "CLOUD_AUTOMATION",
+                            "SPC"
+                          ]
+                        },
+                        "quota": {
+                          "type": "integer",
+                          "description": "The quantity of provisioned quota.",
+                          "format": "int32"
+                        },
+                        "resources": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "additionalInfo": {
+                                "type": "object",
+                                "description": "any relevant information about the resource that is not provided by other parameter values.",
+                                "additionalProperties": {
+                                  "type": "object",
+                                  "description": "any relevant information about the resource that is not provided by other parameter values."
+                                }
+                              },
+                              "description": {
+                                "type": "string",
+                                "description": "Description of the resource."
+                              },
+                              "displayName": {
+                                "type": "string",
+                                "description": "Descriptive name of the resource for customer-facing UIs."
+                              },
+                              "resourceData": {
+                                "type": "object",
+                                "description": "Data associated with the resource.",
+                                "additionalProperties": {
+                                  "type": "object",
+                                  "description": "Data associated with the resource."
+                                }
+                              },
+                              "resourceProvider": {
+                                "type": "string",
+                                "description": "Provider of the requested resource. For example, IaaS provider: AWS."
+                              },
+                              "resourceTechnicalName": {
+                                "type": "string",
+                                "description": "Unique technical name of the resource."
+                              },
+                              "resourceType": {
+                                "type": "string",
+                                "description": "Type of the resource."
+                              }
+                            }
+                          }
+                        },
+                        "service": {
+                          "type": "string",
+                          "description": "The name of the service of the provisioned quota."
+                        },
+                        "serviceCategory": {
+                          "type": "string",
+                          "enum": [
+                            "PLATFORM",
+                            "SERVICE",
+                            "ELASTIC_SERVICE",
+                            "ELASTIC_LIMITED",
+                            "APPLICATION",
+                            "QUOTA_BASED_APPLICATION",
+                            "ENVIRONMENT"
+                          ]
+                        },
+                        "subaccountGUID": {
+                          "type": "string",
+                          "description": "Unique ID of the subaccount for which to get quota."
+                        },
+                        "tenantId": {
+                          "type": "string",
+                          "description": "The ID of the tenant for the subaccount."
+                        },
+                        "uniqueIdentifier": {
+                          "type": "string",
+                          "description": "The unique identifier of the plan of the provisioned quota."
+                        },
+                        "unlimited": {
+                          "type": "boolean",
+                          "description": "Whether an unlimited quantity of quota can be provisioned."
+                        }
+                      }
+                    }
+                  }
+                },
+                "description": "Ok (HTTP 200)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Bad Request (HTTP 400)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Subaccount or tenant does not exist (HTTP 404)"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "description": "Technical code of the error as a reference for support",
+                    "format": "int32"
+                  },
+                  "correlationID": {
+                    "type": "string",
+                    "description": "Log correlation ID to track the event"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Error description in JSON format"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User-friendly description of the error."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Describes a data element (for example, a resource path: /online-store/v1/products/123)"
+                  }
+                },
+                "required": [
+                  "code",
+                  "correlationID",
+                  "message"
+                ],
+                "description": "Internal Server Error (HTTP 500)"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

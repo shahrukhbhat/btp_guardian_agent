@@ -1,0 +1,55 @@
+apiVersion: asset.sap/v1
+kind: Asset
+
+metadata:
+  name: btp-guardian-agent
+  version: 1.0.1
+  description: >
+    BTP Guardian AI Agent â conversational agent for SAP BTP platform teams
+    providing natural-language visibility into cloud consumption, costs,
+    entitlements, account topology, and governance posture.
+
+type: agent
+
+container:
+  buildPath: .
+  port: 5000
+
+requires:
+  - name: accounts-service-mcp-server
+    kind: mcp-server
+    ordId: sap.btp:apiResource:accounts-service-mcp:v1
+  - name: entitlements-service-mcp-server
+    kind: mcp-server
+    ordId: sap.btp:apiResource:entitlements-service-mcp:v1
+  - name: resource-consumption-mcp-server
+    kind: mcp-server
+    ordId: sap.btp:apiResource:resource-consumption-mcp:v1
+  - name: metrics-api-mcp-server
+    kind: mcp-server
+    ordId: sap.btp:apiResource:metrics-api-mcp:v1
+  - name: usage-records-mcp-server
+    kind: mcp-server
+    ordId: sap.btp:apiResource:usage-records-mcp:v1
+  - name: provisioning-service-mcp-server
+    kind: mcp-server
+    ordId: sap.btp:apiResource:provisioning-service-mcp:v1
+
+probes:
+  startup:
+    path: /.well-known/agent.json
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 18
+  liveness:
+    path: /.well-known/agent.json
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /.well-known/agent.json
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3

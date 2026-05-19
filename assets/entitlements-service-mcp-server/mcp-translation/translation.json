@@ -1,0 +1,250 @@
+{
+    "mcpTranslationVersion": "0.1",
+    "target": {
+        "ordId": "sap.btp:apiResource:entitlements-service:v1",
+        "type": "openapi-v3"
+    },
+    "serverInfo": {
+        "name": "sap.mcp/entitlements_service",
+        "title": "entitlements_service",
+        "version": "1.0.0",
+        "description": "MCP server for the entitlements_service service."
+    },
+    "tools": [
+        {
+            "name": "getDirectoryAssignments",
+            "title": "getDirectoryAssignments",
+            "description": "Get all the entitlements and quota assignments for a global account and its directories and subaccounts. The information returned depends on the target of this API:\n- When the target is a global account, you view all the resources a global account and its directories and subaccounts are entitled to use. In this case, you omit the directoryGUID and subaccountGUID in the API call.\n- When the target is directory (applies only to directories that can manage their own entitlements), you view all the resources the directory and its subaccounts are entitled to use.\n- When the target is a specific subaccount, you can view all the entitlements and quota assigned to the subaccount.<br/><br/>Required scopes: $XSAPPNAME.directory.entitlement.read or $XSAPPNAME.global-account.entitlement.read",
+            "openApiType": {
+                "path": "/entitlements/v1/assignments",
+                "method": "get",
+                "operationId": "getDirectoryAssignments",
+                "parameters": [
+                    {
+                        "name": "directoryGUID",
+                        "description": "The ID of the directory for which to show the entitlements and quota assignments.",
+                        "in": "query",
+                        "newParameterName": "directoryguid"
+                    },
+                    {
+                        "name": "subaccountGUID",
+                        "description": "The ID of the subaccount for which to show the entitlements and quota assignments.",
+                        "in": "query",
+                        "newParameterName": "subaccountguid"
+                    },
+                    {
+                        "name": "includeAutoManagedPlans",
+                        "description": "Specify if to include also services that are automatically entitled to a global account when the global account is created. Default is false.",
+                        "in": "query",
+                        "newParameterName": "includeautomanagedplans"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "description": "Indicates the natural language and locale that the client prefers.",
+                        "in": "header",
+                        "newParameterName": "accept_language"
+                    },
+                    {
+                        "name": "entitledServicesOnly",
+                        "description": "When true: (1) only the available services for which the global account is entitled (under 'entitledServices') are retrieved, and (2) services that are assigned to directories and subaccounts in the global account are not retrieved (under 'assignedServices'). When false, both 'entitledServices' and 'assignedServices' are retrieved. Default value: false",
+                        "in": "query",
+                        "newParameterName": "entitledservicesonly"
+                    },
+                    {
+                        "name": "assignedServiceName",
+                        "description": "A specific service for which to return subaccount quota assignments in the global account or directory. If not specified, then all services in the global account or directory are returned.",
+                        "in": "query",
+                        "newParameterName": "assignedservicename"
+                    },
+                    {
+                        "name": "serviceName",
+                        "description": "A specific service for which to return subaccount quota entitlements and assignments in the global account. this parameter comes with conjunction with planName. If not specified, then all services in the global account are returned.",
+                        "in": "query",
+                        "newParameterName": "servicename"
+                    },
+                    {
+                        "name": "planName",
+                        "description": "A specific service for which to return subaccount quota entitlements and assignments in the global account. this parameter comes with conjunction with serviceName. If not specified, then all services in the global account are returned.",
+                        "in": "query",
+                        "newParameterName": "planname"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "createOrUpdateEntitlements",
+            "title": "createOrUpdateEntitlements",
+            "description": "Assign or update an entitlement plan of a service, multitenant application, or environment, to a directory. This is valid only for directories that are enabled to manage their entitlements.The amount that can be assigned to plans that are based on a numeric quota, is subject to available quota in the global account.Note that some environments, such as Cloud Foundry, are available by default to all subaccounts, and therefore are not displayed as entitlements.<br/><br/>Required scopes: $XSAPPNAME.directory.entitlement.update",
+            "openApiType": {
+                "path": "/entitlements/v1/directories/{directoryGUID}/assignments",
+                "method": "put",
+                "operationId": "createOrUpdateEntitlements",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "directoryGUID",
+                        "description": "The unique ID of the directory to which the entitlement is assigned.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "updateEntitlements",
+            "title": "updateEntitlements",
+            "description": "Update an entitlement plan of a service, multitenant application, or environment that is already assigned to a directory. Use it to apply changes to the distribution of a plan and quota to subaccounts in a directory. You cannot use this API to assign new plans or to change the quota assigned to a directory. This API is valid only for directories that are enabled to manage their entitlements. Note that some environments, such as Cloud Foundry, are available by default to all subaccounts, and therefore are not displayed as entitlements.<br/><br/>Required scopes: $XSAPPNAME.directory.entitlement.update",
+            "openApiType": {
+                "path": "/entitlements/v1/directories/{directoryGUID}/assignments",
+                "method": "patch",
+                "operationId": "updateEntitlements",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    },
+                    {
+                        "name": "directoryGUID",
+                        "description": "The unique ID of the directory to which the entitlement is assigned.",
+                        "in": "path",
+                        "newParameterName": "directoryguid"
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "getAllowedDataCenters",
+            "title": "getAllowedDataCenters",
+            "description": "Get all data centers that are available for the global account, including information such as their names, regions where they are located, and their IaaS providers.<br/><br/>Returns only data centers that are defined as a main data center. For regions that comprise multiple data centers, use the includeSatelliteDataCenters parameter to list also the regions' satellite data centers.<br/><br/>Required scopes: $XSAPPNAME.global-account.region.read",
+            "openApiType": {
+                "path": "/entitlements/v1/globalAccountAllowedDataCenters",
+                "method": "get",
+                "operationId": "getAllowedDataCenters",
+                "parameters": [
+                    {
+                        "name": "region",
+                        "description": "Region for which to get data centers.",
+                        "in": "query",
+                        "newParameterName": "region"
+                    },
+                    {
+                        "name": "includeSatelliteDataCenters",
+                        "description": "Whether to list also satellite data centers in regions that comprise multiple data centers. When omitted, only data centers that are defined as a main data center are listed.",
+                        "in": "query",
+                        "newParameterName": "includesatellitedatacenters"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "description": "Indicates the natural language and locale that the client prefers.",
+                        "in": "header",
+                        "newParameterName": "accept_language"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "getGlobalAccountAssignments",
+            "title": "getGlobalAccountAssignments",
+            "description": "Get details about all the entitlements assigned to a global account.<br/><br/>Required scopes: $XSAPPNAME.global-account.entitlement.read",
+            "openApiType": {
+                "path": "/entitlements/v1/globalAccountAssignments",
+                "method": "get",
+                "operationId": "getGlobalAccountAssignments",
+                "parameters": [
+                    {
+                        "name": "subaccountGUID",
+                        "description": "Use the parameter to specify for which subaccount to view assigned entitlements.\nIf left empty, the API returns the entitlements for the global account and all its subaccounts.",
+                        "in": "query",
+                        "newParameterName": "subaccountguid"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "description": "Indicates the natural language and locale that the client prefers.",
+                        "in": "header",
+                        "newParameterName": "accept_language"
+                    },
+                    {
+                        "name": "includeAutoManagedPlans",
+                        "description": "Specify if to include also services that are automatically assigned to a subaccount when the subaccount is created. Default is false.",
+                        "in": "query",
+                        "newParameterName": "includeautomanagedplans"
+                    },
+                    {
+                        "name": "entitledServicesOnly",
+                        "description": "When true: (1) only the available services for which the global account is entitled (under 'entitledServices') are retrieved, and (2) services that are assigned to directories and subaccounts in the global account are not retrieved (under 'assignedServices'). When false, both 'entitledServices' and 'assignedServices' are retrieved. Default value: false",
+                        "in": "query",
+                        "newParameterName": "entitledservicesonly"
+                    },
+                    {
+                        "name": "assignedServiceName",
+                        "description": "A specific service for which to return subaccount quota assignments in the global account. If not specified, then all services in the global account are returned.",
+                        "in": "query",
+                        "newParameterName": "assignedservicename"
+                    },
+                    {
+                        "name": "serviceName",
+                        "description": "A specific service for which to return subaccount quota entitlements and assignments in the global account. this parameter comes with conjunction with planName. If not specified, then all services in the global account are returned.",
+                        "in": "query",
+                        "newParameterName": "servicename"
+                    },
+                    {
+                        "name": "planName",
+                        "description": "A specific service for which to return subaccount quota entitlements and assignments in the global account. this parameter comes with conjunction with serviceName. If not specified, then all services in the global account are returned.",
+                        "in": "query",
+                        "newParameterName": "planname"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "setServicePlans",
+            "title": "setServicePlans",
+            "description": "Assign or update an entitlement of a service, multitenant application, or environment plan, to a subaccount. Subaccounts can be located either directly under the global account, or under a directory in the global account.When a subaccount is located directly under the global account, total amount of service or application plan it is entitled to consume cannot exceed the entitlement\u00e2\u0080\u0099s quota for the global account. This is also true for the directories that are not enabled to manage their quota as they consume the quota from the global account.<br/>For the directories that are enabled to manage their entitlements, the total amounts assigned to subaccounts cannot exceed the entitlement\u00e2\u0080\u0099s quota for these directories.<br/>Note that some environments, such as Cloud Foundry, are available by default to all subaccounts, and therefore are not displayed as entitlements.<br/><br/>Required scopes: $XSAPPNAME.global-account.entitlement.subaccount.update",
+            "openApiType": {
+                "path": "/entitlements/v1/subaccountServicePlans",
+                "method": "put",
+                "operationId": "setServicePlans",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "description": ""
+                    }
+                ],
+                "requestBody": {
+                    "contentType": "application/json"
+                }
+            }
+        },
+        {
+            "name": "getStatus",
+            "title": "getStatus",
+            "description": "Get information for a specified job, including its ID and its current status.<br/><br/>Required scope: $XSAPPNAME.job.read",
+            "openApiType": {
+                "path": "/jobs-management/v1/jobs/{jobInstanceIdOrUniqueId}/status",
+                "method": "get",
+                "operationId": "getStatus",
+                "parameters": [
+                    {
+                        "name": "jobInstanceIdOrUniqueId",
+                        "description": "ID of the job for which to get status",
+                        "in": "path",
+                        "newParameterName": "jobinstanceidoruniqueid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        }
+    ]
+}

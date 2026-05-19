@@ -1,0 +1,174 @@
+{
+  "summary": {
+    "total": 26,
+    "passed": 26,
+    "failed": 0,
+    "score": 100.0
+  },
+  "sections": [
+    {
+      "name": "Structure Tests",
+      "marker": "structure",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "score": 100.0,
+      "tests": [
+        {
+          "name": "test_agent_directory_exists",
+          "outcome": "passed",
+          "duration": 0.0002
+        },
+        {
+          "name": "test_app_directory_exists",
+          "outcome": "passed",
+          "duration": 0.0003
+        },
+        {
+          "name": "test_requirements_txt_exists",
+          "outcome": "passed",
+          "duration": 0.0002
+        }
+      ]
+    },
+    {
+      "name": "Server Tests",
+      "marker": "server",
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "score": 100.0,
+      "tests": [
+        {
+          "name": "test_server_starts",
+          "outcome": "passed",
+          "duration": 0.0004
+        },
+        {
+          "name": "test_agent_card_endpoint",
+          "outcome": "passed",
+          "duration": 0.0289
+        }
+      ]
+    },
+    {
+      "name": "Agent Tests",
+      "marker": "agent_tests",
+      "total": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "score": 100.0,
+      "tests": [
+        {
+          "name": "test_invoke_access_query",
+          "outcome": "passed",
+          "duration": 0.0088
+        },
+        {
+          "name": "test_invoke_privilege_drift_query",
+          "outcome": "passed",
+          "duration": 0.0029
+        },
+        {
+          "name": "test_milestone_alert_achieved",
+          "outcome": "passed",
+          "duration": 0.0004
+        },
+        {
+          "name": "test_milestone_alert_missed",
+          "outcome": "passed",
+          "duration": 0.0008
+        },
+        {
+          "name": "test_invoke_alert_query",
+          "outcome": "passed",
+          "duration": 0.0028
+        },
+        {
+          "name": "test_milestone_consumption_achieved",
+          "outcome": "passed",
+          "duration": 0.0005
+        },
+        {
+          "name": "test_milestone_consumption_missed",
+          "outcome": "passed",
+          "duration": 0.0006
+        },
+        {
+          "name": "test_invoke_cost_query",
+          "outcome": "passed",
+          "duration": 0.003
+        },
+        {
+          "name": "test_milestone_entitlement_achieved",
+          "outcome": "passed",
+          "duration": 0.0004
+        },
+        {
+          "name": "test_milestone_entitlement_missed",
+          "outcome": "passed",
+          "duration": 0.0007
+        },
+        {
+          "name": "test_invoke_entitlement_query",
+          "outcome": "passed",
+          "duration": 0.0029
+        },
+        {
+          "name": "test_milestone_governance_achieved",
+          "outcome": "passed",
+          "duration": 0.0004
+        },
+        {
+          "name": "test_milestone_governance_no_issues",
+          "outcome": "passed",
+          "duration": 0.0004
+        },
+        {
+          "name": "test_milestone_governance_missed",
+          "outcome": "passed",
+          "duration": 0.0005
+        },
+        {
+          "name": "test_invoke_governance_query",
+          "outcome": "passed",
+          "duration": 0.003
+        },
+        {
+          "name": "test_end_to_end_cost_ranking",
+          "outcome": "passed",
+          "duration": 0.0028
+        },
+        {
+          "name": "test_end_to_end_stream",
+          "outcome": "passed",
+          "duration": 0.0028
+        },
+        {
+          "name": "test_end_to_end_governance_assessment",
+          "outcome": "passed",
+          "duration": 0.0029
+        },
+        {
+          "name": "test_milestone_account_topology_achieved",
+          "outcome": "passed",
+          "duration": 0.0004
+        },
+        {
+          "name": "test_milestone_account_topology_missed",
+          "outcome": "passed",
+          "duration": 0.0006
+        },
+        {
+          "name": "test_invoke_topology_query",
+          "outcome": "passed",
+          "duration": 0.0029
+        }
+      ],
+      "coverage": 57.74
+    }
+  ]
+}

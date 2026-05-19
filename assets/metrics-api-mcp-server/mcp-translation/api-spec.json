@@ -1,0 +1,1903 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "v2",
+    "title": "Metrics API",
+    "description": "The Metrics REST API version 2, available in the Neo environment, allows you to retrieve metrics for Java and HTML5 applications. Furthermore, you can get metrics of any database system as well as for SAP HANA XS applications. For more information, see [SAP Monitoring Service.](https://help.sap.com/docs/MONITORING_SERVICE/64f7d2b06c6b40a9b3097860c5930641/2dacf6f12dd047efad9bc8929ff1759d.html) \n\nTo use this REST API, you first need to get OAuth client credentials (client ID and secret) by using the SAP BTP cockpit. You then pass the OAuth client credentials to the token endpoint to obtain an [access token](https://tools.ietf.org/html/rfc6749#page-41). Finally, in the REST API request, you include the access token as a header. See [Using Platform APIs](https://help.sap.com/docs/BTP/ea72206b834e4ace9cd834feed6c0e09/392af9d162694d6595499f1549978aa6.html).",
+    "x-targetEndpoint": "https://api.hana.ondemand.com/monitoring/v2"
+  },
+  "x-sap-shortText": "Monitor applications and databases in the Neo environment.",
+  "externalDocs": {
+    "description": "Metrics REST API",
+    "url": "https://help.sap.com/docs/MONITORING_SERVICE/64f7d2b06c6b40a9b3097860c5930641/14bbf239d9e44096bdd2278e7317012b.html"
+  },
+  "host": "hostname",
+  "schemes": [
+    "https"
+  ],
+  "securityDefinitions": {
+    "OAuth2": {
+      "type": "oauth2",
+      "description": "To use this REST API, you need to get OAuth client credentials (client ID and secret) by using the SAP BTP cockpit. After that, you need to pass the obtained client credentials to the token endpoint to obtain an access token.",
+      "flow": "application",
+      "tokenUrl": "https://api.{host}/oauth2/apitoken/v1",
+      "scopes": {
+        "hcp.readMonitoringData": "Read Monitoring Data"
+      }
+    }
+  },
+  "security": [
+    {
+      "OAuth2": [
+        "hcp.readMonitoringData"
+      ]
+    }
+  ],
+  "x-servers": [
+    {
+      "url": "https://api.{host}/monitoring/v2",
+      "description": "Metrics REST API endpoint",
+      "templates": {
+        "host": {
+          "description": "Region host",
+          "enum": [
+            "us1.hana.ondemand.com",
+            "us2.hana.ondemand.com",
+            "us3.hana.ondemand.com",
+            "us4.hana.ondemand.com",
+            "ap1.hana.ondemand.com",
+            "br1.hana.ondemand.com",
+            "ca1.hana.ondemand.com",
+            "eu1.hana.ondemand.com",
+            "eu2.hana.ondemand.com",
+            "eu3.hana.ondemand.com",
+            "jp1.hana.ondemand.com",
+            "sa1.hana.ondemand.com",
+            "ae1.hana.ondemand.com",
+            "cn1.platform.sapcloud.cn"
+          ],
+          "default": "hana.ondemand.com"
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/accounts/{subaccountName}/apps/{appName}/processes/{processId}/metrics": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "required": true,
+            "x-is-map": false,
+            "default": "p1940842373trial",
+            "type": "string"
+          },
+          {
+            "name": "appName",
+            "in": "path",
+            "description": "Application Name",
+            "required": true,
+            "x-is-map": false,
+            "default": "example",
+            "type": "string"
+          },
+          {
+            "name": "processId",
+            "in": "path",
+            "description": "Unique ID of a single application process",
+            "required": true,
+            "x-is-map": false,
+            "default": "cb3a2ac3e7217fdcffc3b28cae33f7b38eaeb51b",
+            "type": "string"
+          }
+        ],
+        "operationId": "GET_subaccount_app_process_metrics",
+        "summary": "Returns the metrics of the application process.",
+        "description": "Returns the metrics of the requested processes in the requested application and subaccount. To receive any process metrics, the process and its Java application have to be running.",
+        "tags": [
+          "Java Process Metrics"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsAppsProcessesProcessIdMetricsresponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "application": "helloworld",
+                  "process": "b81b7d48a579542c53f1fd1b19dd3339ecb52db9",
+                  "state": "Warning",
+                  "metrics": [
+                    {
+                      "name": "Used Disk Space",
+                      "state": "Ok",
+                      "value": 41,
+                      "unit": "%",
+                      "warningThreshold": 90,
+                      "errorThreshold": 95,
+                      "timestamp": 1434381986000,
+                      "output": "DISK OK - free space: / 4331 MB (56% inode=84%); /var 1408 MB (73% inode=98%); /tmp 1835 MB (95% inode=98%);",
+                      "metricType": "rate",
+                      "min": 0,
+                      "max": 8063
+                    },
+                    {
+                      "name": "Memory Usage",
+                      "state": "Ok",
+                      "value": 75,
+                      "unit": "%",
+                      "warningThreshold": 98,
+                      "errorThreshold": 98,
+                      "timestamp": 1434381986000,
+                      "output": "OK: MemoryValue: 75 (W> 98, C> 98) ",
+                      "metricType": "performance",
+                      "min": 0,
+                      "max": 0
+                    },
+                    {
+                      "name": "CPU Utilization",
+                      "state": "Warning",
+                      "value": 85,
+                      "unit": "%",
+                      "warningThreshold": 80,
+                      "errorThreshold": 90,
+                      "timestamp": 1434381987000,
+                      "output": "WARNING CPUValue: 4 (W> 80, C> 90) ",
+                      "metricType": "performance",
+                      "min": 0,
+                      "max": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/apps/{appName}/metrics": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "appName",
+            "in": "path",
+            "description": "Application Name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          }
+        ],
+        "operationId": "GET_subaccount_app_metrics",
+        "summary": "Returns the metrics of the requested application.",
+        "description": "Returns the metrics of the requested application in the requested subaccount. To receive any application metrics, the Java application has to be running.",
+        "tags": [
+          "Java Application Metrics"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsAppsMetricsresponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "application": "helloworld",
+                  "state": "Warning",
+                  "processes": [
+                    {
+                      "process": "d3e360f269b4600419ead528b7f86a4c4a868e24",
+                      "metrics": [
+                        {
+                          "name": "Used Disk Space",
+                          "state": "Ok",
+                          "value": 40,
+                          "unit": "%",
+                          "warningThreshold": 90,
+                          "errorThreshold": 95,
+                          "timestamp": 1434381976000,
+                          "output": "DISK OK - free space: / 4352 MB (56% inode=84%); /var 1412 MB (73% inode=98%); /tmp 1835 MB (95% inode=98%);",
+                          "metricType": "rate",
+                          "min": 0,
+                          "max": 8063
+                        },
+                        {
+                          "name": "Memory Usage",
+                          "state": "Ok",
+                          "value": 71,
+                          "unit": "%",
+                          "warningThreshold": 98,
+                          "errorThreshold": 98,
+                          "timestamp": 1434381976000,
+                          "output": "OK: MemoryValue: 71 (W> 98, C> 98) ",
+                          "metricType": "performance",
+                          "min": 0,
+                          "max": 0
+                        },
+                        {
+                          "name": "CPU Utilization",
+                          "state": "Ok",
+                          "value": 2,
+                          "unit": "%",
+                          "warningThreshold": 80,
+                          "errorThreshold": 90,
+                          "timestamp": 1434381977000,
+                          "output": "OK CPUValue: 2 (W> 80, C> 90) ",
+                          "metricType": "performance",
+                          "min": 0,
+                          "max": 0
+                        }
+                      ],
+                      "state": "Ok"
+                    },
+                    {
+                      "process": "b81b7d48a579542c53f1fd1b19dd3339ecb52db9",
+                      "metrics": [
+                        {
+                          "name": "Used Disk Space",
+                          "state": "Ok",
+                          "value": 41,
+                          "unit": "%",
+                          "warningThreshold": 90,
+                          "errorThreshold": 95,
+                          "timestamp": 1434381986000,
+                          "output": "DISK OK - free space: / 4331 MB (56% inode=84%); /var 1408 MB (73% inode=98%); /tmp 1835 MB (95% inode=98%);",
+                          "metricType": "rate",
+                          "min": 0,
+                          "max": 8063
+                        },
+                        {
+                          "name": "Memory Usage",
+                          "state": "Ok",
+                          "value": 75,
+                          "unit": "%",
+                          "warningThreshold": 98,
+                          "errorThreshold": 98,
+                          "timestamp": 1434381986000,
+                          "output": "OK: MemoryValue: 75 (W> 98, C> 98) ",
+                          "metricType": "performance",
+                          "min": 0,
+                          "max": 0
+                        },
+                        {
+                          "name": "CPU Utilization",
+                          "state": "Warning",
+                          "value": 85,
+                          "unit": "%",
+                          "warningThreshold": 80,
+                          "errorThreshold": 90,
+                          "timestamp": 1434381987000,
+                          "output": "WARNING CPUValue: 4 (W> 80, C> 90) ",
+                          "metricType": "performance",
+                          "min": 0,
+                          "max": 0
+                        }
+                      ],
+                      "state": "Warning"
+                    }
+                  ],
+                  "metrics": [
+                    {
+                      "name": "Availability Check",
+                      "state": "Ok",
+                      "value": 0.156,
+                      "unit": "s",
+                      "warningThreshold": 50,
+                      "errorThreshold": 60,
+                      "timestamp": 1434382006000,
+                      "output": "OK: HTTP Status Code: 200 Response size: 2782B Response time: 0.156s",
+                      "metricType": "performance",
+                      "min": 0,
+                      "max": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/apps/{appName}/processes/{processId}/state": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "required": true,
+            "x-is-map": false,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "appName",
+            "in": "path",
+            "description": "Application Name",
+            "required": true,
+            "x-is-map": false,
+            "type": "string",
+            "default": "example"
+          },
+          {
+            "name": "processId",
+            "in": "path",
+            "description": "Unique ID of a single application process",
+            "required": true,
+            "x-is-map": false,
+            "type": "string",
+            "default": "cb3a2ac3e7217fdcffc3b28cae33f7b38eaeb51b"
+          }
+        ],
+        "operationId": "GET_subaccount_app_process_state",
+        "summary": "Returns the state of the application process.",
+        "description": "Returns the state of the requested processes in the requested application and subaccount. To receive the process state, the process and its Java application have to be running.",
+        "tags": [
+          "Java Process State"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsAppsProcessesProcessIdStateresponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "application": "hellocloud",
+                  "process": "d3e360f269b4600419ead528b7f86a4c4a868e24",
+                  "state": "Ok"
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/apps/{appName}/state": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "appName",
+            "in": "path",
+            "description": "Application Name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          }
+        ],
+        "operationId": "GET_subaccount_app_state",
+        "summary": "Returns the state of the application.",
+        "description": "Returns the state of the requested application in the requested subaccount. To receive the application state, the Java application has to be running.",
+        "tags": [
+          "Java Application State"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "application": "hellocloud",
+                  "state": "Ok",
+                  "processes": [
+                    {
+                      "process": "ddf367f4d304a0ca60f163fb8e9a94518196b8c7",
+                      "state": "Ok"
+                    },
+                    {
+                      "process": "db71e79daa7e9bae5771297a68265d21e462cc52",
+                      "state": "Ok"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/dbsystem/{databaseSystem}/metrics": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "databaseSystem",
+            "in": "path",
+            "description": "Database Name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          }
+        ],
+        "operationId": "GET_subaccount_dbsystem_metrics",
+        "summary": "Returns the metrics for the requested database.",
+        "description": "Returns the metrics for the requested database in the requested subaccount. To receive any database metrics, your database system has to be up and running.",
+        "tags": [
+          "Database Metrics"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsDbSystemStateMetricsResponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "dbsystem": "mydbsystem",
+                  "state": "Ok",
+                  "metrics": [
+                    {
+                      "name": "CPU Load",
+                      "value": "0",
+                      "state": "Ok",
+                      "unit": "%",
+                      "warningThreshold": "80",
+                      "errorThreshold": "90",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "performance",
+                      "timestamp": 1521020183000,
+                      "output": "OK CPUValue: 0 (W> 80, C> 90)"
+                    },
+                    {
+                      "name": "HANA XS Availability",
+                      "value": "0",
+                      "state": "Ok",
+                      "warningThreshold": "0",
+                      "errorThreshold": "0",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "status",
+                      "timestamp": 1521020204000,
+                      "output": "OK"
+                    },
+                    {
+                      "name": "HANA DB Backup Volumes Availability",
+                      "value": "0",
+                      "state": "Ok",
+                      "warningThreshold": "0",
+                      "errorThreshold": "0",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "status",
+                      "timestamp": 1521019888000,
+                      "output": "OK"
+                    },
+                    {
+                      "name": "HANA DB Data Backup Age",
+                      "value": "0",
+                      "state": "Ok",
+                      "warningThreshold": "0",
+                      "errorThreshold": "0",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "status",
+                      "timestamp": 1521018134000,
+                      "output": "OK"
+                    },
+                    {
+                      "name": "HANA DB Data Backup Successful",
+                      "value": "0",
+                      "state": "Ok",
+                      "warningThreshold": "0",
+                      "errorThreshold": "0",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "status",
+                      "timestamp": 1521018144000,
+                      "output": "OK"
+                    },
+                    {
+                      "name": "HANA DB Alerting Availability",
+                      "value": "0",
+                      "state": "Ok",
+                      "warningThreshold": "0",
+                      "errorThreshold": "0",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "status",
+                      "timestamp": 1521020228000,
+                      "output": "OK"
+                    },
+                    {
+                      "name": "HANA DB Service Memory Usage",
+                      "value": "0",
+                      "state": "Ok",
+                      "warningThreshold": "0",
+                      "errorThreshold": "0",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "status",
+                      "timestamp": 1521020187000,
+                      "output": "OK"
+                    },
+                    {
+                      "name": "Disk IO",
+                      "value": "28318",
+                      "state": "Ok",
+                      "unit": "B/s",
+                      "warningThreshold": "10000000",
+                      "errorThreshold": "15000000",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "performance",
+                      "timestamp": 1521020204000,
+                      "output": "OK: DiskRead: 0 B/s (W> 10000000, C> 15000000) DiskWrite: 28318 B/s (W> 10000000, C> 15000000)"
+                    },
+                    {
+                      "name": "Network Ping",
+                      "value": "0",
+                      "state": "Ok",
+                      "unit": "% lost",
+                      "warningThreshold": "60",
+                      "errorThreshold": "80",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "performance",
+                      "output": "OK - : rta 5.007ms, lost 0%"
+                    },
+                    {
+                      "name": "OS Memory Usage",
+                      "value": "34",
+                      "state": "Ok",
+                      "unit": "%",
+                      "warningThreshold": "98",
+                      "errorThreshold": "98",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "performance",
+                      "timestamp": 1521020233000,
+                      "output": "OK: MemoryValue: 34 (W> 98, C> 98)"
+                    },
+                    {
+                      "name": "HANA DB Availability",
+                      "value": "0",
+                      "state": "Ok",
+                      "warningThreshold": "0",
+                      "errorThreshold": "0",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "status",
+                      "timestamp": 1521020183000,
+                      "output": "OK"
+                    },
+                    {
+                      "name": "HANA DB Data Backup Exists",
+                      "value": "0",
+                      "state": "Ok",
+                      "warningThreshold": "0",
+                      "errorThreshold": "0",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "status",
+                      "timestamp": 1521018144000,
+                      "output": "OK"
+                    },
+                    {
+                      "name": "HANA DB Log Backup Successful",
+                      "value": "0",
+                      "state": "Ok",
+                      "warningThreshold": "0",
+                      "errorThreshold": "0",
+                      "minValue": "0",
+                      "maxValue": "0",
+                      "hasValue": true,
+                      "type": "status",
+                      "timestamp": 1521019817000,
+                      "output": "OK"
+                    },
+                    {
+                      "name": "Used Disc Space",
+                      "value": "64",
+                      "state": "Ok",
+                      "unit": "%",
+                      "warningThreshold": "90",
+                      "errorThreshold": "95",
+                      "minValue": "0",
+                      "maxValue": "8063",
+                      "hasValue": true,
+                      "type": "rate",
+                      "timestamp": 1521020192000,
+                      "output": "DISK OK - free space: / 2479 MB (32% inode=81%): /var 1374 MB (71% inode=98%): /tmp 1845 MB (96% inode=99%):"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/dbsystem/{databaseSystem}/state": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "databaseSystem",
+            "in": "path",
+            "description": "Database Name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          }
+        ],
+        "operationId": "GET_subaccount_dbsystem_state",
+        "summary": "Returns the state of the database.",
+        "description": "Returns the state of the requested database in the requested subaccount. To receive the database state, your database system has to be up and running.",
+        "tags": [
+          "Database State"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsDbSystemStateResponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "dbsystem": "mydbsystem",
+                  "state": "Ok"
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/instances/{instanceName}/apps/{appName}/metrics": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "instanceName",
+            "in": "path",
+            "description": "XS Instance name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          },
+          {
+            "name": "appName",
+            "in": "path",
+            "description": "Application Name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          }
+        ],
+        "operationId": "GET_subaccount_instance_app_metrics",
+        "summary": "Returns the metrics for the requested XS application.",
+        "description": "Returns the custom HTTP checks for the requested XS application in the requested XS instance and subaccount.",
+        "tags": [
+          "XS Application Metrics"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsInstancesAppsStateMetricsResponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "instance": "yxj",
+                  "application": "com.helloworld",
+                  "state": "Critical",
+                  "metrics": [
+                    {
+                      "name": "My status check",
+                      "state": "Ok",
+                      "value": 0,
+                      "warningThreshold": 0,
+                      "errorThreshold": 0,
+                      "timestamp": 1522150397000,
+                      "output": "OK: 12",
+                      "metricType": "status",
+                      "min": 0,
+                      "max": 0
+                    },
+                    {
+                      "name": "My Performance check",
+                      "state": "Ok",
+                      "value": 12,
+                      "warningThreshold": 93,
+                      "errorThreshold": 884,
+                      "timestamp": 1522150408000,
+                      "output": "OK: Current: 12, W: 93, C: 884",
+                      "metricType": "performance",
+                      "min": 0,
+                      "max": 0
+                    },
+                    {
+                      "name": "Availability Check",
+                      "state": "Ok",
+                      "value": 0.374,
+                      "unit": "s",
+                      "warningThreshold": 50,
+                      "errorThreshold": 60,
+                      "timestamp": 1522306068000,
+                      "output": "OK: HTTP Status Code: 200 Response size: 117359B Response time: 0.374s",
+                      "metricType": "performance",
+                      "min": 0,
+                      "max": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/instances/{instanceName}/metrics": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "instanceName",
+            "in": "path",
+            "description": "XS Instance name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          }
+        ],
+        "operationId": "GET_subaccount_instance_metrics",
+        "summary": "Returns the metrics for the requested XS instance.",
+        "description": "Returns the metrics for all applications in the requested subaccount and XS instance.",
+        "tags": [
+          "XS Instance Metrics"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsInstancesStateMetricsResponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "instance": "yxj",
+                  "state": "Critical",
+                  "applications": [
+                    {
+                      "application": "com.helloworld",
+                      "state": "Warning",
+                      "metrics": [
+                        {
+                          "name": "My Performance Check",
+                          "state": "Ok",
+                          "value": 12,
+                          "warningThreshold": 100,
+                          "errorThreshold": 200,
+                          "timestamp": 1522154487000,
+                          "output": "OK: Current: 12, W: 100, C: 200",
+                          "metricType": "performance",
+                          "min": 0,
+                          "max": 0
+                        },
+                        {
+                          "name": "Availability Check",
+                          "state": "Ok",
+                          "value": 0.369,
+                          "unit": "s",
+                          "warningThreshold": 50,
+                          "errorThreshold": 60,
+                          "timestamp": 1522154501000,
+                          "output": "OK: HTTP Status Code: 200 Response size: 120700B Response time: 0.369s",
+                          "metricType": "performance",
+                          "min": 0,
+                          "max": 0
+                        },
+                        {
+                          "name": "My Status check",
+                          "state": "Ok",
+                          "value": 0,
+                          "warningThreshold": 0,
+                          "errorThreshold": 0,
+                          "timestamp": 1522154495000,
+                          "output": "OK: 12",
+                          "metricType": "status",
+                          "min": 0,
+                          "max": 0
+                        }
+                      ]
+                    },
+                    {
+                      "application": "com.hellocloud",
+                      "state": "Critical",
+                      "metrics": [
+                        {
+                          "name": "My Status check",
+                          "state": "Ok",
+                          "value": 0,
+                          "warningThreshold": 0,
+                          "errorThreshold": 0,
+                          "timestamp": 1522154517000,
+                          "output": "OK: 12",
+                          "metricType": "status",
+                          "min": 0,
+                          "max": 0
+                        },
+                        {
+                          "name": "My Performance check",
+                          "state": "Ok",
+                          "value": 12,
+                          "warningThreshold": 93,
+                          "errorThreshold": 884,
+                          "timestamp": 1522154528000,
+                          "output": "OK: Current: 12, W: 93, C: 884",
+                          "metricType": "performance",
+                          "min": 0,
+                          "max": 0
+                        },
+                        {
+                          "name": "Availability Check",
+                          "state": "Ok",
+                          "value": 0.369,
+                          "unit": "s",
+                          "warningThreshold": 50,
+                          "errorThreshold": 60,
+                          "timestamp": 1522154501000,
+                          "output": "OK: HTTP Status Code: 200 Response size: 120700B Response time: 0.369s",
+                          "metricType": "performance",
+                          "min": 0,
+                          "max": 0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/instances/{instanceName}/apps/{appName}/state": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "instanceName",
+            "in": "path",
+            "description": "XS Instance name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          },
+          {
+            "name": "appName",
+            "in": "path",
+            "description": "Application Name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          }
+        ],
+        "operationId": "GET_subaccount_instance_app_state",
+        "summary": "Returns the state of the requested XS application.",
+        "description": "Returns the states of the requested XS instance and its applications in the requested subaccount.",
+        "tags": [
+          "XS Application State"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsInstancesAppsStateResponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "instance": "yxj",
+                  "application": "com.helloworld",
+                  "state": "Critical"
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/instances/{instanceName}/state": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "instanceName",
+            "in": "path",
+            "description": "XS Instance name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          }
+        ],
+        "operationId": "GET_subaccount_instance_state",
+        "summary": "Returns the state of the requested XS instance.",
+        "description": "Returns the state of the applications in the requested subaccount and XS instance.",
+        "tags": [
+          "XS Instance State"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsInstancesStateResponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "instance": "yxj",
+                  "state": "Critical",
+                  "applications": [
+                    {
+                      "application": "com.helloworld",
+                      "state": "Warning"
+                    },
+                    {
+                      "application": "com.hellocloud",
+                      "state": "Critical"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/html5/apps/{appName}/metrics": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "appName",
+            "in": "path",
+            "description": "Application Name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          }
+        ],
+        "operationId": "GET_subaccount_html_app_metrics",
+        "summary": "Returns the metrics of the requested HTML5 application.",
+        "description": "Returns the metrics of the requested HTML5 application in the requested subaccount.",
+        "tags": [
+          "HTML5 Application Metrics"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsHtml5AppsMetricsResponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "application": "myapp",
+                  "state": "Critical",
+                  "metrics": [
+                    {
+                      "name": "Metric 1",
+                      "state": "Ok",
+                      "value": 0.038,
+                      "unit": "s",
+                      "warningThreshold": 10,
+                      "errorThreshold": 20,
+                      "timestamp": 1544431632000,
+                      "output": "OK: HTTP Status Code: 200 Response size: 0B Response time: 0.038s",
+                      "metricType": "performance",
+                      "min": 0,
+                      "max": 0
+                    },
+                    {
+                      "name": "Metric 2",
+                      "state": "Ok",
+                      "value": 0.281,
+                      "unit": "s",
+                      "warningThreshold": 10,
+                      "errorThreshold": 20,
+                      "timestamp": 1544431634000,
+                      "output": "OK: HTTP Status Code: 200 Response size: 900B Response time: 0.281s",
+                      "metricType": "performance",
+                      "min": 0,
+                      "max": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{subaccountName}/html5/apps/{appName}/state": {
+      "get": {
+        "parameters": [
+          {
+            "name": "subaccountName",
+            "in": "path",
+            "description": "Technical name of the subaccount",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "p1940842373trial"
+          },
+          {
+            "name": "appName",
+            "in": "path",
+            "description": "Application Name",
+            "x-is-map": false,
+            "required": true,
+            "type": "string",
+            "default": "example"
+          }
+        ],
+        "operationId": "GET_subaccount_html_app_state",
+        "summary": "Returns the state of the requested HTML5 application.",
+        "description": "Returns the state of the requested HTML5 application in the requested subaccount.",
+        "tags": [
+          "HTML5 Application State"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AccountsHtml5AppsStateResponse"
+              }
+            },
+            "examples": {
+              "application/json": [
+                {
+                  "account": "mysubaccount",
+                  "application": "myapp",
+                  "state": "Ok"
+                }
+              ]
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "schema": {
+              "$ref": "#/definitions/TooManyRequests"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AccountsAppsProcessesProcessIdStateresponse": {
+      "title": "Accounts Apps Processes ProcessId State response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "application": {
+          "type": "string"
+        },
+        "process": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "account",
+        "application",
+        "process",
+        "state"
+      ]
+    },
+    "AccountsAppsMetricsresponse": {
+      "title": "Accounts Apps Metrics response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "application": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "processes": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "account",
+        "application",
+        "state",
+        "processes",
+        "metrics"
+      ]
+    },
+    "AccountsAppsProcessesProcessIdMetricsresponse": {
+      "title": "Accounts Apps Processes ProcessId Metrics response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "application": {
+          "type": "string"
+        },
+        "process": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "account",
+        "application",
+        "process",
+        "state",
+        "metrics"
+      ]
+    },
+    "AccountsDbSystemStateMetricsResponse": {
+      "title": "Account DbSystem State Metrics response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "dbsystem": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "account",
+        "dbsystem",
+        "state",
+        "metrics"
+      ]
+    },
+    "AccountsDbSystemStateResponse": {
+      "title": "Account DbSystem State response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "dbsystem": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "account",
+        "dbsystem",
+        "state"
+      ]
+    },
+    "AccountsInstancesAppsStateMetricsResponse": {
+      "title": "Accounts Instances Apps State Metrics response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "instances": {
+          "type": "string"
+        },
+        "application": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "account",
+        "instances",
+        "application",
+        "state",
+        "metrics"
+      ]
+    },
+    "AccountsInstancesStateMetricsResponse": {
+      "title": "Accounts Instances State Metrics response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "instances": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "applications": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "account",
+        "instances",
+        "state",
+        "applications",
+        "metrics"
+      ]
+    },
+    "AccountsInstancesAppsStateResponse": {
+      "title": "Accounts Instances Application State response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "instances": {
+          "type": "string"
+        },
+        "application": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "account",
+        "instances",
+        "application",
+        "state"
+      ]
+    },
+    "AccountsInstancesStateResponse": {
+      "title": "Accounts Instances State response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "instances": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "applications": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "account",
+        "instances",
+        "state",
+        "applications"
+      ]
+    },
+    "AccountsHtml5AppsMetricsResponse": {
+      "title": "Accounts HTML5 Apps Metrics Response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "application": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "account",
+        "application",
+        "state",
+        "metrics"
+      ]
+    },
+    "AccountsHtml5AppsStateResponse": {
+      "title": "Accounts HTML5 Apps State response",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "application": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "account",
+        "state",
+        "application"
+      ]
+    },
+    "Unauthorized": {
+      "type": "object",
+      "example": {
+        "message": "Token validation failed"
+      },
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "Forbidden": {
+      "type": "object",
+      "example": {
+        "message": "Token not authorized for the requested resource"
+      },
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "TooManyRequests": {
+      "type": "object",
+      "description": "The response returns 'Retry-After' header with a value in seconds, specifying the time the user should wait before attempting to send another request.",
+      "example": {
+        "message": "The number of REST API requests has exceeded the allowed limit per time window and identified user/subaccount."
+      },
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "NotFound": {
+      "type": "object",
+      "example": {
+        "message": "No metrics were found for the requested parameters."
+      },
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "basePath": "/monitoring/v2"
+}

@@ -1,0 +1,339 @@
+{
+    "mcpTranslationVersion": "0.1",
+    "target": {
+        "ordId": "sap.btp:apiResource:metrics-api:v1",
+        "type": "openapi-v3"
+    },
+    "serverInfo": {
+        "name": "sap.mcp/metrics_api",
+        "title": "metrics_api",
+        "version": "1.0.0",
+        "description": "MCP server for the metrics_api service."
+    },
+    "tools": [
+        {
+            "name": "GET_subaccount_app_process_metrics",
+            "title": "GET_subaccount_app_process_metrics",
+            "description": "Returns the metrics of the requested processes in the requested application and subaccount. To receive any process metrics, the process and its Java application have to be running.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/apps/{appName}/processes/{processId}/metrics",
+                "method": "get",
+                "operationId": "GET_subaccount_app_process_metrics",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "appName",
+                        "description": "Application Name",
+                        "in": "path",
+                        "newParameterName": "appname"
+                    },
+                    {
+                        "name": "processId",
+                        "description": "Unique ID of a single application process",
+                        "in": "path",
+                        "newParameterName": "processid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_app_metrics",
+            "title": "GET_subaccount_app_metrics",
+            "description": "Returns the metrics of the requested application in the requested subaccount. To receive any application metrics, the Java application has to be running.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/apps/{appName}/metrics",
+                "method": "get",
+                "operationId": "GET_subaccount_app_metrics",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "appName",
+                        "description": "Application Name",
+                        "in": "path",
+                        "newParameterName": "appname"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_app_process_state",
+            "title": "GET_subaccount_app_process_state",
+            "description": "Returns the state of the requested processes in the requested application and subaccount. To receive the process state, the process and its Java application have to be running.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/apps/{appName}/processes/{processId}/state",
+                "method": "get",
+                "operationId": "GET_subaccount_app_process_state",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "appName",
+                        "description": "Application Name",
+                        "in": "path",
+                        "newParameterName": "appname"
+                    },
+                    {
+                        "name": "processId",
+                        "description": "Unique ID of a single application process",
+                        "in": "path",
+                        "newParameterName": "processid"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_app_state",
+            "title": "GET_subaccount_app_state",
+            "description": "Returns the state of the requested application in the requested subaccount. To receive the application state, the Java application has to be running.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/apps/{appName}/state",
+                "method": "get",
+                "operationId": "GET_subaccount_app_state",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "appName",
+                        "description": "Application Name",
+                        "in": "path",
+                        "newParameterName": "appname"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_dbsystem_metrics",
+            "title": "GET_subaccount_dbsystem_metrics",
+            "description": "Returns the metrics for the requested database in the requested subaccount. To receive any database metrics, your database system has to be up and running.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/dbsystem/{databaseSystem}/metrics",
+                "method": "get",
+                "operationId": "GET_subaccount_dbsystem_metrics",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "databaseSystem",
+                        "description": "Database Name",
+                        "in": "path",
+                        "newParameterName": "databasesystem"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_dbsystem_state",
+            "title": "GET_subaccount_dbsystem_state",
+            "description": "Returns the state of the requested database in the requested subaccount. To receive the database state, your database system has to be up and running.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/dbsystem/{databaseSystem}/state",
+                "method": "get",
+                "operationId": "GET_subaccount_dbsystem_state",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "databaseSystem",
+                        "description": "Database Name",
+                        "in": "path",
+                        "newParameterName": "databasesystem"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_instance_app_metrics",
+            "title": "GET_subaccount_instance_app_metrics",
+            "description": "Returns the custom HTTP checks for the requested XS application in the requested XS instance and subaccount.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/instances/{instanceName}/apps/{appName}/metrics",
+                "method": "get",
+                "operationId": "GET_subaccount_instance_app_metrics",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "instanceName",
+                        "description": "XS Instance name",
+                        "in": "path",
+                        "newParameterName": "instancename"
+                    },
+                    {
+                        "name": "appName",
+                        "description": "Application Name",
+                        "in": "path",
+                        "newParameterName": "appname"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_instance_metrics",
+            "title": "GET_subaccount_instance_metrics",
+            "description": "Returns the metrics for all applications in the requested subaccount and XS instance.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/instances/{instanceName}/metrics",
+                "method": "get",
+                "operationId": "GET_subaccount_instance_metrics",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "instanceName",
+                        "description": "XS Instance name",
+                        "in": "path",
+                        "newParameterName": "instancename"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_instance_app_state",
+            "title": "GET_subaccount_instance_app_state",
+            "description": "Returns the states of the requested XS instance and its applications in the requested subaccount.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/instances/{instanceName}/apps/{appName}/state",
+                "method": "get",
+                "operationId": "GET_subaccount_instance_app_state",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "instanceName",
+                        "description": "XS Instance name",
+                        "in": "path",
+                        "newParameterName": "instancename"
+                    },
+                    {
+                        "name": "appName",
+                        "description": "Application Name",
+                        "in": "path",
+                        "newParameterName": "appname"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_instance_state",
+            "title": "GET_subaccount_instance_state",
+            "description": "Returns the state of the applications in the requested subaccount and XS instance.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/instances/{instanceName}/state",
+                "method": "get",
+                "operationId": "GET_subaccount_instance_state",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "instanceName",
+                        "description": "XS Instance name",
+                        "in": "path",
+                        "newParameterName": "instancename"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_html_app_metrics",
+            "title": "GET_subaccount_html_app_metrics",
+            "description": "Returns the metrics of the requested HTML5 application in the requested subaccount.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/html5/apps/{appName}/metrics",
+                "method": "get",
+                "operationId": "GET_subaccount_html_app_metrics",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "appName",
+                        "description": "Application Name",
+                        "in": "path",
+                        "newParameterName": "appname"
+                    }
+                ],
+                "requestBody": {}
+            }
+        },
+        {
+            "name": "GET_subaccount_html_app_state",
+            "title": "GET_subaccount_html_app_state",
+            "description": "Returns the state of the requested HTML5 application in the requested subaccount.",
+            "openApiType": {
+                "path": "/accounts/{subaccountName}/html5/apps/{appName}/state",
+                "method": "get",
+                "operationId": "GET_subaccount_html_app_state",
+                "parameters": [
+                    {
+                        "name": "subaccountName",
+                        "description": "Technical name of the subaccount",
+                        "in": "path",
+                        "newParameterName": "subaccountname"
+                    },
+                    {
+                        "name": "appName",
+                        "description": "Application Name",
+                        "in": "path",
+                        "newParameterName": "appname"
+                    }
+                ],
+                "requestBody": {}
+            }
+        }
+    ]
+}

@@ -1,0 +1,347 @@
+{
+  "mcpTranslationVersion": "0.1",
+  "target": {
+    "ordId": "sap.btp:apiResource:provisioning-service:v1",
+    "type": "openapi-v3"
+  },
+  "serverInfo": {
+    "name": "sap.mcp/provisioning_service",
+    "title": "provisioning_service",
+    "version": "1.0.0",
+    "description": "MCP server for the provisioning_service service."
+  },
+  "tools": [
+    {
+      "name": "getStatus",
+      "title": "getStatus",
+      "description": "Get information for a specified job, including its ID and its current status.<br/><br/>Required scope: $XSAPPNAME.job.read",
+      "openApiType": {
+        "path": "/jobs-management/v1/jobs/{jobInstanceIdOrUniqueId}/status",
+        "method": "get",
+        "operationId": "getStatus",
+        "parameters": [
+          {
+            "name": "jobInstanceIdOrUniqueId",
+            "description": "ID of the job for which to get status",
+            "in": "path",
+            "newParameterName": "jobinstanceidoruniqueid"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "getAvailableEnvironments",
+      "title": "getAvailableEnvironments",
+      "description": "Get all the available environments for a specified subaccount.<br/>This includes the environments, such as Cloud Foundry, which are available by default to all subaccounts, and those restricted environments, such as Kyma, which are offered in the product catalog as service entitlements and whose plans have been assigned by a global account admin to the subaccount.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.read ",
+      "openApiType": {
+        "path": "/provisioning/v1/availableEnvironments",
+        "method": "get",
+        "operationId": "getAvailableEnvironments",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "description": "Access token to work with this API group.",
+            "in": "header",
+            "newParameterName": "authorization"
+          },
+          {
+            "name": "X-ID-Token",
+            "description": "Security token that contains authentication declarations of an end user by the authorization server (SAP Identity and Authentication Service).",
+            "in": "header",
+            "newParameterName": "x_id_token"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "getEnvironmentInstances",
+      "title": "getEnvironmentInstances",
+      "description": "Get all environment instances of a subaccount.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.read",
+      "openApiType": {
+        "path": "/provisioning/v1/environments",
+        "method": "get",
+        "operationId": "getEnvironmentInstances",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "description": "Access token to work with this API group.",
+            "in": "header",
+            "newParameterName": "authorization"
+          },
+          {
+            "name": "X-ID-Token",
+            "description": "Security token that contains authentication declarations of an end user by the authorization server (SAP Identity and Authentication Service).",
+            "in": "header",
+            "newParameterName": "x_id_token"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "createEnvironmentInstance",
+      "title": "createEnvironmentInstance",
+      "description": "Create an environment instance, such as a Cloud Foundry org, in a subaccount.<br/>To see which environments are available to the subaccount, use the API:  GET /provisioning/v1/availableEnvironments<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.create",
+      "openApiType": {
+        "path": "/provisioning/v1/environments",
+        "method": "post",
+        "operationId": "createEnvironmentInstance",
+        "parameters": [
+          {
+            "name": "body",
+            "description": ""
+          }
+        ],
+        "requestBody": {
+          "contentType": "application/json"
+        }
+      }
+    },
+    {
+      "name": "deleteEnvironmentInstances",
+      "title": "deleteEnvironmentInstances",
+      "description": "Delete all environment instances, including their data in the environment relating to the subaccount. \nThe deletion may take a while depending on the amount of content in your environment instance.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.delete",
+      "openApiType": {
+        "path": "/provisioning/v1/environments",
+        "method": "delete",
+        "operationId": "deleteEnvironmentInstances",
+        "parameters": [],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "getEnvironmentInstance",
+      "title": "getEnvironmentInstance",
+      "description": "Get the details of a specific environment instance in a subaccount.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.read",
+      "openApiType": {
+        "path": "/provisioning/v1/environments/{environmentInstanceId}",
+        "method": "get",
+        "operationId": "getEnvironmentInstance",
+        "parameters": [
+          {
+            "name": "environmentInstanceId",
+            "description": "The ID of the environment instance to view.",
+            "in": "path",
+            "newParameterName": "environmentinstanceid"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "deleteEnvironmentInstance",
+      "title": "deleteEnvironmentInstance",
+      "description": "Delete a specific environment instance, including all its data in the environment relating to the subaccount. \nThe deletion may take a while depending on the amount of content in your environment instance.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.delete",
+      "openApiType": {
+        "path": "/provisioning/v1/environments/{environmentInstanceId}",
+        "method": "delete",
+        "operationId": "deleteEnvironmentInstance",
+        "parameters": [
+          {
+            "name": "environmentInstanceId",
+            "description": "ID of the environment instance to delete",
+            "in": "path",
+            "newParameterName": "environmentinstanceid"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "updateEnvironmentInstance",
+      "title": "updateEnvironmentInstance",
+      "description": "Update an environment instance.<br/>To see which environments are provisioned for the subaccount, use the API:  GET /provisioning/v1/environments<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.delete",
+      "openApiType": {
+        "path": "/provisioning/v1/environments/{environmentInstanceId}",
+        "method": "patch",
+        "operationId": "updateEnvironmentInstance",
+        "parameters": [
+          {
+            "name": "body",
+            "description": ""
+          },
+          {
+            "name": "environmentInstanceId",
+            "description": "ID of the environment instance to update",
+            "in": "path",
+            "newParameterName": "environmentinstanceid"
+          }
+        ],
+        "requestBody": {
+          "contentType": "application/json"
+        }
+      }
+    },
+    {
+      "name": "getAllEnvironmentInstanceBindings",
+      "title": "getAllEnvironmentInstanceBindings",
+      "description": "Get all environment instance bindings for a given environment \ninstance.<br/>The list includes metadata of each binding.<br/>To get\ncredentials and additional binding details, run Get an environment\ninstance binding API and specify the binding ID.<br/><br/>Required\nscope: $XSAPPNAME.subaccount.environment.read",
+      "openApiType": {
+        "path": "/provisioning/v1/environments/{environmentInstanceId}/bindings",
+        "method": "get",
+        "operationId": "getAllEnvironmentInstanceBindings",
+        "parameters": [
+          {
+            "name": "environmentInstanceId",
+            "description": "The ID of the environment instance for which to get bindings.",
+            "in": "path",
+            "newParameterName": "environmentinstanceid"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "createEnvironmentInstanceBinding",
+      "title": "createEnvironmentInstanceBinding",
+      "description": "Create an environment instance binding.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.create",
+      "openApiType": {
+        "path": "/provisioning/v1/environments/{environmentInstanceId}/bindings",
+        "method": "put",
+        "operationId": "createEnvironmentInstanceBinding",
+        "parameters": [
+          {
+            "name": "body",
+            "description": ""
+          },
+          {
+            "name": "environmentInstanceId",
+            "description": "The ID of the environment instance for which to create a binding.",
+            "in": "path",
+            "newParameterName": "environmentinstanceid"
+          }
+        ],
+        "requestBody": {
+          "contentType": "application/json"
+        }
+      }
+    },
+    {
+      "name": "getEnvironmentInstanceBinding",
+      "title": "getEnvironmentInstanceBinding",
+      "description": "Get the details of a specific environment instance binding.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.read",
+      "openApiType": {
+        "path": "/provisioning/v1/environments/{environmentInstanceId}/bindings/{bindingId}",
+        "method": "get",
+        "operationId": "getEnvironmentInstanceBinding",
+        "parameters": [
+          {
+            "name": "environmentInstanceId",
+            "description": "The ID of the associated environment instance.",
+            "in": "path",
+            "newParameterName": "environmentinstanceid"
+          },
+          {
+            "name": "bindingId",
+            "description": "The ID of the environment instance binding",
+            "in": "path",
+            "newParameterName": "bindingid"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "deleteEnvironmentInstanceBinding",
+      "title": "deleteEnvironmentInstanceBinding",
+      "description": "Delete an environment instance binding.<br/><br/>Required scope: $XSAPPNAME.subaccount.environment.delete",
+      "openApiType": {
+        "path": "/provisioning/v1/environments/{environmentInstanceId}/bindings/{bindingId}",
+        "method": "delete",
+        "operationId": "deleteEnvironmentInstanceBinding",
+        "parameters": [
+          {
+            "name": "environmentInstanceId",
+            "description": "The ID of the environment instance for which the binding is to be deleted.",
+            "in": "path",
+            "newParameterName": "environmentinstanceid"
+          },
+          {
+            "name": "bindingId",
+            "description": "The ID of the binding to delete.",
+            "in": "path",
+            "newParameterName": "bindingid"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "getEnvironmentInstanceLabels",
+      "title": "getEnvironmentInstanceLabels",
+      "description": "Get all the custom labels that are assigned as key-value pairs to a given environment instance. \nNOTE: These custom labels are user-defined and apply only to SAP BTP. They are not the same labels that might be defined by your environment broker; this API does not retrieve the broker-defined labels that may exist. \nRequired scope: $XSAPPNAME.subaccount.environment.read",
+      "openApiType": {
+        "path": "/provisioning/v1/environments/{environmentInstanceId}/labels",
+        "method": "get",
+        "operationId": "getEnvironmentInstanceLabels",
+        "parameters": [
+          {
+            "name": "environmentInstanceId",
+            "description": "The ID of the environment instance.",
+            "in": "path",
+            "newParameterName": "environmentinstanceid"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "createEnvironmentInstanceLabels",
+      "title": "createEnvironmentInstanceLabels",
+      "description": "Create and assign custom labels to a given environment instance. Labels are specified as key-value pairs. \nNOTE: These custom labels are user-defined and apply only to SAP BTP. They are not the same labels that might be defined by your environment broker; this API does not update broker-defined labels that may exist. \nRequired scope: $XSAPPNAME.subaccount.environment.create",
+      "openApiType": {
+        "path": "/provisioning/v1/environments/{environmentInstanceId}/labels",
+        "method": "put",
+        "operationId": "createEnvironmentInstanceLabels",
+        "parameters": [
+          {
+            "name": "body",
+            "description": ""
+          },
+          {
+            "name": "environmentInstanceId",
+            "description": "The ID of the environment instance.",
+            "in": "path",
+            "newParameterName": "environmentinstanceid"
+          }
+        ],
+        "requestBody": {
+          "contentType": "application/json"
+        }
+      }
+    },
+    {
+      "name": "deleteEnvironmentInstanceLabels",
+      "title": "deleteEnvironmentInstanceLabels",
+      "description": "Remove all user-defined labels that are assigned to a given environment instance. \nTo remove specific labels, use instead: PUT /provisioning/v1/environments/{environmentInstanceId}/labels\nNOTE: This API applies only to custom labels that are defined by users for SAP BTP. Any labels that might be defined by your environment broker are not removed by this API.\nRequired scope: $XSAPPNAME.subaccount.environment.delete",
+      "openApiType": {
+        "path": "/provisioning/v1/environments/{environmentInstanceId}/labels",
+        "method": "delete",
+        "operationId": "deleteEnvironmentInstanceLabels",
+        "parameters": [
+          {
+            "name": "environmentInstanceId",
+            "description": "The ID of the environment instance.",
+            "in": "path",
+            "newParameterName": "environmentinstanceid"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "getSubaccountQuota",
+      "title": "getSubaccountQuota",
+      "description": "Get the plans and quota assignments for a subaccount.<br/><br/>Required scope: $XSAPPNAME.subaccount.entitlement.read",
+      "openApiType": {
+        "path": "/provisioning/v1/servicePlanAssignments",
+        "method": "get",
+        "operationId": "getSubaccountQuota",
+        "parameters": [],
+        "requestBody": {}
+      }
+    }
+  ]
+}

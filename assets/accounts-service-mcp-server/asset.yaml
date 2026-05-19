@@ -1,0 +1,10 @@
+apiVersion: asset.sap/v1
+kind: Asset
+type: mcp-server
+
+metadata:
+  name: accounts-service-mcp-server
+  ordId: sap.btp:apiResource:accounts-service-mcp:v1
+  version: 1.0.0
+  description: MCP server wrapping the SAP BTP Accounts Service API for account topology queries
+  translation: mcp-translation/translation.json

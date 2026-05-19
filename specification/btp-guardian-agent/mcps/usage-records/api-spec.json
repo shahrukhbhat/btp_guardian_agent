@@ -1,0 +1,1465 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Usage Records",
+    "description": "Enables you to create and update usage records to store consumption data from an external metering system. Each usage record is valid for a given aggregation period.",
+    "version": "1"
+  },
+  "x-sap-extensible": {
+    "supported": "automatic",
+    "description": "The API can be extended by using custom references. For more information, refer to [Custom References](https://help.sap.com/docs/CLOUD_TO_CASH_OD/e4aa21cd43494cc1a8a90ea0f3dab8bb/1a8601ce8db44b2b8e29012d385892ca.html#custom-references) on the SAP Help Portal."
+  },
+  "externalDocs": {
+    "description": "API Guide",
+    "url": "https://help.sap.com/viewer/987aec876092428f88162e438acf80d6/latest/en-US/c0bf1642864f42e4a6d87ac0e288aa37.html"
+  },
+  "servers": [
+    {
+      "url": "https://sandbox.api.sap.com/subscriptionbilling/api/usage-record/v1"
+    },
+    {
+      "url": "https://{region}.revenue.cloud.sap/api/usage-record/v1",
+      "description": "SAP Subscription Billing API Endpoint",
+      "variables": {
+        "region": {
+          "description": "SAP Subscription Billing Region",
+          "enum": [
+            "eu10",
+            "eu11",
+            "us10"
+          ],
+          "default": "eu10"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "oauth2": [
+        "{identityzone}.usage_create",
+        "{identityzone}.usage_view",
+        "{identityzone}.usage_delete"
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Usage Records",
+      "description": "Manage usage records."
+    }
+  ],
+  "paths": {
+    "/usage-records": {
+      "get": {
+        "tags": [
+          "Usage Records"
+        ],
+        "summary": "Retrieves usage records.",
+        "description": "Retrieves a collection of usage records that match the search criteria.<br><br>This operation requires the scope `usage_view`.",
+        "operationId": "get_usage-records",
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Defines the attributes to be used for filtering the result.<br>You could, for example, use the query parameter `metricId eq 'API_CALL'` to retrieve only usage records with the quantity-defining metric identifier API_CALL.<br><br>The following attributes are supported for filtering:<br>- id<br>- category<br>- startedAt<br>- endedAt<br>- quantity<br>- metricId<br>- usageRatingVariant<br>- subMetricId<br>- customKey<br>- userTechnicalId<br>- createdAt<br>- changedAt<br>- subscriptionNumber<br>- subscriptionDocumentId<br>- externalId<br>- isAssigned<br>- discarded<br>- createdBy<br>- changedBy<br>- customReferences.id<br>- customReferences.typeCode<br><br>Criteria for attributes can be combined using the logical operators AND and OR.<br>Possible operators are:<br>- eq (equal), for example: metricId eq 'API_CALL'<br>- ne (not equal), for example: metricId ne 'API_CALL'<br>- gt (greater than), for example: startedAt gt 2010-01-01T00:00:00Z<br>- ge (greater than or equal), for example: quantity ge 10<br>- lt (less than), for example: startedAt lt 2020-01-01T00:00:00Z<br>- le (less than or equal), for example: createdAt le 2010-01-01T00:00:00Z<br>- ci (contains), for example: description ci 'demo'. Note that this filter is case-insensitive.<br>- in (in a set of literals), for example: metricId in 'EMAIL_SENT' 'EMAIL_RECEIVED'<br>- and (logical and), for example: createdAt le 2010-02-01T00:00:00Z and createdAt ge 2010-01-01T00:00:00Z<br>- or (logical or), for example: metricId eq 'EMAIL_SENT' or metricId eq 'EMAIL_RECEIVED'<br>- not (logical negation), for example: not metricId in 'EMAIL_SENT' 'EMAIL_RECEIVED'<br>- () (precedence grouping), for example: not (metricId eq 'EMAIL_SENT' or metricId eq 'EMAIL_RECEIVED')<br><br>A literal can be:<br> - a string, in this case, it must be put between single quotes ('). A single quote is escaped by another single quote.<br> - a decimal integer,<br> - a date, formatted as YYYY-MM-DDThh:mm:ssZ,<br> - a boolean<br>Note you need to escape each single quote character by another single quote character (' or %27) in text value. For example, the text value MY'TAG (or MY%27TAG) needs to be MY''TAG (or MY%27%27TAG) in your query.",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Defines the attributes to be used for sorting the results.<br>The attribute name has to be provided together with the sort direction separated by a space.<br>The value for the sort direction is either asc (ascending order) or desc (descending order). For example, sort by start date ascending order: `'startedAt asc'`.<br>If you want to sort by multiple attributes, you can apply this parameter multiple times. For example: `'sort=userTechnicalId&sort=startedAt desc'`. Or you can apply sort with attributes separated by a comma. For example: `'sort=userTechnicalId desc,startedAt desc'`.<br><br>The following attributes are supported for sorting:<br>- metricId<br>- userTechnicalId<br>- quantity<br>- startedAt<br>- endedAt<br>- createdAt<br>- subMetricId<br>- customKey<br>- externalId<br>- subscriptionDocumentId<br><br>Note that the attributes subMetricId, customKey, externalId, and subscriptionDocumentId are not supported for cursor-based pagination.",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/trait-paged-pageNumber"
+          },
+          {
+            "$ref": "#/components/parameters/trait-paged-pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/trait-enabledCount"
+          },
+          {
+            "name": "$skipToken",
+            "in": "query",
+            "description": "Represents a cursor to be used to continue the paging. This parameter is only relevant for cursor-based pagination.",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paging",
+            "in": "query",
+            "description": "Defines the pagination type to be used.",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OFFSET",
+                "CURSOR"
+              ],
+              "default": "OFFSET"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage records retrieved successfully.",
+            "headers": {
+              "x-count": {
+                "description": "The total number of objects that fulfill the criteria.",
+                "style": "simple",
+                "explode": false,
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "x-pagecount": {
+                "description": "The total number of pages that fulfill the criteria. This header is only relevant for keyset-based pagination.",
+                "style": "simple",
+                "explode": false,
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "link": {
+                "description": "RFC 5988 compliant links to the previous and next pages, if available. This header is only relevant for cursor-based pagination.",
+                "style": "simple",
+                "explode": false,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "minItems": 0,
+                  "uniqueItems": true,
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/usageRecord"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "992e46d8-ab05-4a26-a740-6ef7b0dae916",
+                    "startedAt": "2017-01-01T05:00:00.000Z",
+                    "endedAt": "2017-02-01T05:00:00.000Z",
+                    "category": "MEASURED",
+                    "metricId": "API_CALL",
+                    "subMetricId": "OffPeak",
+                    "customKey": "Card001",
+                    "userTechnicalId": "ce6ad4d2-edb6-4415-8b03-840e787e06da",
+                    "usageRatingVariant": "aggregated",
+                    "quantity": 400,
+                    "subscriptionNumber": 1,
+                    "subscriptionDocumentId": "1",
+                    "externalId": "API_CALL-694b71b4-7b3a-11eb-9439-0242ac130002",
+                    "isAssigned": true,
+                    "discarded": false,
+                    "customReferences": [
+                      {
+                        "id": "MARK_2",
+                        "typeCode": "SYSTEM_TYPE"
+                      }
+                    ],
+                    "createdAt": "2017-01-15T12:00:00.000Z",
+                    "changedAt": "2017-01-15T12:00:00.000Z",
+                    "createdBy": "user@sap.com",
+                    "changedBy": "user@sap.com"
+                  },
+                  {
+                    "id": "b58941fc-6803-4738-90ec-f9a529ce247c",
+                    "startedAt": "2022-05-01T00:00:00.000Z",
+                    "endedAt": "2022-06-01T00:00:00.000Z",
+                    "category": "MEASURED",
+                    "metricId": "E_CHARGE",
+                    "userTechnicalId": "3cd7ff22-b8ea-426b-b0b5-7b844022af6f",
+                    "usageRatingVariant": "individual",
+                    "quantity": 1,
+                    "subscriptionNumber": 45,
+                    "subscriptionDocumentId": "SB-45",
+                    "isAssigned": true,
+                    "discarded": false,
+                    "items": [
+                      {
+                        "id": "53823a07-62b1-4cd2-a5ae-9ccb80ac5f4b",
+                        "itemNumber": 1,
+                        "fields": [
+                          {
+                            "fieldCode": "start_date_time",
+                            "fieldType": "Date",
+                            "dateValue": "2022-02-23"
+                          },
+                          {
+                            "fieldCode": "ENERGY",
+                            "fieldType": "Quantity",
+                            "quantityValue": {
+                              "value": 120,
+                              "unit": "KWH"
+                            }
+                          },
+                          {
+                            "fieldCode": "contractType",
+                            "fieldType": "String",
+                            "stringValue": "Standard"
+                          },
+                          {
+                            "fieldCode": "Discount",
+                            "fieldType": "Ratio",
+                            "ratioValue": {
+                              "denominator": 100,
+                              "numerator": 88
+                            }
+                          }
+                        ],
+                        "customReferences": [
+                          {
+                            "id": "abc",
+                            "typeCode": "URM_Item_Mutiple"
+                          }
+                        ]
+                      }
+                    ],
+                    "customReferences": [
+                      {
+                        "id": "MARK_2",
+                        "typeCode": "SYSTEM_TYPE"
+                      }
+                    ],
+                    "createdAt": "2022-05-15T12:00:00.000Z",
+                    "changedAt": "2022-05-15T12:00:00.000Z",
+                    "createdBy": "user@sap.com",
+                    "changedBy": "user@sap.com"
+                  },
+                  {
+                    "id": "40a0a3f1-88f5-4b31-ad0f-1fb097ea42a1",
+                    "startedAt": "2017-02-01T05:00:00.000Z",
+                    "endedAt": "2017-03-01T05:00:00.000Z",
+                    "category": "MEASURED",
+                    "metricId": "API_CALL",
+                    "userTechnicalId": "ce6ad4d2-edb6-4415-8b03-840e787e06da",
+                    "usageRatingVariant": "aggregated",
+                    "quantity": 1200,
+                    "isAssigned": false,
+                    "discarded": false,
+                    "customReferences": [
+                      {
+                        "id": "MARK_1",
+                        "typeCode": "SYSTEM_TYPE"
+                      }
+                    ],
+                    "createdAt": "2017-02-28T12:00:00.000Z",
+                    "changedAt": "2017-02-28T12:00:00.000Z",
+                    "createdBy": "user@sap.com",
+                    "changedBy": "user@sap.com"
+                  },
+                  {
+                    "id": "c7fad89b-febc-4d34-a2bb-8c6e3a274005",
+                    "startedAt": "2017-02-01T05:00:00.000Z",
+                    "endedAt": "2017-03-01T05:00:00.000Z",
+                    "category": "MEASURED",
+                    "metricId": "API_CALL2",
+                    "userTechnicalId": "abc",
+                    "quantity": 1200,
+                    "isAssigned": false,
+                    "discarded": true,
+                    "customReferences": [
+                      {
+                        "id": "MARK_1",
+                        "typeCode": "SYSTEM_TYPE"
+                      }
+                    ],
+                    "createdAt": "2017-02-28T12:00:00.000Z",
+                    "changedAt": "2017-03-01T12:00:00.000Z",
+                    "createdBy": "user@sap.com",
+                    "changedBy": "user@sap.com"
+                  },
+                  {
+                    "id": "992e46d8-ab05-4a26-a740-6ef7b0dae918",
+                    "startedAt": "2017-02-01T05:00:00.000Z",
+                    "endedAt": "2017-03-01T05:00:00.000Z",
+                    "category": "FORECAST",
+                    "metricId": "API_CALL",
+                    "userTechnicalId": "ce6ad4d2-edb6-4415-8b03-840e787e06da",
+                    "usageRatingVariant": "aggregated",
+                    "quantity": 1200,
+                    "subscriptionNumber": 2,
+                    "subscriptionDocumentId": "sb-2",
+                    "isAssigned": true,
+                    "discarded": false,
+                    "customReferences": [
+                      {
+                        "id": "MARK_1",
+                        "typeCode": "SYSTEM_TYPE"
+                      }
+                    ],
+                    "createdAt": "2017-02-28T12:00:00.000Z",
+                    "changedAt": "2017-02-28T12:00:00.000Z",
+                    "createdBy": "user@sap.com",
+                    "changedBy": "user@sap.com"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/trait-revcAware-400"
+          },
+          "403": {
+            "$ref": "#/components/responses/trait-revcAware-403"
+          },
+          "404": {
+            "$ref": "#/components/responses/trait-revcAware-404"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "{identityzone}.usage_view"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Usage Records"
+        ],
+        "summary": "Creates or updates a usage record.",
+        "description": "Before sending a usage record, the external system aggregates the usage data in the usage record.<br>If the external system sends another usage record with the same key attributes, the new usage record replaces the previous one. The key attributes are: category, period, user, metric identifier, submetric identifier (if applicable), and custom key (optional).<br>Before you use this operation, check the [API Guide](https://help.sap.com/viewer/987aec876092428f88162e438acf80d6/latest/en-US/58d81632791e424dbf86702aca619034.html) for important information.<br><br>This operation requires the scope `usage_create`.",
+        "operationId": "post_usage-record",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/usageRecordPost"
+              },
+              "examples": {
+                "aggregated usage record": {
+                  "value": {
+                    "startedAt": "2017-01-01T05:00:00Z",
+                    "endedAt": "2017-02-01T05:00:00Z",
+                    "category": "MEASURED",
+                    "metricId": "API_CALL",
+                    "subMetricId": "OffPeak",
+                    "customKey": "Card001",
+                    "quantity": 12345,
+                    "userTechnicalId": "ce6ad4d2-edb6-4415-8b03-840e787e06da",
+                    "externalId": "API_CALL-694b71b4-7b3a-11eb-9439-0242ac130002",
+                    "customReferences": [
+                      {
+                        "id": "MARK_1",
+                        "typeCode": "SYSTEM_TYPE"
+                      }
+                    ]
+                  }
+                },
+                "individual usage record": {
+                  "value": {
+                    "startedAt": "2022-05-01T00:00:00Z",
+                    "endedAt": "2022-06-01T00:00:00Z",
+                    "category": "MEASURED",
+                    "metricId": "E_CHARGE",
+                    "userTechnicalId": "3cd7ff22-b8ea-426b-b0b5-7b844022af6f",
+                    "quantity": 1,
+                    "items": [
+                      {
+                        "fields": [
+                          {
+                            "fieldCode": "start_date_time",
+                            "dateValue": "2022-02-23"
+                          },
+                          {
+                            "fieldCode": "ENERGY",
+                            "quantityValue": {
+                              "value": 120,
+                              "unit": "KWH"
+                            }
+                          },
+                          {
+                            "fieldCode": "contractType",
+                            "stringValue": "Standard"
+                          },
+                          {
+                            "fieldCode": "Discount",
+                            "ratioValue": {
+                              "denominator": 100,
+                              "numerator": 88
+                            }
+                          }
+                        ],
+                        "customReferences": [
+                          {
+                            "id": "abc",
+                            "typeCode": "URM_Item_Mutiple"
+                          }
+                        ]
+                      }
+                    ],
+                    "customReferences": [
+                      {
+                        "id": "MARK_2",
+                        "typeCode": "SYSTEM_TYPE"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Usage record created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/usageRecordId"
+                },
+                "example": {
+                  "id": "992e46d8-ab05-4a26-a740-6ef7b0dae916"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/trait-revcAware-400"
+          },
+          "403": {
+            "$ref": "#/components/responses/trait-revcAware-403"
+          },
+          "409": {
+            "description": "A usage record with the same key attributes is already stored in the database at the same time. The key attributes include 'category', 'startedAt', 'endedAt', 'userTechnicalId', 'metricId' and 'subMetricId' (if required).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/errorMessage"
+                },
+                "example": {
+                  "status": 409,
+                  "type": "conflict_resource",
+                  "message": "A usage record with the same key attributes is already stored in the database at the same time. The key attributes include 'category', 'startedAt', 'endedAt', 'userTechnicalId', 'metricId' and 'subMetricId' (if required)."
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "{identityzone}.usage_create"
+            ]
+          }
+        ],
+        "x-codegen-request-body-name": "usageRecord"
+      }
+    },
+    "/usage-records/{id}/discard": {
+      "post": {
+        "tags": [
+          "Usage Records"
+        ],
+        "summary": "Discards a usage record.",
+        "description": "Discards a single usage record with a specific identifier.<br>You can mark usage records as discarded to retain them for traceability but make them no longer valid. Once usage records are discarded, they can no longer be edited.<br>If you discard a measured usage record that has already been charged or credited, the corresponding charges or credits are reverted and reflected in the bills.<br><br>This operation requires the scope `usage_discard`.",
+        "operationId": "discard_usage-record-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The ID of the usage record to work on.",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The usage record was discarded successfully.",
+            "content": {}
+          },
+          "400": {
+            "description": "The value for the usage record ID must be a valid UUID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/errorMessage"
+                },
+                "example": {
+                  "status": 400,
+                  "message": "The value for the usage record ID must be a valid UUID.",
+                  "type": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified usage record does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/errorMessage"
+                },
+                "example": {
+                  "status": 404,
+                  "message": "The usage record with the requested ID does not exist.",
+                  "type": "Not Found"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The usage record is already discarded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/errorMessage"
+                },
+                "example": {
+                  "status": 409,
+                  "message": "The usage record is already discarded.",
+                  "type": "conflict_resource"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "{identityzone}.usage_discard"
+            ]
+          }
+        ]
+      }
+    },
+    "/usage-records/{id}": {
+      "delete": {
+        "tags": [
+          "Usage Records"
+        ],
+        "summary": "Deletes a usage record.",
+        "description": "Deletes a single usage record with a specific identifier.<br>Important: The deletion is not reversible and SAP cannot restore deleted data.<br>Also note that, deleting a measured usage record is not supported, and you can only delete forecast usage record currently. <br><br>This operation requires the scope `usage_delete`.",
+        "operationId": "delete_usage-record-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The ID of the usage record to work on.",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The usage record was deleted successfully.",
+            "content": {}
+          },
+          "400": {
+            "description": "The value for the usage record ID must be a valid UUID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/errorMessage"
+                },
+                "example": {
+                  "status": 400,
+                  "message": "The value for the usage record ID must be a valid UUID.",
+                  "type": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified usage record does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/errorMessage"
+                },
+                "example": {
+                  "status": 404,
+                  "message": "The usage record with the requested ID does not exist.",
+                  "type": "Not Found"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Deleting a measured usage record is not supported.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/errorMessage"
+                },
+                "example": {
+                  "status": 501,
+                  "message": "Deleting a measured usage record with the requested ID is not supported.",
+                  "type": "unsupported_method"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "{identityzone}.usage_delete"
+            ]
+          }
+        ]
+      }
+    },
+    "/$batch": {
+      "post": {
+        "tags": [
+          "Usage Records"
+        ],
+        "summary": "Creates or updates a set of usage records.",
+        "description": "Requests with the same 'atomicityGroup' will take effect together or fail together. If the atomicity group in a request is not defined, the ID of the request becomes the atomicity group of the request. <br> Before you use this operation, check the [API Guide]( https://help.sap.com/viewer/987aec876092428f88162e438acf80d6/latest/en-US/86ff37de0fa641a591c3ddcfd1b7fb07.html) for important information.<br><br>This operation requires the scope `usage_create`.",
+        "operationId": "post_batch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/batchRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The batch requests are processed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/batchResponseBody"
+                },
+                "example": {
+                  "responses": [
+                    {
+                      "id": "1",
+                      "status": 201,
+                      "body": {
+                        "id": "ba188349-7a19-4674-80ce-56f256d7f806"
+                      }
+                    },
+                    {
+                      "id": "3",
+                      "status": 201,
+                      "body": {
+                        "id": "ba188349-7a19-4674-80ce-56f256d7f806"
+                      }
+                    },
+                    {
+                      "id": "2",
+                      "status": 201,
+                      "body": {
+                        "id": "9207ca85-9800-4e25-81b4-d038c8b5ecd0"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/trait-revcAware-400"
+          },
+          "403": {
+            "$ref": "#/components/responses/trait-revcAware-403"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "{identityzone}.usage_create"
+            ]
+          }
+        ],
+        "x-codegen-request-body-name": "Requests"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "batchRequestBody": {
+        "title": "Batch Usage Records Request Schema",
+        "type": "object",
+        "description": "The schema of batch usage records request.",
+        "properties": {
+          "requests": {
+            "type": "array",
+            "title": "requests",
+            "minItems": 0,
+            "maxItems": 500,
+            "description": "A set of requests.",
+            "items": {
+              "$ref": "#/components/schemas/batchRequestBodyRequests"
+            }
+          }
+        },
+        "required": [
+          "requests"
+        ],
+        "example": {
+          "requests": [
+            {
+              "id": "1",
+              "method": "POST",
+              "url": "usage-records",
+              "atomicityGroup": "t1",
+              "body": {
+                "startedAt": "2020-06-29T00:00:00Z",
+                "endedAt": "2020-06-30T00:00:00Z",
+                "category": "MEASURED",
+                "metricId": "ppu_usage_fee",
+                "quantity": 1,
+                "userTechnicalId": "229c1bc6-b041-4396-bd42-cb79d71a3780",
+                "customReferences": []
+              }
+            },
+            {
+              "id": "2",
+              "method": "POST",
+              "url": "usage-records",
+              "atomicityGroup": "t1",
+              "body": {
+                "startedAt": "2020-06-29T00:00:00Z",
+                "endedAt": "2020-06-30T00:00:00Z",
+                "metricId": "ppu_usage_fee",
+                "quantity": 2,
+                "userTechnicalId": "229c1bc6-b041-4396-bd42-cb79d71a3780",
+                "externalId": "ppu_usage_fee-0084bb6c-7b3b-11eb-9439-0242ac130002"
+              }
+            },
+            {
+              "id": "3",
+              "method": "POST",
+              "url": "usage-records",
+              "atomicityGroup": "t1",
+              "body": {
+                "startedAt": "2020-06-28T00:00:00Z",
+                "endedAt": "2020-06-29T00:00:00Z",
+                "metricId": "ppu_usage_fee2",
+                "quantity": 2,
+                "userTechnicalId": "229c1bc6-b041-4396-bd42-cb79d71a3781"
+              }
+            }
+          ]
+        }
+      },
+      "usageRecord": {
+        "title": "Usage Record Request Schema",
+        "type": "object",
+        "description": "The schema of a usage record request.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+            "description": "The unique identifier of this usage record."
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The start date (inclusive) of the aggregation period for the quantity of usage. This date is expressed in the UTC time zone with the following pattern: yyyy-MM-DDThh:mm:ss.SSSZ."
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The end date (exclusive) of the aggregation period for the quantity of usage. This date is expressed in the UTC time zone with the following pattern: yyyy-MM-DDThh:mm:ss.SSSZ."
+          },
+          "category": {
+            "type": "string",
+            "description": "The category of the usage record.",
+            "enum": [
+              "MEASURED",
+              "FORECAST"
+            ]
+          },
+          "metricId": {
+            "type": "string",
+            "description": "The type of the technical resource.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "subMetricId": {
+            "type": "string",
+            "description": "The unique identifier of the rate subelement.",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "customKey": {
+            "type": "string",
+            "description": "A key attribute that can be provided to uniquely identify a usage record if the combination of values for the other key attributes are not unique between usage records. The other key attributes are category, period, user, metric identifier, and (if applicable) submetric identifier.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "usageRatingVariant": {
+            "type": "string",
+            "description": "The rating variant of the usage record.",
+            "enum": [
+              "aggregated",
+              "individual"
+            ]
+          },
+          "quantity": {
+            "type": "number",
+            "description": "The number of units of usage, that is expressed by 0 or a positive number with up to 3 decimals.",
+            "minimum": 0,
+            "maximum": 9999999999.999,
+            "multipleOf": 0.001
+          },
+          "userTechnicalId": {
+            "type": "string",
+            "description": "The identifier of the technical resource."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The creation date of the usage record. This date is expressed in the UTC time zone with the following pattern: yyyy-MM-DDThh:mm:ss.SSSZ."
+          },
+          "subscriptionNumber": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The number of the subscription this usage record was applied to."
+          },
+          "subscriptionDocumentId": {
+            "type": "string",
+            "description": "The document identifier of the subscription. The document ID consists of a prefix, if configured in the subscription profile, and of a subscription number."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "The identifier of an external system.",
+            "pattern": "^[a-zA-Z0-9_+.:#()-]*$",
+            "maxLength": 128
+          },
+          "isAssigned": {
+            "type": "boolean",
+            "description": "Indicates whether the usage record is assigned to a subscription, which means a subscription item can be identified by a combination of technical resource type, technical resource ID and time period of the usage record."
+          },
+          "discarded": {
+            "type": "boolean",
+            "description": "Indicates whether the usage record is discarded or not."
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "The user who created the usage record. This property will not be returned if the usage record was created by public API."
+          },
+          "changedBy": {
+            "type": "string",
+            "description": "The user who changed the usage record. This property will not be returned if the usage record was changed by public API."
+          },
+          "changedAt": {
+            "type": "string",
+            "description": "The date and time the usage record was last updated. This date is expressed in the UTC time zone with the following pattern: yyyy-MM-DDThh:mm:ss.SSSZ.",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 50,
+            "items": {
+              "$ref": "#/components/schemas/usageRecordItem"
+            }
+          },
+          "customReferences": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 10,
+            "items": {
+              "$ref": "#/components/schemas/customReference"
+            }
+          }
+        },
+        "required": [
+          "metricId",
+          "startedAt",
+          "endedAt",
+          "quantity",
+          "userTechnicalId"
+        ]
+      },
+      "usageRecordPost": {
+        "title": "Usage Record Post Request Schema",
+        "type": "object",
+        "description": "The schema of a usage record post request.",
+        "properties": {
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The start date (inclusive) of the aggregation period for the quantity of usage. This date is expressed in the UTC time zone with the following pattern: yyyy-MM-DDThh:mm:ss.SSSZ."
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The end date (exclusive) of the aggregation period for the quantity of usage. This date is expressed in the UTC time zone with the following pattern: yyyy-MM-DDThh:mm:ss.SSSZ."
+          },
+          "category": {
+            "type": "string",
+            "description": "The category of the usage record. If it's not provided, default value is MEASURED.",
+            "enum": [
+              "MEASURED",
+              "FORECAST"
+            ]
+          },
+          "metricId": {
+            "type": "string",
+            "description": "The type of the technical resource.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "subMetricId": {
+            "type": "string",
+            "description": "The unique identifier of the rate subelement.",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "customKey": {
+            "type": "string",
+            "description": "A key attribute that can be provided to uniquely identify a usage record if the combination of values for the other key attributes are not unique between usage records. The other key attributes are category, period, user, metric identifier, and (if applicable) submetric identifier.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "quantity": {
+            "type": "number",
+            "description": "The number of units of usage, that is expressed by 0 or a positive number with up to 3 decimals.",
+            "minimum": 0,
+            "maximum": 9999999999.999,
+            "multipleOf": 0.001
+          },
+          "userTechnicalId": {
+            "type": "string",
+            "description": "The identifier of the technical resource."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "The identifier of an external system.",
+            "pattern": "^[a-zA-Z0-9_+.:#()-]*$",
+            "maxLength": 128
+          },
+          "items": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 50,
+            "items": {
+              "$ref": "#/components/schemas/usageRecordItemPost"
+            }
+          },
+          "customReferences": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 10,
+            "items": {
+              "$ref": "#/components/schemas/customReference"
+            }
+          }
+        },
+        "required": [
+          "metricId",
+          "startedAt",
+          "endedAt",
+          "quantity",
+          "userTechnicalId"
+        ]
+      },
+      "usageRecordId": {
+        "title": "Usage Record Response Schema",
+        "type": "object",
+        "description": "The schema of a usage record response.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+            "description": "The unique ID of a usage record."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "example": {
+          "id": "992e46d8-ab05-4a26-a740-6ef7b0dae916"
+        }
+      },
+      "batchResponseBody": {
+        "title": "Batch Usage Records Response Schema",
+        "type": "object",
+        "description": "The schema of batch usage records response.",
+        "properties": {
+          "response": {
+            "type": "array",
+            "title": "response",
+            "minItems": 0,
+            "maxItems": 500,
+            "description": "A set of responses.",
+            "items": {
+              "type": "object",
+              "description": "A single response within the batch of responses.",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The unique identifier of this request.",
+                  "pattern": "^.{1,255}$"
+                },
+                "status": {
+                  "type": "integer",
+                  "description": "The original HTTP error code. It should be consistent with the response HTTP code.",
+                  "minimum": 100,
+                  "maximum": 599
+                },
+                "body": {
+                  "$ref": "#/components/schemas/usageRecordId"
+                }
+              }
+            }
+          }
+        }
+      },
+      "errorMessage": {
+        "title": "error",
+        "description": "Schema for API specified errors.",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "description": "original HTTP error code, should be consistent with the response HTTP code",
+            "minimum": 100,
+            "maximum": 599
+          },
+          "type": {
+            "type": "string",
+            "description": "classification of the error type, lower case with underscore eg validation_failure",
+            "pattern": "[a-z]+[a-z_]*[a-z]+"
+          },
+          "message": {
+            "type": "string",
+            "description": "descriptive error message for debugging"
+          },
+          "details": {
+            "type": "array",
+            "description": "list of problems causing this error",
+            "items": {
+              "title": "errorDetail",
+              "description": "schema for specific error cause",
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string",
+                  "description": "a bean notation expression specifying the element in request data causing the error, eg product.variants[3].name, this can be empty if violation was not field specific"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "classification of the error detail type, lower case with underscore eg missing_value, this value must be always interpreted in context of the general error type.",
+                  "pattern": "[a-z]+[a-z_]*[a-z]+"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "descriptive error detail message for debugging"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          }
+        },
+        "required": [
+          "status",
+          "type"
+        ]
+      },
+      "usageRecordItemPost": {
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/usageRecordItemFieldPost"
+            }
+          },
+          "customReferences": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 10,
+            "items": {
+              "$ref": "#/components/schemas/customReference"
+            }
+          }
+        },
+        "required": [
+          "fields"
+        ]
+      },
+      "customReference": {
+        "type": "object",
+        "properties": {
+          "typeCode": {
+            "type": "string",
+            "description": "The code representing the type of the reference.",
+            "pattern": "^[A-Za-z0-9_]*$"
+          },
+          "id": {
+            "type": "string",
+            "description": "The identifier of the reference.",
+            "pattern": "^.{1,255}$"
+          }
+        },
+        "required": [
+          "typeCode",
+          "id"
+        ]
+      },
+      "batchRequestBodyRequests": {
+        "type": "object",
+        "description": "A single request within the batch of requests.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of this request.",
+            "pattern": "^.{1,255}$"
+          },
+          "method": {
+            "type": "string",
+            "description": "The restful method of this request. Now only 'post' is supported."
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL of the request."
+          },
+          "atomicityGroup": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][-A-Za-z0-9]*$",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Indicates that requests are processed as an atomic operation and in a single transaction. All requests with the same atomicityGroup must either all succeed, or all fail. The value of this property is a string that must not be identical to any value of id within the batch request."
+          },
+          "body": {
+            "$ref": "#/components/schemas/usageRecordPost"
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "url",
+          "body"
+        ]
+      },
+      "usageRecordItemFieldPost": {
+        "type": "object",
+        "properties": {
+          "fieldCode": {
+            "type": "string",
+            "description": "The code representing the pricing-relevant field."
+          },
+          "dateValue": {
+            "type": "string",
+            "format": "date",
+            "description": "The date value of the pricing-relevant field."
+          },
+          "quantityValue": {
+            "type": "object",
+            "description": "The quantity value of the pricing-relevant field.",
+            "properties": {
+              "value": {
+                "type": "number",
+                "description": "The decimal value of the quantity.",
+                "minimum": 0,
+                "maximum": 9999999999.999,
+                "multipleOf": 0.001
+              },
+              "unit": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9]{1,3}$",
+                "description": "The unit of the quantity."
+              }
+            },
+            "required": [
+              "value",
+              "unit"
+            ]
+          },
+          "stringValue": {
+            "type": "string",
+            "description": "The string value of the pricing-relevant field.",
+            "maxLength": 255
+          },
+          "ratioValue": {
+            "type": "object",
+            "description": "The ratio value of the pricing-relevant field.",
+            "properties": {
+              "denominator": {
+                "type": "number",
+                "description": "The denominator of the ratio.",
+                "minimum": 0,
+                "maximum": 99999999999.99998,
+                "multipleOf": 0.00001
+              },
+              "numerator": {
+                "type": "number",
+                "description": "The numerator of the ratio.",
+                "minimum": 0,
+                "maximum": 99999999999.99998,
+                "multipleOf": 0.00001
+              }
+            },
+            "required": [
+              "denominator",
+              "numerator"
+            ]
+          }
+        },
+        "required": [
+          "fieldCode"
+        ]
+      },
+      "usageRecordItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+            "description": "The unique identifier of this usage record item."
+          },
+          "itemNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The number of the usage record item."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/usageRecordItemField"
+            }
+          },
+          "customReferences": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 10,
+            "items": {
+              "$ref": "#/components/schemas/customReference"
+            }
+          }
+        },
+        "required": [
+          "fields"
+        ]
+      },
+      "usageRecordItemField": {
+        "type": "object",
+        "properties": {
+          "fieldCode": {
+            "type": "string",
+            "description": "The code representing the pricing-relevant field."
+          },
+          "fieldType": {
+            "type": "string",
+            "description": "The type of the pricing-relevant field.",
+            "enum": [
+              "String",
+              "Date",
+              "Quantity",
+              "Ratio"
+            ]
+          },
+          "dateValue": {
+            "type": "string",
+            "format": "date",
+            "description": "The date value of the pricing-relevant field."
+          },
+          "quantityValue": {
+            "type": "object",
+            "description": "The quantity value of the pricing-relevant field.",
+            "properties": {
+              "value": {
+                "type": "number",
+                "description": "The decimal value of the quantity.",
+                "minimum": 0,
+                "maximum": 9999999999.999,
+                "multipleOf": 0.001
+              },
+              "unit": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9]{1,3}$",
+                "description": "The unit of the quantity."
+              }
+            },
+            "required": [
+              "value",
+              "unit"
+            ]
+          },
+          "stringValue": {
+            "type": "string",
+            "description": "The string value of the pricing-relevant field.",
+            "maxLength": 255
+          },
+          "ratioValue": {
+            "type": "object",
+            "description": "The ratio value of the pricing-relevant field.",
+            "properties": {
+              "denominator": {
+                "type": "number",
+                "description": "The denominator of the ratio.",
+                "minimum": 0,
+                "maximum": 99999999999.99998,
+                "multipleOf": 0.00001
+              },
+              "numerator": {
+                "type": "number",
+                "description": "The numerator of the ratio.",
+                "minimum": 0,
+                "maximum": 99999999999.99998,
+                "multipleOf": 0.00001
+              }
+            },
+            "required": [
+              "denominator",
+              "numerator"
+            ]
+          }
+        },
+        "required": [
+          "fieldCode"
+        ]
+      }
+    },
+    "responses": {
+      "trait-revcAware-400": {
+        "description": "Your input data is not valid or not in a consistent format. Please check it and try again. You can also check the response payload for more information.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorMessage"
+            },
+            "example": {
+              "status": 400,
+              "message": "Your input data is not valid or not in a consistent format. Please check it and try again. You can also check the response payload for more information.",
+              "type": "validation_violation",
+              "details": [
+                {
+                  "field": "page-size",
+                  "message": "Provide a page size between 1 and 36.",
+                  "type": "invalid_header"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "trait-revcAware-403": {
+        "description": "You do not have the necessary authorization as defined by the permissions (scopes) assigned to your user.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorMessage"
+            },
+            "example": {
+              "status": 403,
+              "message": "You do not have the necessary authorization as defined by the permissions (scopes) assigned to your user.",
+              "type": "insufficient_permissions"
+            }
+          }
+        }
+      },
+      "trait-revcAware-404": {
+        "description": "The specified usage record does not exist.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorMessage"
+            },
+            "example": {
+              "status": 404,
+              "message": "The specified usage record does not exist.",
+              "type": "Not Found"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "trait-paged-pageNumber": {
+        "name": "pageNumber",
+        "in": "query",
+        "description": "The page number to be retrieved where the size of the pages must be specified by the `pageSize` parameter.<br>The number of the first page is 1. This parameter is only relevant for offset-based pagination.",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "minimum": 1,
+          "type": "integer",
+          "format": "int64",
+          "default": 1
+        }
+      },
+      "trait-paged-pageSize": {
+        "name": "pageSize",
+        "in": "query",
+        "description": "The number of documents retrieved on each page.<br>For example, `pageNumber=3&pageSize=30` retrieves the third page. The page contains 30 elements. This means that from the total list, you get the elements 61-90.<br>If you do not provide a page size, the size is set to 16 as a default.",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "minimum": 1,
+          "type": "integer",
+          "format": "int64",
+          "default": 16
+        }
+      },
+      "trait-enabledCount": {
+        "name": "$count",
+        "in": "query",
+        "description": "If `false`, the response headers `x-count` and `x-pagecount` will not be returned. The recommended setting is `false` if not otherwise required by a special use case, as this results in a significantly faster response time. Note that the default value of this parameter for cursor-based pagination is `false`.",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "boolean",
+          "format": "boolean",
+          "default": true
+        }
+      }
+    },
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "description": "To use this API, log on to the SAP BTP (Business Technology Platform) cockpit to get a service key with OAuth client credentials. Then use the service key to generate an access/bearer token. <br>For more information, see the API Guide.",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://{identityzone}.authentication.{region}.hana.ondemand.com/oauth/token",
+            "scopes": {
+              "{identityzone}.usage_create": "Create usage data.",
+              "{identityzone}.usage_view": "View usage data."
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-sap-shortText": "Manage usage data from an external metering system.",
+  "x-original-swagger-version": "2.0"
+}

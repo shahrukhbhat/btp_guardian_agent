@@ -1,0 +1,19 @@
+apiVersion: solution.sap/v1
+kind: Solution
+
+metadata:
+  name: btp-guardian-a4c7f
+  version: 1.0.1
+  description: >
+    BTP Guardian â AI-powered conversational agent giving SAP BTP platform teams
+    and FinOps stakeholders natural-language visibility into cloud consumption,
+    costs, account topology, entitlements, and governance posture.
+
+assets:
+  - ref: ./assets/btp-guardian-agent/asset.yaml
+  - ref: ./assets/accounts-service-mcp-server/asset.yaml
+  - ref: ./assets/entitlements-service-mcp-server/asset.yaml
+  - ref: ./assets/resource-consumption-mcp-server/asset.yaml
+  - ref: ./assets/metrics-api-mcp-server/asset.yaml
+  - ref: ./assets/usage-records-mcp-server/asset.yaml
+  - ref: ./assets/provisioning-service-mcp-server/asset.yaml

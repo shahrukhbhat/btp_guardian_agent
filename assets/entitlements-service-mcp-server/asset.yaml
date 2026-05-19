@@ -1,0 +1,10 @@
+apiVersion: asset.sap/v1
+kind: Asset
+type: mcp-server
+
+metadata:
+  name: entitlements-service-mcp-server
+  ordId: sap.btp:apiResource:entitlements-service-mcp:v1
+  version: 1.0.0
+  description: MCP server wrapping the SAP BTP Entitlements Service API for entitlement assignment queries
+  translation: mcp-translation/translation.json

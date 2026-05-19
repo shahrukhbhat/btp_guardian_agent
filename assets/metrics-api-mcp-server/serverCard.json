@@ -1,0 +1,294 @@
+{
+  "_meta": {
+    "sap.ord/ordId": {
+      "ordId": "customer.mcpbuilder.btp:apiResource:metrics-api_MCP:v1"
+    },
+    "sap.mcpbuilder/translation": {
+      "ordId": "customer.mcpbuilder.btp:apiResource:metrics-api_MCP:v1"
+    },
+    "sap.ord/originalApiResourceOrdId": "sap.btp:apiResource:metrics-api:v1"
+  },
+  "$schema": "https://pages.github.tools.sap/CPA/mcp-protocol/spec-v1/mcp-server-card-spec.schema.json",
+  "remotes": [],
+  "capabilities": {
+    "tools": {},
+    "prompts": {}
+  },
+  "supportedProtocolVersions": [
+    "2025-11-25"
+  ],
+  "name": "sap.mcp/metrics_api",
+  "title": "metrics_api",
+  "version": "1.0.0",
+  "description": "MCP server for the metrics_api service.",
+  "tools": [
+    {
+      "name": "GET_subaccount_app_process_metrics",
+      "title": "GET_subaccount_app_process_metrics",
+      "description": "Returns the metrics of the requested processes in the requested application and subaccount. To receive any process metrics, the process and its Java application have to be running.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "appname",
+          "processid"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "appname": {
+            "description": "Application Name"
+          },
+          "processid": {
+            "description": "Unique ID of a single application process"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_app_metrics",
+      "title": "GET_subaccount_app_metrics",
+      "description": "Returns the metrics of the requested application in the requested subaccount. To receive any application metrics, the Java application has to be running.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "appname"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "appname": {
+            "description": "Application Name"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_app_process_state",
+      "title": "GET_subaccount_app_process_state",
+      "description": "Returns the state of the requested processes in the requested application and subaccount. To receive the process state, the process and its Java application have to be running.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "appname",
+          "processid"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "appname": {
+            "description": "Application Name"
+          },
+          "processid": {
+            "description": "Unique ID of a single application process"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_app_state",
+      "title": "GET_subaccount_app_state",
+      "description": "Returns the state of the requested application in the requested subaccount. To receive the application state, the Java application has to be running.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "appname"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "appname": {
+            "description": "Application Name"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_dbsystem_metrics",
+      "title": "GET_subaccount_dbsystem_metrics",
+      "description": "Returns the metrics for the requested database in the requested subaccount. To receive any database metrics, your database system has to be up and running.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "databasesystem"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "databasesystem": {
+            "description": "Database Name"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_dbsystem_state",
+      "title": "GET_subaccount_dbsystem_state",
+      "description": "Returns the state of the requested database in the requested subaccount. To receive the database state, your database system has to be up and running.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "databasesystem"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "databasesystem": {
+            "description": "Database Name"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_instance_app_metrics",
+      "title": "GET_subaccount_instance_app_metrics",
+      "description": "Returns the custom HTTP checks for the requested XS application in the requested XS instance and subaccount.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "instancename",
+          "appname"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "instancename": {
+            "description": "XS Instance name"
+          },
+          "appname": {
+            "description": "Application Name"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_instance_metrics",
+      "title": "GET_subaccount_instance_metrics",
+      "description": "Returns the metrics for all applications in the requested subaccount and XS instance.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "instancename"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "instancename": {
+            "description": "XS Instance name"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_instance_app_state",
+      "title": "GET_subaccount_instance_app_state",
+      "description": "Returns the states of the requested XS instance and its applications in the requested subaccount.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "instancename",
+          "appname"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "instancename": {
+            "description": "XS Instance name"
+          },
+          "appname": {
+            "description": "Application Name"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_instance_state",
+      "title": "GET_subaccount_instance_state",
+      "description": "Returns the state of the applications in the requested subaccount and XS instance.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "instancename"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "instancename": {
+            "description": "XS Instance name"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_html_app_metrics",
+      "title": "GET_subaccount_html_app_metrics",
+      "description": "Returns the metrics of the requested HTML5 application in the requested subaccount.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "appname"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "appname": {
+            "description": "Application Name"
+          }
+        }
+      }
+    },
+    {
+      "name": "GET_subaccount_html_app_state",
+      "title": "GET_subaccount_html_app_state",
+      "description": "Returns the state of the requested HTML5 application in the requested subaccount.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subaccountname",
+          "appname"
+        ],
+        "properties": {
+          "subaccountname": {
+            "description": "Technical name of the subaccount"
+          },
+          "appname": {
+            "description": "Application Name"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,195 @@
+{
+  "mcpTranslationVersion": "0.1",
+  "target": {
+    "ordId": "sap.btp:apiResource:resource-consumption:v1",
+    "type": "openapi-v3"
+  },
+  "serverInfo": {
+    "name": "sap.mcp/resource_consumption",
+    "title": "resource_consumption",
+    "version": "1.0.0",
+    "description": "MCP server for the resource_consumption service."
+  },
+  "tools": [
+    {
+      "name": "cloudCreditsDetails",
+      "title": "cloudCreditsDetails",
+      "description": "Get cloud credit data history for a global account. <br /><br />NOTE: You cannot use this API with global accounts that are licensed for the subscription-based commercial model. <br />\nNOTE: Global accounts are the only contractual billable entity for SAP BTP. <br /><br />Required scope: $XSAPPNAME.reporting.GA_Admin",
+      "openApiType": {
+        "path": "/reports/v1/cloudCreditsDetails",
+        "method": "get",
+        "operationId": "cloudCreditsDetails",
+        "parameters": [
+          {
+            "name": "viewPhases",
+            "description": "Show the cloud credit history: <br /><li>CURRENT: For the current phase; the default setting. </li><li>ALL: For all phases.</li>",
+            "in": "query",
+            "newParameterName": "viewphases"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "monthlyDirectoryUsage",
+      "title": "monthlyDirectoryUsage",
+      "description": "Get monthly usage reporting data for a directory and a specified time period. <br /><br />NOTE: Use the monthlyDirectoryUsage if you have different directories that require different levels of authorization in your global account. To maintain data security, this API ensures that the usage data of users in specific directories is kept separate and only the administrators of the specific directories can access it.<br />If you do not need specialized authorizations for directories, we recommend using the MonthlyUsage API. The MonthlyUsage API provides a more comprehensive overview of usage metrics for the global account and its various directories.<br /><br />NOTE: Before using the monthlyDirectoryUsage API, make sure that:<br />(1) The method is used in the context of a directory under the global account and the directory contains one or more subaccounts.<br />(2) User management for the directory is enabled. <br /><br />Required scope: $XSAPPNAME.reporting.Directory_Admin",
+      "openApiType": {
+        "path": "/reports/v1/monthlyDirectoryUsage",
+        "method": "get",
+        "operationId": "monthlyDirectoryUsage",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "description": "Start date for querying the directoryâs monthly usage data<br />Example:<br />fromDate=201901, toDate=201912 <br />This query will return the usage data for the period between January 2019 and December 2019.",
+            "in": "query",
+            "newParameterName": "fromdate"
+          },
+          {
+            "name": "toDate",
+            "description": "End date for querying the directoryâs monthly usage data<br />Example:<br />fromDate=201901, toDate=201912 <br />This query will return the usage data for the period between January 2019 and December 2019.",
+            "in": "query",
+            "newParameterName": "todate"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "monthlyUsageSubaccountCost",
+      "title": "monthlyUsageSubaccountCost",
+      "description": "Get monthly cost reporting data for all subaccounts and a specified time period. Applies to global accounts that use the Cloud Platform Enterprise Agreement (CPEA) consumption-based commercial model. <br /><br />NOTE: You cannot use this API with global accounts that are licensed for the subscription-based commercial model. <br /><br />NOTE: Global accounts are the only contractual billable entity for SAP BTP. Directories and subaccounts are used as structural entities in global accounts, and their usage and cost data should only be used for your internal cost estimations. The relative calculation per billable usage within each subaccount is an estimation only as it is based on certain measures which in some cases can either be different from the metrics that are presented in the <b>Global Account Costs</b> tab or which use different formulas than the ones used for billing. <br /><br />Required scope: $XSAPPNAME.reporting.GA_Admin<br />",
+      "openApiType": {
+        "path": "/reports/v1/monthlySubaccountsCost",
+        "method": "get",
+        "operationId": "monthlyUsageSubaccountCost",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "description": "Start date for querying the global accountâs monthly usage data<br />Example:<br />fromDate=201901, toDate=201912 <br />This query will return the usage data for the period between January 2019 and December 2019.",
+            "in": "query",
+            "newParameterName": "fromdate"
+          },
+          {
+            "name": "toDate",
+            "description": "End date for querying the global accountâs monthly usage data<br />Example:<br />fromDate=201901, toDate=201912 <br />This query will return the usage data for the period between January 2019 and December 2019.",
+            "in": "query",
+            "newParameterName": "todate"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "monthlySubaccountCmCosts",
+      "title": "monthlySubaccountCmCosts",
+      "description": "Get monthly cost reporting data for all subaccounts over a specified time period. You can use this API only for global accounts that use the BTP Enterprise Agreement (SAP BTPEA), consumption-based commercial model. <br /><br />NOTE: You cannot use this API for global accounts that are licensed for the subscription-based commercial model. <br /><br />NOTE: Only global accounts are recognized as the contractual billable entity for SAP BTP. Directories and subaccounts are used as structural entities in global accounts. Use the usage and cost data of directories and subaccounts only internal cost estimations. The calculation for the billable usage of each subaccount is an estimate. It is based on measures that might differ from the metrics shown in the <b> Global Account Costs </b> tab or that might use different formulas than those used for billing. <br /><br />NOTE: This API provides capabilities similar to OData as it complies with the minimal set of OData query capabilities required for the SAP Analytics Cloud integration ($select,$top, $skip, $count, $order), but it does not implement the complete OData protocol. It supports logical operators for filtering such as: Equal, Not Equal, Less or Equal, Greater than, Greater than or Equal, Less than, and Less than or equal. It also supports pagination and ordering of the result set. However,it does not support logical negation, arithmetic operators, or functions. <br /><br />NOTE: The order of the data rows in the data source needs to be fixed during data acquisition (for example, by sorting on a column). Otherwise, when paging is done, there could be data correctness issues. For example, the same data row could appear more than once in different pages.The order of data rows should be guaranteed on data source during paging by $skip and $top.<br /><br />Required scope: $XSAPPNAME.reporting.GA_Admin<br />",
+      "openApiType": {
+        "path": "/odata/MonthlySubaccountCmCosts",
+        "method": "get",
+        "operationId": "monthlySubaccountCmCosts",
+        "parameters": [
+          {
+            "name": "$select",
+            "description": "Filters properties (columns). Request a limited set of properties for each entity.",
+            "in": "query",
+            "newParameterName": "select"
+          },
+          {
+            "name": "$filter",
+            "description": "Filters results (rows). Lets you filter a collection of resources that are addressed by a request URL.",
+            "in": "query",
+            "newParameterName": "filter"
+          },
+          {
+            "name": "$skip",
+            "description": "Specifies the number of items in the queried collection that are to be skipped and not included in the result.",
+            "in": "query",
+            "newParameterName": "skip"
+          },
+          {
+            "name": "$top",
+            "description": "Sets the page size of the results. Specifies the number of items in the queried collection to be included in the result",
+            "in": "query",
+            "newParameterName": "top"
+          },
+          {
+            "name": "$orderby",
+            "description": "Orders the results. Lets you request resources in either  ascending or descending order using asc and desc.",
+            "in": "query",
+            "newParameterName": "orderby"
+          },
+          {
+            "name": "$count",
+            "description": "Lets you request a count of the matching resources included with the resources in the response.",
+            "in": "query",
+            "newParameterName": "count"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "monthlyUsage",
+      "title": "monthlyUsage",
+      "description": "Get monthly usage reporting data for a global account and a specified time period. <br /><br />Required scope: $XSAPPNAME.reporting.GA_Admin",
+      "openApiType": {
+        "path": "/reports/v1/monthlyUsage",
+        "method": "get",
+        "operationId": "monthlyUsage",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "description": "Start date for querying the global accountâs monthly usage data<br />Example:<br />fromDate=201901, toDate=201912 <br />This query will return the usage data for the period between January 2019 and December 2019.",
+            "in": "query",
+            "newParameterName": "fromdate"
+          },
+          {
+            "name": "toDate",
+            "description": "End date for querying the global accountâs monthly usage data<br />Example:<br />fromDate=201901, toDate=201912 <br />This query will return the usage data for the period between January 2019 and December 2019.",
+            "in": "query",
+            "newParameterName": "todate"
+          }
+        ],
+        "requestBody": {}
+      }
+    },
+    {
+      "name": "dailySubaccountUsage",
+      "title": "dailySubaccountUsage",
+      "description": "Get usage reporting data for a subaccount and a specified time period.<br /><br />Required scope: $XSAPPNAME.reporting.GA_Admin",
+      "openApiType": {
+        "path": "/reports/v1/subaccountUsage",
+        "method": "get",
+        "operationId": "dailySubaccountUsage",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "description": "Start date for querying the subaccount usage data using the format YYYYMMDD.<br />Example:<br />fromDate=20190101, toDate=20191201<br />This query returns the subaccount usage data for the period January 1st, 2019 to December 1st, 2019.",
+            "in": "query",
+            "newParameterName": "fromdate"
+          },
+          {
+            "name": "periodPerspective",
+            "description": "The time division of the subaccount usage report, namely, DAY, WEEK and MONTH according to the specified time period. If no period perspective is defined, then the subaccount usage data is returned for the entire period as a single element.<br /> If you select DAY, the maximum search period is four months. If you select WEEK, the search period must not exceed one year.<br />Example:<br /> periodPerspective=WEEK <br />This query returns the subaccount usage data aggregated by week.",
+            "in": "query",
+            "newParameterName": "periodperspective"
+          },
+          {
+            "name": "subaccountId",
+            "description": "Unique ID of the subaccount.",
+            "in": "query",
+            "newParameterName": "subaccountid"
+          },
+          {
+            "name": "toDate",
+            "description": "End date for querying the subaccount usage data using the format YYYYMMDD.<br />Example:<br />fromDate=20190101, toDate=20191201<br />This query returns the subaccount usage data for the period January 1st, 2019 to December 1st, 2019.",
+            "in": "query",
+            "newParameterName": "todate"
+          }
+        ],
+        "requestBody": {}
+      }
+    }
+  ]
+}

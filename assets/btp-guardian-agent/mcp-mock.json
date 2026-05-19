@@ -1,0 +1,492 @@
+{
+  "servers": {
+    "accounts-service": {
+      "mcp_server_name": "sap.mcp/accounts_service",
+      "description": "SAP BTP Accounts Service — account topology (global account, directories, subaccounts)",
+      "tools": {
+        "getGlobalAccount": {
+          "description": "Get information for the global account",
+          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "mock_response": {
+            "guid": "ga-0001-mock",
+            "displayName": "BTP Guardian Demo Global Account",
+            "createdDate": 1680000000000,
+            "modifiedDate": 1745000000000,
+            "entityState": "OK",
+            "stateMessage": "",
+            "subdomain": "btp-guardian-demo",
+            "contractStatus": "ACTIVE",
+            "licenseType": "STANDARD",
+            "geoAccess": "STANDARD"
+          }
+        },
+        "getSubaccounts": {
+          "description": "Get all subaccounts in the global account",
+          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "mock_response": {
+            "value": [
+              {
+                "guid": "sa-0001-dev",
+                "displayName": "Development",
+                "subdomain": "btp-guardian-dev",
+                "region": "eu10",
+                "state": "OK",
+                "parentGUID": "ga-0001-mock",
+                "parentType": "ROOT"
+              },
+              {
+                "guid": "sa-0002-prod",
+                "displayName": "Production",
+                "subdomain": "btp-guardian-prod",
+                "region": "eu10",
+                "state": "OK",
+                "parentGUID": "dir-0001-mock",
+                "parentType": "FOLDER"
+              },
+              {
+                "guid": "sa-0003-test",
+                "displayName": "Testing",
+                "subdomain": "btp-guardian-test",
+                "region": "eu10",
+                "state": "OK",
+                "parentGUID": "ga-0001-mock",
+                "parentType": "ROOT"
+              },
+              {
+                "guid": "sa-0004-staging",
+                "displayName": "Staging",
+                "subdomain": "btp-guardian-staging",
+                "region": "eu10",
+                "state": "OK",
+                "parentGUID": "dir-0001-mock",
+                "parentType": "FOLDER"
+              },
+              {
+                "guid": "sa-0005-sandbox",
+                "displayName": "Sandbox",
+                "subdomain": "btp-guardian-sandbox",
+                "region": "eu10",
+                "state": "OK",
+                "parentGUID": "ga-0001-mock",
+                "parentType": "ROOT"
+              }
+            ]
+          }
+        },
+        "getDirectories": {
+          "description": "Get all directories in the global account",
+          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "mock_response": {
+            "value": [
+              {
+                "guid": "dir-0001-mock",
+                "displayName": "Production Group",
+                "subdomain": "btp-guardian-prod-dir",
+                "parentGUID": "ga-0001-mock",
+                "state": "OK"
+              },
+              {
+                "guid": "dir-0002-mock",
+                "displayName": "Non-Production",
+                "subdomain": "btp-guardian-nonprod-dir",
+                "parentGUID": "ga-0001-mock",
+                "state": "OK"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "entitlements-service": {
+      "mcp_server_name": "sap.mcp/entitlements_service",
+      "description": "SAP BTP Entitlements Service — quota assignments and utilization",
+      "tools": {
+        "getGlobalAccountAssignments": {
+          "description": "Get details about all entitlements assigned to the global account",
+          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "mock_response": {
+            "entitledServices": [
+              {
+                "name": "sapappstudio",
+                "displayName": "SAP Business Application Studio",
+                "servicePlans": [
+                  {
+                    "name": "standard-edition",
+                    "displayName": "Standard Edition",
+                    "amount": 50,
+                    "remainingAmount": 45,
+                    "usedAmount": 5,
+                    "unitOfMeasure": "USER"
+                  }
+                ]
+              },
+              {
+                "name": "kymaruntime",
+                "displayName": "SAP BTP, Kyma Runtime",
+                "servicePlans": [
+                  {
+                    "name": "aws",
+                    "displayName": "AWS",
+                    "amount": 4,
+                    "remainingAmount": 2,
+                    "usedAmount": 2,
+                    "unitOfMeasure": "CLUSTER"
+                  }
+                ]
+              },
+              {
+                "name": "hana-cloud",
+                "displayName": "SAP HANA Cloud",
+                "servicePlans": [
+                  {
+                    "name": "hana",
+                    "displayName": "HANA",
+                    "amount": 10,
+                    "remainingAmount": 0.95,
+                    "usedAmount": 9.05,
+                    "unitOfMeasure": "INSTANCES"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "getSubaccountAssignments": {
+          "description": "Get entitlement assignments for a subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {"type": "string", "description": "Subaccount GUID"}
+            },
+            "required": ["subaccountGUID"]
+          },
+          "mock_response": {
+            "entitledServices": [
+              {
+                "name": "hana-cloud",
+                "displayName": "SAP HANA Cloud",
+                "servicePlans": [
+                  {
+                    "name": "hana",
+                    "amount": 5,
+                    "remainingAmount": 0.5,
+                    "usedAmount": 4.5,
+                    "unitOfMeasure": "INSTANCES"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "resource-consumption": {
+      "mcp_server_name": "sap.mcp/resource_consumption",
+      "description": "SAP BTP Resource Consumption — monthly cost and usage reports",
+      "tools": {
+        "monthlySubaccountCmCosts": {
+          "description": "Get monthly cost reporting data for all subaccounts",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "fromDate": {"type": "string", "description": "Start month (YYYY-MM)"},
+              "toDate": {"type": "string", "description": "End month (YYYY-MM)"}
+            },
+            "required": []
+          },
+          "mock_response": {
+            "content": [
+              {
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "18450.00",
+                "month": "2026-04"
+              },
+              {
+                "subaccountId": "sa-0004-staging",
+                "subaccountName": "Staging",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "4200.00",
+                "month": "2026-04"
+              },
+              {
+                "subaccountId": "sa-0001-dev",
+                "subaccountName": "Development",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "1890.00",
+                "month": "2026-04"
+              },
+              {
+                "subaccountId": "sa-0003-test",
+                "subaccountName": "Testing",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "750.00",
+                "month": "2026-04"
+              },
+              {
+                "subaccountId": "sa-0005-sandbox",
+                "subaccountName": "Sandbox",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "120.00",
+                "month": "2026-04"
+              }
+            ]
+          }
+        },
+        "monthlyUsage": {
+          "description": "Get monthly usage summary for all services",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "month": {"type": "string", "description": "Report month (YYYY-MM)"}
+            },
+            "required": []
+          },
+          "mock_response": {
+            "monthlyUsage": [
+              {
+                "serviceName": "SAP HANA Cloud",
+                "planName": "hana",
+                "usage": "9.05",
+                "unit": "INSTANCES",
+                "measure": "AVERAGE"
+              },
+              {
+                "serviceName": "SAP BTP, Kyma Runtime",
+                "planName": "aws",
+                "usage": "2",
+                "unit": "CLUSTER",
+                "measure": "CURRENT"
+              },
+              {
+                "serviceName": "SAP Business Application Studio",
+                "planName": "standard-edition",
+                "usage": "5",
+                "unit": "USER",
+                "measure": "PEAK"
+              }
+            ]
+          }
+        },
+        "cloudCreditsDetails": {
+          "description": "Get cloud credit usage and remaining balance",
+          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "mock_response": {
+            "cloudCreditsForIaas": "100000.00",
+            "availableCredits": "74890.50",
+            "consumedCredits": "25109.50",
+            "currency": "EUR",
+            "reportTime": "/Date(1747612800000)/"
+          }
+        }
+      }
+    },
+    "metrics-api": {
+      "mcp_server_name": "sap.mcp/metrics_api",
+      "description": "SAP BTP Metrics API — runtime metrics for apps and service instances",
+      "tools": {
+        "GET_accounts-subaccountName-apps-appName-metrics": {
+          "description": "Get runtime metrics for an application in a subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {"type": "string", "description": "Subaccount subdomain"},
+              "appName": {"type": "string", "description": "Application name"}
+            },
+            "required": ["subaccountName", "appName"]
+          },
+          "mock_response": {
+            "metrics": [
+              {"name": "CPU_USAGE_PERCENT", "value": 72.5, "unit": "percent", "timestamp": 1747612800000},
+              {"name": "MEMORY_USAGE_PERCENT", "value": 65.2, "unit": "percent", "timestamp": 1747612800000},
+              {"name": "DISK_USAGE_PERCENT", "value": 38.1, "unit": "percent", "timestamp": 1747612800000}
+            ]
+          }
+        },
+        "GET_accounts-subaccountName-apps-appName-state": {
+          "description": "Get application state for a subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {"type": "string"},
+              "appName": {"type": "string"}
+            },
+            "required": ["subaccountName", "appName"]
+          },
+          "mock_response": {
+            "state": "STARTED",
+            "instances": 2,
+            "runningInstances": 2
+          }
+        }
+      }
+    },
+    "usage-records": {
+      "mcp_server_name": "sap.mcp/usage_records",
+      "description": "SAP BTP Usage Records — granular service usage data",
+      "tools": {
+        "get_usage-records": {
+          "description": "Retrieve usage records for services",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "$top": {"type": "integer", "description": "Max records to return"},
+              "$skip": {"type": "integer", "description": "Records to skip"},
+              "$filter": {"type": "string", "description": "OData filter expression"}
+            },
+            "required": []
+          },
+          "mock_response": {
+            "value": [
+              {
+                "id": "ur-001",
+                "serviceName": "hana-cloud",
+                "planName": "hana",
+                "subaccountId": "sa-0002-prod",
+                "metricName": "STORAGE_GB",
+                "quantity": "512.00",
+                "unitOfMeasure": "GB",
+                "startDate": "/Date(1746316800000)/",
+                "endDate": "/Date(1747612800000)/"
+              },
+              {
+                "id": "ur-002",
+                "serviceName": "kymaruntime",
+                "planName": "aws",
+                "subaccountId": "sa-0002-prod",
+                "metricName": "NODE_HOURS",
+                "quantity": "720.00",
+                "unitOfMeasure": "HOURS",
+                "startDate": "/Date(1746316800000)/",
+                "endDate": "/Date(1747612800000)/"
+              },
+              {
+                "id": "ur-003",
+                "serviceName": "sapappstudio",
+                "planName": "standard-edition",
+                "subaccountId": "sa-0001-dev",
+                "metricName": "ACTIVE_USERS",
+                "quantity": "5.00",
+                "unitOfMeasure": "USER",
+                "startDate": "/Date(1746316800000)/",
+                "endDate": "/Date(1747612800000)/"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "provisioning-service": {
+      "mcp_server_name": "sap.mcp/provisioning_service",
+      "description": "SAP BTP Provisioning Service — environments and service plan assignments",
+      "tools": {
+        "getEnvironmentInstances": {
+          "description": "Get all provisioned environments",
+          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "mock_response": {
+            "environmentInstances": [
+              {
+                "id": "env-001-cf",
+                "type": "cloudfoundry",
+                "state": "OK",
+                "stateMessage": "",
+                "landscapeLabel": "cf-eu10",
+                "subaccountGUID": "sa-0002-prod",
+                "planName": "standard",
+                "name": "prod-cf-org"
+              },
+              {
+                "id": "env-002-cf",
+                "type": "cloudfoundry",
+                "state": "OK",
+                "stateMessage": "",
+                "landscapeLabel": "cf-eu10",
+                "subaccountGUID": "sa-0001-dev",
+                "planName": "standard",
+                "name": "dev-cf-org"
+              },
+              {
+                "id": "env-003-kyma",
+                "type": "kyma",
+                "state": "OK",
+                "stateMessage": "",
+                "landscapeLabel": "kyma-eu10",
+                "subaccountGUID": "sa-0004-staging",
+                "planName": "aws",
+                "name": "staging-kyma-cluster"
+              }
+            ]
+          }
+        },
+        "getAvailableEnvironments": {
+          "description": "Get available environment types for the global account",
+          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "mock_response": {
+            "availableEnvironments": [
+              {"type": "cloudfoundry", "planName": "standard"},
+              {"type": "kyma", "planName": "aws"},
+              {"type": "kyma", "planName": "gcp"}
+            ]
+          }
+        },
+        "getServicePlanAssignments": {
+          "description": "Get service plan assignments across all environments",
+          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "mock_response": {
+            "assignments": [
+              {
+                "serviceName": "hana-cloud",
+                "planName": "hana",
+                "subaccountGUID": "sa-0002-prod",
+                "amount": 5,
+                "usedAmount": 4.5
+              },
+              {
+                "serviceName": "sapappstudio",
+                "planName": "standard-edition",
+                "subaccountGUID": "sa-0001-dev",
+                "amount": 20,
+                "usedAmount": 5
+              },
+              {
+                "serviceName": "hana-cloud",
+                "planName": "hana",
+                "subaccountGUID": "sa-0005-sandbox",
+                "amount": 2,
+                "usedAmount": 0
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "created_for_agent": "btp-guardian-agent",
+    "mock_mode": true,
+    "deterministic": true,
+    "total_servers": 6,
+    "total_tools": 15,
+    "generated_from": [
+      "accounts-service/translation.json",
+      "entitlements-service/translation.json",
+      "resource-consumption/translation.json",
+      "metrics-api/translation.json",
+      "usage-records/translation.json",
+      "provisioning-service/translation.json"
+    ],
+    "generation_date": "2026-05-19"
+  }
+}
