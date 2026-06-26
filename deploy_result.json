@@ -1,0 +1,9 @@
+{
+  "solution_id": "ca2b906d-5e5b-45d2-afa7-e8ec05ae29a0",
+  "cf_app_name": "btp-guardian-agent",
+  "cf_org": "SAP CoE NA",
+  "cf_space": "Development",
+  "cf_api_endpoint": "https://api.cf.eu10.hana.ondemand.com/",
+  "route_url": "https://btp-guardian-agent.cfapps.eu10.hana.ondemand.com",
+  "last_pushed_at": "2026-06-17T16:15:03Z"
+}

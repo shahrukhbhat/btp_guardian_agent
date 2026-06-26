@@ -1,4 +1,4 @@
-"""Integration test: end-to-end agent flow with mocked LLM and MCP tools."""
+"""Integration test: end-to-end agent flow with mocked LLM and fake BTP clients."""
 
 import pytest
 from langchain_core.messages import AIMessage

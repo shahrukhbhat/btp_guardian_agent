@@ -1,0 +1,207 @@
+{
+  "schema_version": 2,
+  "agent_dir": "assets/btp-guardian-agent",
+  "state": {
+    "selected_systems": [
+      {
+        "id": "btp_accounts",
+        "destination_name": "BTP_ACCOUNTS",
+        "proxy_type": "Internet",
+        "response_envelope": "rest"
+      },
+      {
+        "id": "btp_entitlements",
+        "destination_name": "BTP_ENTITLEMENTS",
+        "proxy_type": "Internet",
+        "response_envelope": "rest"
+      },
+      {
+        "id": "btp_resource_consumption",
+        "destination_name": "BTP_RESOURCE_CONSUMPTION",
+        "proxy_type": "Internet",
+        "response_envelope": "rest"
+      },
+      {
+        "id": "btp_metrics",
+        "destination_name": "BTP_METRICS",
+        "proxy_type": "Internet",
+        "response_envelope": "rest"
+      },
+      {
+        "id": "btp_usage_records",
+        "destination_name": "BTP_USAGE_RECORDS",
+        "proxy_type": "Internet",
+        "response_envelope": "rest"
+      },
+      {
+        "id": "btp_provisioning",
+        "destination_name": "BTP_PROVISIONING",
+        "proxy_type": "Internet",
+        "response_envelope": "rest"
+      }
+    ],
+    "aicore_destination_name": "aicore",
+    "llm_model_name": "gpt-4o",
+    "runtime_mode": "dual-mode",
+    "client_strategy": "shared",
+    "file_disposition": {
+      "assets/btp-guardian-agent/app/api_client.py": "created",
+      "assets/btp-guardian-agent/app/aicore.py": "created",
+      "assets/btp-guardian-agent/app/agent.py": "edited",
+      "assets/btp-guardian-agent/app/agent_executor.py": "edited",
+      "assets/btp-guardian-agent/app/main.py": "edited",
+      "assets/btp-guardian-agent/app/mcp_tools.py": "kept-gated",
+      "assets/btp-guardian-agent/app/mcp_client.py": "kept",
+      "assets/btp-guardian-agent/mcp-mock.json": "kept",
+      "assets/btp-guardian-agent/requirements.txt": "edited",
+      "assets/btp-guardian-agent/requirements-joule.txt": "created",
+      "assets/btp-guardian-agent/manifest.yml": "created",
+      "assets/btp-guardian-agent/Procfile": "created",
+      "assets/btp-guardian-agent/runtime.txt": "created",
+      "assets/btp-guardian-agent/.cfignore": "created",
+      "assets/btp-guardian-agent/asset.yaml": "kept-cfignored",
+      "assets/btp-guardian-agent/tests/_helpers.py": "created",
+      "assets/btp-guardian-agent/tests/conftest.py": "edited",
+      "assets/btp-guardian-agent/tests/test_api_client.py": "created",
+      "assets/btp-guardian-agent/tests/test_integration.py": "edited",
+      "assets/btp-guardian-agent/migration-audit/": "created"
+    },
+    "deployment": {
+      "cf_api_endpoint": "https://api.cf.eu10.hana.ondemand.com/",
+      "cf_org": "SAP CoE NA",
+      "cf_space": "Development",
+      "cf_app_name": "btp-guardian-agent",
+      "cf_app_guid": "ca2b906d-5e5b-45d2-afa7-e8ec05ae29a0",
+      "route_url": "https://btp-guardian-agent.cfapps.eu10.hana.ondemand.com",
+      "services_bound": [
+        {
+          "name": "proj-vector-destination-service",
+          "plan": "lite",
+          "offering": "destination"
+        }
+      ],
+      "memory_settled_mb": 512,
+      "agent_card_status_code": 200,
+      "smoke_verdict": "running-destinations-not-configured",
+      "model_overrides": [],
+      "last_pushed_at": "2026-06-17T16:15:03Z",
+      "last_run_outcome": "success"
+    }
+  },
+  "audit_trail": [
+    {
+      "ts": "2026-06-17T13:48:00Z",
+      "phase": "0.1",
+      "kind": "autonomous_decision",
+      "value": "agent_dir = assets/btp-guardian-agent"
+    },
+    {
+      "ts": "2026-06-17T13:48:10Z",
+      "phase": "0.2",
+      "kind": "autonomous_decision",
+      "value": "audit initialised \u2014 AUDIT_DIR=assets/btp-guardian-agent/migration-audit, history rotated=false"
+    },
+    {
+      "ts": "2026-06-17T13:50:00Z",
+      "phase": "2.2",
+      "kind": "user_answer",
+      "value": "selected systems: btp_accounts (BTP_ACCOUNTS), btp_entitlements (BTP_ENTITLEMENTS), btp_resource_consumption (BTP_RESOURCE_CONSUMPTION), btp_metrics (BTP_METRICS), btp_usage_records (BTP_USAGE_RECORDS), btp_provisioning (BTP_PROVISIONING); aicore=aicore; model=gpt-4o"
+    },
+    {
+      "ts": "2026-06-17T13:50:05Z",
+      "phase": "2.3",
+      "kind": "autonomous_decision",
+      "value": "client_strategy = shared (6 BTP REST systems, uniform conventions)"
+    },
+    {
+      "ts": "2026-06-17T13:51:00Z",
+      "phase": "3.5",
+      "kind": "autonomous_decision",
+      "value": "runtime_mode = dual-mode (default)"
+    },
+    {
+      "ts": "2026-06-17T13:52:00Z",
+      "phase": "3.5",
+      "kind": "file_op",
+      "value": "mcp artefacts: gated (dual-mode) \u2014 6 items: mcp_tools.py=kept-gated, mcp_client.py=kept, mcp-mock.json=kept, mcp-server-folders=kept-cfignored, asset.yaml=kept-cfignored, solution.yaml=kept-cfignored"
+    },
+    {
+      "ts": "2026-06-17T13:53:00Z",
+      "phase": "4.4",
+      "kind": "file_op",
+      "value": "requirements: split=true; sap-ai-sdk-gen=6.6.0; gunicorn~=22.0; uvicorn[standard]~=0.30"
+    },
+    {
+      "ts": "2026-06-17T13:54:00Z",
+      "phase": "4.7",
+      "kind": "file_op",
+      "value": "joule artefacts: kept \u2014 asset.yaml=kept-cfignored, solution.yaml=kept-cfignored"
+    },
+    {
+      "ts": "2026-06-17T13:57:07Z",
+      "phase": "5.5",
+      "kind": "autonomous_decision",
+      "value": "tests passed: 35 | no coverage measurement (no-cov flag used in sandbox)"
+    },
+    {
+      "ts": "2026-06-17T16:00:00Z",
+      "phase": "6.0",
+      "kind": "autonomous_decision",
+      "value": "deploy run started against agent_dir=assets/btp-guardian-agent"
+    },
+    {
+      "ts": "2026-06-17T16:00:10Z",
+      "phase": "6.1",
+      "kind": "autonomous_decision",
+      "value": "cf_api_endpoint = https://api.cf.eu10.hana.ondemand.com/ (hardcoded, no prompt)"
+    },
+    {
+      "ts": "2026-06-17T16:00:20Z",
+      "phase": "6.1",
+      "kind": "autonomous_decision",
+      "value": "passcode scrubbed post-login (single-use enforcement)"
+    },
+    {
+      "ts": "2026-06-17T16:01:00Z",
+      "phase": "6.1",
+      "kind": "user_answer",
+      "value": "cf_org=SAP CoE NA; cf_space=Development"
+    },
+    {
+      "ts": "2026-06-17T16:02:00Z",
+      "phase": "6.2",
+      "kind": "external_op",
+      "value": "marketplace check: destination=ok, connectivity=skipped-no-onprem"
+    },
+    {
+      "ts": "2026-06-17T16:03:00Z",
+      "phase": "6.3",
+      "kind": "autonomous_decision",
+      "value": "service plan: destination=lite"
+    },
+    {
+      "ts": "2026-06-17T16:03:10Z",
+      "phase": "6.3",
+      "kind": "external_op",
+      "value": "cf create-service destination lite proj-vector-destination-service"
+    },
+    {
+      "ts": "2026-06-17T16:15:08Z",
+      "phase": "6.3",
+      "kind": "external_op",
+      "value": "cf push succeeded \u2014 app=btp-guardian-agent, route=https://btp-guardian-agent.cfapps.eu10.hana.ondemand.com, memory=512M, services=[proj-vector-destination-service]"
+    },
+    {
+      "ts": "2026-06-17T16:16:38Z",
+      "phase": "6.5",
+      "kind": "external_op",
+      "value": "agent card check: 200"
+    },
+    {
+      "ts": "2026-06-17T16:17:03Z",
+      "phase": "6.6",
+      "kind": "external_op",
+      "value": "smoke verdict: running-destinations-not-configured (aicore destination not yet created in BTP cockpit)"
+    }
+  ]
+}

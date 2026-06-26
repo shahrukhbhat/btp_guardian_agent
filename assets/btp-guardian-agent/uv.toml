@@ -1,2 +1,5 @@
-[pip]
-find-links = ["vendor"]
+# uv configuration for local development and Joule/Kyma runtime.
+# The vendor/ directory is CF-deployment-only (Python 3.12 manylinux wheels
+# pre-downloaded for the python_buildpack offline install). It must NOT be
+# referenced here — uv runs on Python 3.13 and will reject those wheels.
+# CF staging uses pip directly from vendor/, not uv.

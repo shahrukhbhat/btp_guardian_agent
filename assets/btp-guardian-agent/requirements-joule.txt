@@ -1,0 +1,16 @@
+# Joule / Kyma requirements — used by the Joule build pipeline.
+# Includes litellm + sap-cloud-sdk which are incompatible with CF's
+# sap-ai-sdk-gen (click version conflict). Do NOT use this file for CF deploys.
+litellm==1.83.0,!=1.82.7,!=1.82.8
+langchain==1.2.15
+langchain-core==1.3.0
+langchain-litellm==0.3.5
+langgraph==1.1.9
+a2a-sdk[all]==0.3.22
+uvicorn==0.40.0
+httpx==0.28.1
+python-dotenv==1.2.1
+click==8.1.8
+mcp>=1.0.0
+opentelemetry-instrumentation-starlette
+sap-cloud-sdk @ file:vendor/sap_cloud_sdk-0.14.1.dev20260504-py3-none-any.whl

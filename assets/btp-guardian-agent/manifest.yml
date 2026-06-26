@@ -1,0 +1,27 @@
+---
+# CF manifest for btp-guardian-agent.
+# The default route is assigned automatically as
+#   btp-guardian-agent.<default-shared-domain>
+# of your CF org. Override `routes:` only if you need a custom hostname.
+applications:
+  - name: btp-guardian-agent
+    memory: 512M
+    disk_quota: 1G
+    instances: 1
+    buildpacks:
+      - python_buildpack
+    command: gunicorn --worker-class uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:${PORT} --chdir app main:application
+    timeout: 180
+    health-check-type: http
+    health-check-http-endpoint: /.well-known/agent.json
+    services:
+      - proj-vector-destination-service
+    env:
+      BTP_ACCOUNTS_DESTINATION_NAME: BTP_ACCOUNTS
+      BTP_ENTITLEMENTS_DESTINATION_NAME: BTP_ENTITLEMENTS
+      BTP_RESOURCE_CONSUMPTION_DESTINATION_NAME: BTP_RESOURCE_CONSUMPTION
+      BTP_METRICS_DESTINATION_NAME: BTP_METRICS
+      BTP_USAGE_RECORDS_DESTINATION_NAME: BTP_USAGE_RECORDS
+      BTP_PROVISIONING_DESTINATION_NAME: BTP_PROVISIONING
+      AICORE_DESTINATION_NAME: aicore
+      LOG_LEVEL: INFO

@@ -1,20 +1,48 @@
 import logging
+import os
 from dataclasses import dataclass
 from typing import AsyncGenerator, Literal
 
+from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 from opentelemetry import trace
-from sap_cloud_sdk.agent_decorators import agent_config, agent_model, prompt_section
 
-from mcp_tools import get_mcp_tools
+try:
+    from sap_cloud_sdk.agent_decorators import agent_config, agent_model, prompt_section
+except ImportError:
+    def _identity_decorator(*_dargs, **_dkwargs):
+        def _wrap(fn):
+            return fn
+        return _wrap
+
+    agent_model = _identity_decorator
+    agent_config = _identity_decorator
+    prompt_section = _identity_decorator
+
+from api_client import Client
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
 
 # ---------------------------------------------------------------------------
-# Agent model / config / prompt decorators (exactly 3 — do not add more)
+# BTP API destination names (resolved from env at startup)
+# ---------------------------------------------------------------------------
+
+DEST_ACCOUNTS = os.environ.get("BTP_ACCOUNTS_DESTINATION_NAME", "BTP_ACCOUNTS")
+DEST_ENTITLEMENTS = os.environ.get("BTP_ENTITLEMENTS_DESTINATION_NAME", "BTP_ENTITLEMENTS")
+DEST_RESOURCE_CONSUMPTION = os.environ.get(
+    "BTP_RESOURCE_CONSUMPTION_DESTINATION_NAME", "BTP_RESOURCE_CONSUMPTION"
+)
+DEST_METRICS = os.environ.get("BTP_METRICS_DESTINATION_NAME", "BTP_METRICS")
+DEST_USAGE_RECORDS = os.environ.get("BTP_USAGE_RECORDS_DESTINATION_NAME", "BTP_USAGE_RECORDS")
+DEST_PROVISIONING = os.environ.get("BTP_PROVISIONING_DESTINATION_NAME", "BTP_PROVISIONING")
+
+MAX_PAGE_SIZE = int(os.environ.get("BTP_MAX_PAGE_SIZE", "100"))
+
+# ---------------------------------------------------------------------------
+# Agent model / config / prompt decorators
 # ---------------------------------------------------------------------------
 
 
@@ -24,7 +52,7 @@ tracer = trace.get_tracer(__name__)
     description="The language model powering BTP Guardian",
 )
 def get_model_name() -> str:
-    return "sap/anthropic--claude-4.5-sonnet"
+    return os.environ.get("AGENT_LLM_MODEL", "gpt-4o")
 
 
 @agent_config(
@@ -75,30 +103,413 @@ class AgentResponse:
 # BTP Guardian Agent
 # ---------------------------------------------------------------------------
 
-# Threshold defaults (can be overridden at deploy time via env if needed)
 COST_ALERT_PCT = 80
 ENTITLEMENT_ALERT_PCT = 85
+
+
+def _enforce_page_size(params: dict, key: str = "$top") -> dict:
+    """Cap pagination param at MAX_PAGE_SIZE."""
+    if key in params:
+        try:
+            params[key] = min(int(params[key]), MAX_PAGE_SIZE)
+        except (ValueError, TypeError):
+            params[key] = MAX_PAGE_SIZE
+    return params
+
+
+def _build_domain_tools(
+    accounts_client: Client,
+    entitlements_client: Client,
+    consumption_client: Client,
+    metrics_client: Client,
+    usage_records_client: Client,
+    provisioning_client: Client,
+) -> list:
+    """Build LangChain StructuredTool instances backed by direct BTP REST clients."""
+    from langchain_core.tools import StructuredTool
+    from pydantic import BaseModel, Field
+
+    # -----------------------------------------------------------------------
+    # Accounts Service tools
+    # -----------------------------------------------------------------------
+
+    class GetGlobalAccountInput(BaseModel):
+        expand: bool = Field(default=False, description="Whether to expand child entities")
+
+    async def get_global_account(expand: bool = False) -> str:
+        import json
+        result = await accounts_client.get(
+            "/accounts/v1/globalAccount",
+            params={"expand": str(expand).lower()},
+        )
+        return json.dumps(result)
+
+    class GetSubaccountsInput(BaseModel):
+        directoryGUID: str | None = Field(default=None, description="Filter by directory GUID")
+        labelSelector: str | None = Field(default=None, description="Label selector filter")
+
+    async def get_subaccounts(
+        directoryGUID: str | None = None,
+        labelSelector: str | None = None,
+    ) -> str:
+        import json
+        params: dict = {}
+        if directoryGUID:
+            params["directoryGUID"] = directoryGUID
+        if labelSelector:
+            params["labelSelector"] = labelSelector
+        result = await accounts_client.get("/accounts/v1/subaccounts", params=params)
+        return json.dumps(result)
+
+    class GetDirectoriesInput(BaseModel):
+        expand: bool = Field(default=True, description="Whether to include subaccounts in response")
+
+    async def get_directories(expand: bool = True) -> str:
+        import json
+        # Directories are retrieved via global account with expand
+        result = await accounts_client.get(
+            "/accounts/v1/globalAccount",
+            params={"expand": str(expand).lower()},
+        )
+        return json.dumps(result)
+
+    # -----------------------------------------------------------------------
+    # Entitlements Service tools
+    # -----------------------------------------------------------------------
+
+    class GetGlobalAccountAssignmentsInput(BaseModel):
+        entitledServicesOnly: bool = Field(
+            default=False, description="Return only services with quota assigned"
+        )
+        assignedServiceName: str | None = Field(
+            default=None, description="Filter by service technical name"
+        )
+
+    async def get_global_account_assignments(
+        entitledServicesOnly: bool = False,
+        assignedServiceName: str | None = None,
+    ) -> str:
+        import json
+        params: dict = {"entitledServicesOnly": str(entitledServicesOnly).lower()}
+        if assignedServiceName:
+            params["assignedServiceName"] = assignedServiceName
+        result = await entitlements_client.get(
+            "/entitlements/v1/globalAccountAssignments", params=params
+        )
+        return json.dumps(result)
+
+    class GetSubaccountAssignmentsInput(BaseModel):
+        subaccountGUID: str | None = Field(
+            default=None, description="Subaccount GUID to filter assignments"
+        )
+        entitledServicesOnly: bool = Field(
+            default=False, description="Return only entitled services"
+        )
+
+    async def get_subaccount_assignments(
+        subaccountGUID: str | None = None,
+        entitledServicesOnly: bool = False,
+    ) -> str:
+        import json
+        params: dict = {"entitledServicesOnly": str(entitledServicesOnly).lower()}
+        if subaccountGUID:
+            params["subaccountGUID"] = subaccountGUID
+        result = await entitlements_client.get(
+            "/entitlements/v1/assignments", params=params
+        )
+        return json.dumps(result)
+
+    # -----------------------------------------------------------------------
+    # Resource Consumption tools
+    # -----------------------------------------------------------------------
+
+    class MonthlySubaccountCmCostsInput(BaseModel):
+        filter: str | None = Field(default=None, description="OData $filter expression")
+        top: int = Field(default=100, description="Maximum number of results (max 100)")
+        skip: int | None = Field(default=None, description="Number of results to skip")
+
+    async def monthly_subaccount_cm_costs(
+        filter: str | None = None,
+        top: int = 100,
+        skip: int | None = None,
+    ) -> str:
+        import json
+        params: dict = _enforce_page_size({"$top": top}, "$top")
+        if filter:
+            params["$filter"] = filter
+        if skip is not None:
+            params["$skip"] = skip
+        result = await consumption_client.get(
+            "/odata/MonthlySubaccountCmCosts", params=params
+        )
+        return json.dumps(result)
+
+    class MonthlyUsageInput(BaseModel):
+        fromDate: str | None = Field(
+            default=None, description="Start date (YYYY-MM format)"
+        )
+        toDate: str | None = Field(
+            default=None, description="End date (YYYY-MM format)"
+        )
+
+    async def monthly_usage(
+        fromDate: str | None = None,
+        toDate: str | None = None,
+    ) -> str:
+        import json
+        params: dict = {}
+        if fromDate:
+            params["fromDate"] = fromDate
+        if toDate:
+            params["toDate"] = toDate
+        result = await consumption_client.get("/reports/v1/monthlyUsage", params=params)
+        return json.dumps(result)
+
+    class CloudCreditsDetailsInput(BaseModel):
+        viewPhases: str | None = Field(
+            default=None, description="Comma-separated view phases to include"
+        )
+
+    async def cloud_credits_details(viewPhases: str | None = None) -> str:
+        import json
+        params: dict = {}
+        if viewPhases:
+            params["viewPhases"] = viewPhases
+        result = await consumption_client.get(
+            "/reports/v1/cloudCreditsDetails", params=params
+        )
+        return json.dumps(result)
+
+    # -----------------------------------------------------------------------
+    # Metrics API tools
+    # -----------------------------------------------------------------------
+
+    class GetAppMetricsInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount technical name")
+        appName: str = Field(description="Application name")
+
+    async def get_app_metrics(subaccountName: str, appName: str) -> str:
+        import json
+        result = await metrics_client.get(
+            f"/accounts/{subaccountName}/apps/{appName}/metrics"
+        )
+        return json.dumps(result)
+
+    class GetAppStateInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount technical name")
+        appName: str = Field(description="Application name")
+
+    async def get_app_state(subaccountName: str, appName: str) -> str:
+        import json
+        result = await metrics_client.get(
+            f"/accounts/{subaccountName}/apps/{appName}/state"
+        )
+        return json.dumps(result)
+
+    # -----------------------------------------------------------------------
+    # Usage Records tools
+    # -----------------------------------------------------------------------
+
+    class GetUsageRecordsInput(BaseModel):
+        limit: int = Field(default=100, description="Maximum number of records (max 100)")
+
+    async def get_usage_records(limit: int = 100) -> str:
+        import json
+        params = _enforce_page_size({"limit": limit}, "limit")
+        result = await usage_records_client.get("/usage-records", params=params)
+        return json.dumps(result)
+
+    # -----------------------------------------------------------------------
+    # Provisioning Service tools
+    # -----------------------------------------------------------------------
+
+    class GetEnvironmentInstancesInput(BaseModel):
+        subaccountGUID: str | None = Field(
+            default=None, description="Filter by subaccount GUID"
+        )
+
+    async def get_environment_instances(subaccountGUID: str | None = None) -> str:
+        import json
+        params: dict = {}
+        if subaccountGUID:
+            params["subaccountGUID"] = subaccountGUID
+        result = await provisioning_client.get(
+            "/provisioning/v1/environments", params=params
+        )
+        return json.dumps(result)
+
+    class GetAvailableEnvironmentsInput(BaseModel):
+        pass
+
+    async def get_available_environments() -> str:
+        import json
+        result = await provisioning_client.get("/provisioning/v1/availableEnvironments")
+        return json.dumps(result)
+
+    # -----------------------------------------------------------------------
+    # Assemble tool list
+    # -----------------------------------------------------------------------
+    return [
+        StructuredTool.from_function(
+            coroutine=get_global_account,
+            name="getGlobalAccount",
+            description="Get global account details including child directories and subaccounts",
+            args_schema=GetGlobalAccountInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_subaccounts,
+            name="getSubaccounts",
+            description="List all subaccounts in the global account, optionally filtered by directory or label",
+            args_schema=GetSubaccountsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_directories,
+            name="getDirectories",
+            description="Get directories and account topology from the global account",
+            args_schema=GetDirectoriesInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_global_account_assignments,
+            name="getGlobalAccountAssignments",
+            description="Get all entitlement assignments for the global account including quota and usage",
+            args_schema=GetGlobalAccountAssignmentsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_subaccount_assignments,
+            name="getSubaccountAssignments",
+            description="Get entitlement assignments for a specific subaccount",
+            args_schema=GetSubaccountAssignmentsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=monthly_subaccount_cm_costs,
+            name="monthlySubaccountCmCosts",
+            description="Get monthly subaccount costs from consumption-based commercial model billing",
+            args_schema=MonthlySubaccountCmCostsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=monthly_usage,
+            name="monthlyUsage",
+            description="Get monthly usage report across all services in the global account",
+            args_schema=MonthlyUsageInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=cloud_credits_details,
+            name="cloudCreditsDetails",
+            description="Get cloud credits balance and consumption details",
+            args_schema=CloudCreditsDetailsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_app_metrics,
+            name="GET_accounts-subaccountName-apps-appName-metrics",
+            description="Get runtime metrics for a specific application in a subaccount",
+            args_schema=GetAppMetricsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_app_state,
+            name="GET_accounts-subaccountName-apps-appName-state",
+            description="Get the running state of a specific application in a subaccount",
+            args_schema=GetAppStateInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_usage_records,
+            name="get_usage-records",
+            description="Get subscription billing usage records",
+            args_schema=GetUsageRecordsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_environment_instances,
+            name="getEnvironmentInstances",
+            description="Get all environment instances (Kyma, Cloud Foundry) provisioned in the global account",
+            args_schema=GetEnvironmentInstancesInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_available_environments,
+            name="getAvailableEnvironments",
+            description="Get available environment types that can be provisioned",
+            args_schema=GetAvailableEnvironmentsInput,
+        ),
+    ]
 
 
 class BTPGuardianAgent:
     SUPPORTED_CONTENT_TYPES = ["text", "text/plain"]
 
-    def __init__(self):
-        from langchain_litellm import ChatLiteLLM
+    def __init__(
+        self,
+        accounts_client: Client | None = None,
+        entitlements_client: Client | None = None,
+        consumption_client: Client | None = None,
+        metrics_client: Client | None = None,
+        usage_records_client: Client | None = None,
+        provisioning_client: Client | None = None,
+    ):
+        self._accounts_client = accounts_client or Client(destination_name=DEST_ACCOUNTS)
+        self._entitlements_client = entitlements_client or Client(destination_name=DEST_ENTITLEMENTS)
+        self._consumption_client = consumption_client or Client(destination_name=DEST_RESOURCE_CONSUMPTION)
+        self._metrics_client = metrics_client or Client(destination_name=DEST_METRICS)
+        self._usage_records_client = usage_records_client or Client(destination_name=DEST_USAGE_RECORDS)
+        self._provisioning_client = provisioning_client or Client(destination_name=DEST_PROVISIONING)
 
-        self.llm = ChatLiteLLM(model=get_model_name(), temperature=get_temperature())
-        self._tools = None
+        self._llm: BaseChatModel | None = None
+        self._tools: list | None = None
         self._graph = None
+
+    # ------------------------------------------------------------------
+    # Client properties (for testing / injection)
+    # ------------------------------------------------------------------
+
+    @property
+    def accounts_client(self) -> Client:
+        return self._accounts_client
+
+    @property
+    def entitlements_client(self) -> Client:
+        return self._entitlements_client
+
+    @property
+    def consumption_client(self) -> Client:
+        return self._consumption_client
+
+    @property
+    def metrics_client(self) -> Client:
+        return self._metrics_client
+
+    @property
+    def usage_records_client(self) -> Client:
+        return self._usage_records_client
+
+    @property
+    def provisioning_client(self) -> Client:
+        return self._provisioning_client
+
+    # ------------------------------------------------------------------
+    # Lazy LLM initialisation
+    # ------------------------------------------------------------------
+
+    async def _get_llm(self) -> BaseChatModel:
+        if self._llm is None:
+            from aicore import init_llm_from_destination
+            self._llm = await init_llm_from_destination(
+                get_model_name(), temperature=get_temperature()
+            )
+        return self._llm
 
     # ------------------------------------------------------------------
     # Tool loading
     # ------------------------------------------------------------------
 
-    async def _get_tools(self) -> list:
+    def _get_tools(self) -> list:
         if self._tools is None:
-            self._tools = await get_mcp_tools()
+            self._tools = _build_domain_tools(
+                accounts_client=self._accounts_client,
+                entitlements_client=self._entitlements_client,
+                consumption_client=self._consumption_client,
+                metrics_client=self._metrics_client,
+                usage_records_client=self._usage_records_client,
+                provisioning_client=self._provisioning_client,
+            )
             logger.info(
-                "MCP tools loaded: %d tool(s) — %s",
+                "Domain tools built: %d tool(s) — %s",
                 len(self._tools),
                 [t.name for t in self._tools],
             )
@@ -108,8 +519,8 @@ class BTPGuardianAgent:
     # LangGraph construction
     # ------------------------------------------------------------------
 
-    def _build_graph(self, tools):
-        llm_with_tools = self.llm.bind_tools(tools)
+    def _build_graph(self, tools, llm):
+        llm_with_tools = llm.bind_tools(tools)
         tool_node = ToolNode(tools)
 
         def should_continue(state: MessagesState) -> Literal["tools", "__end__"]:
@@ -134,13 +545,13 @@ class BTPGuardianAgent:
 
     async def _get_graph(self):
         if self._graph is None:
-            tools = await self._get_tools()
-            self._graph = self._build_graph(tools)
+            llm = await self._get_llm()
+            tools = self._get_tools()
+            self._graph = self._build_graph(tools, llm)
         return self._graph
 
     # ------------------------------------------------------------------
-    # Business logic helper — instrumented separately from stream()
-    # to avoid wrapping yield inside a span context (GeneratorExit risk)
+    # Business logic helper
     # ------------------------------------------------------------------
 
     @tracer.start_as_current_span("btp-guardian.run-agent")
@@ -153,15 +564,11 @@ class BTPGuardianAgent:
         graph = await self._get_graph()
         result = await graph.ainvoke({"messages": messages})
         response = result["messages"][-1].content
-
-        # Milestone instrumentation is emitted by the LLM tool-call path;
-        # log overall completion here.
         logger.info("btp-guardian.run-agent completed for context_id=%s", context_id)
         return response
 
     # ------------------------------------------------------------------
     # Milestone instrumentation helpers
-    # (called explicitly from tools / post-processing if needed)
     # ------------------------------------------------------------------
 
     @tracer.start_as_current_span("M1-account-topology")
@@ -248,7 +655,6 @@ class BTPGuardianAgent:
             "content": "Querying BTP platform data...",
         }
         try:
-            # All business logic is in _run_agent() — never instrument yield
             response = await self._run_agent(query, context_id)
             yield {
                 "is_task_complete": True,

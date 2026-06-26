@@ -1,4 +1,5 @@
 import logging
+import os
 
 from a2a.server.agent_execution import AgentExecutor as A2AAgentExecutor, RequestContext
 from a2a.server.events import EventQueue
@@ -16,6 +17,12 @@ from a2a.utils.errors import ServerError
 from agent import SampleAgent
 
 logger = logging.getLogger(__name__)
+
+# Dual-mode gate: on Joule (JOULE_RUNTIME=1), MCP tools are loaded from the
+# Agent Gateway. On Cloud Foundry (JOULE_RUNTIME unset), direct API clients
+# are used — get_mcp_tools is never called.
+if os.environ.get("JOULE_RUNTIME"):
+    from mcp_tools import get_mcp_tools  # noqa: E402
 
 
 class AgentExecutor(A2AAgentExecutor):
