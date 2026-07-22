@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Extension Asset",
+  "description": "Schema for agent extension asset definition",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "type", "sourceRoot"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "asset.sap/v1",
+      "description": "API version"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Asset",
+      "description": "Resource type, must be 'Asset'"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Identifying name for the asset",
+          "pattern": "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$"
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of this asset",
+          "default": "1.0.0"
+        }
+      }
+    },
+    "type": {
+      "type": "string",
+      "const": "agent-extension",
+      "description": "Asset type"
+    },
+    "sourceRoot": {
+      "type": "string",
+      "description": "Root directory where Agent Extension files are located",
+      "default": "agent-extensions"
+    },
+    "provides": {
+      "type": "object",
+      "required": ["extensions"],
+      "properties": {
+        "extensions": {
+          "type": "array",
+          "description": "List of agent extensions provided by this asset",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["descriptorFile", "name"],
+            "properties": {
+              "descriptorFile": {
+                "type": "string",
+                "description": "Path to the extension descriptor YAML file",
+                "pattern": "^.+\\.ya?ml$"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable extension name"
+              }
+            }
+          }
+        }
+      }
+    },
+    "requires": {
+      "type": "array",
+      "description": "List of asset dependencies required by this agent extension. MUST include at least one entry with type 'agent'.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "version"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the required asset"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["domain-model-extension", "agent", "n8n-workflow", "mcp"],
+            "description": "Type of the required asset"
+          },
+          "version": {
+            "type": "string",
+            "description": "Compatible version of the required asset",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "ordId": {
+            "type": "string",
+            "description": "ORD ID of the required asset for discoverability and platform integration"
+          },
+          "id": {
+            "type": "string",
+            "description": "ID of the required asset (e.g. workflow ID)"
+          }
+        }
+      }
+    }
+  }
+}

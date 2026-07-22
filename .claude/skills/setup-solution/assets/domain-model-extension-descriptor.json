@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Domain Model Extension Descriptor",
+  "description": "Schema for extension.yaml descriptor file referenced by domain-model-extension assets. Contains the actual extension definition with entities, fields, and translations.",
+  "type": "object",
+  "required": ["appNameSpace", "extensions"],
+  "properties": {
+    "appNameSpace": {
+      "type": "string",
+      "description": "Namespace of the application being extended (e.g., 'sample-app', 'demoapp-dev-eu12')"
+    },
+    "extensions": {
+      "type": "array",
+      "description": "List of extension projects",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["extensionProject", "entities"],
+        "properties": {
+          "extensionProject": {
+            "type": "object",
+            "required": ["name", "description"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Extension project name (typically uppercase with hyphens)"
+              },
+              "description": {
+                "type": "string",
+                "description": "Human-readable description of the extension project"
+              },
+              "customAttributes": {
+                "type": "array",
+                "description": "Custom attributes for the extension project",
+                "default": []
+              }
+            }
+          },
+          "types": {
+            "type": "array",
+            "description": "Custom types defined for this extension",
+            "items": {
+              "type": "object"
+            },
+            "default": []
+          },
+          "entities": {
+            "type": "array",
+            "description": "Entity extensions defined in this extension",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["entityName", "displayName", "isParametric", "fields"],
+              "properties": {
+                "entityName": {
+                  "type": "string",
+                  "description": "Full entity name including namespace (e.g., 'my.bookshop.Addresses')"
+                },
+                "displayName": {
+                  "type": "string",
+                  "description": "Human-readable entity name (e.g., 'Addresses')"
+                },
+                "isParametric": {
+                  "type": "boolean",
+                  "description": "Whether the entity is parametric",
+                  "default": false
+                },
+                "fields": {
+                  "type": "array",
+                  "description": "Fields to add to the entity",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "required": ["fieldName", "isKey", "type", "fieldLabel"],
+                    "properties": {
+                      "fieldName": {
+                        "type": "string",
+                        "description": "Field name (must start with letter, alphanumeric and underscores only)",
+                        "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
+                      },
+                      "isKey": {
+                        "type": "boolean",
+                        "description": "Whether this field is a key field",
+                        "default": false
+                      },
+                      "type": {
+                        "type": "object",
+                        "required": ["name", "isExtended", "isBase"],
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "Data type name (e.g., 'String', 'Integer', 'Boolean', 'Date', 'DateTime', 'Decimal', 'Double', 'LargeString')"
+                          },
+                          "isExtended": {
+                            "type": "boolean",
+                            "description": "Whether the type is an extended type",
+                            "default": false
+                          },
+                          "isBase": {
+                            "type": "boolean",
+                            "description": "Whether the type is a base type",
+                            "default": true
+                          }
+                        }
+                      },
+                      "fieldLabel": {
+                        "type": "string",
+                        "description": "Human-readable label for the field"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "translations": {
+            "type": "array",
+            "description": "i18n translations for extended fields",
+            "items": {
+              "type": "object",
+              "required": ["entityName", "locale", "translationKey", "translationValue"],
+              "properties": {
+                "entityName": {
+                  "type": "string",
+                  "description": "Full entity name the translation applies to"
+                },
+                "locale": {
+                  "type": "string",
+                  "description": "Locale code (e.g., 'de', 'fr', 'es')"
+                },
+                "translationKey": {
+                  "type": "string",
+                  "description": "i18n translation key (e.g., '{i18n>fieldName}')"
+                },
+                "translationValue": {
+                  "type": "string",
+                  "description": "Translated value for the field label"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

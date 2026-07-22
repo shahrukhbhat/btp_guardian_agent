@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "mcp-server Asset",
+  "description": "Schema for mcp-server asset definition. An MCP server is a metadata asset that maps API operations to MCP tools via a translation file.",
+  "type": "object",
+  "required": ["kind", "type", "metadata"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "asset.sap/v1",
+      "description": "API version"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Asset",
+      "description": "Asset kind must be 'Asset'"
+    },
+    "type": {
+      "type": "string",
+      "const": "mcp-translation",
+      "description": "Asset type must be 'mcp-translation'"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Identifying name for the asset. Follow naming convention: {domain}-{purpose}-mcp-server (e.g., s4-dispute-mcp-server).",
+          "pattern": "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$"
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of this asset",
+          "default": "1.0.0"
+        },
+        "translation": {
+          "type": "string",
+          "description": "Relative path to the translation file (MCP-to-API protocol mappings).",
+          "default": "mcp-translation/translation.json"
+        }
+      }
+    }
+  }
+}

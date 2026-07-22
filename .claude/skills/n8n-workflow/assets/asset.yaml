@@ -1,0 +1,16 @@
+apiVersion: asset.sap/v1  # API version
+kind: Asset               # Resource type
+
+metadata:                 # Asset identity - modifying the name after deployment will cause breaking changes (such as URLs of the deployed asset)
+  name: <asset-name>      # Identifying name using kebab case (only lower case chars and dashes, max 63 chars)
+  version: 1.0.0          # Semantic version of this asset
+
+type: n8n-workflow        # Asset type
+sourceRoot: "workflows"   # Root directory where workflow files are located
+
+provides:
+  workflows:
+    - definitionFile: <file-name-1>.n8n.json
+      name: <workflow-name-1> # Kebad-case Human Readable Name of the workflow
+    - definitionFile: <file-name-2>.n8n.json
+      name: <workflow-name-2> # Kebad-case Human Readable Name of the workflow

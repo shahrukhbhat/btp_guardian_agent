@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Domain Model Extension Asset",
+  "description": "Schema for domain model extension asset definition. A domain model extension adds custom fields to existing CAP entities.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "type", "sourceRoot", "provides"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "asset.sap/v1",
+      "description": "API version"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Asset",
+      "description": "Resource type, must be 'Asset'"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Extension name in kebab-case (e.g., 'bookshop-addresses-extension')",
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of this asset",
+          "default": "1.0.0"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the extension"
+        }
+      }
+    },
+    "type": {
+      "type": "string",
+      "const": "domain-model-extension",
+      "description": "Asset type must be 'domain-model-extension'"
+    },
+    "sourceRoot": {
+      "type": "string",
+      "description": "Root directory for extension files",
+      "default": "."
+    },
+    "provides": {
+      "type": "object",
+      "required": ["extensions"],
+      "properties": {
+        "extensions": {
+          "type": "array",
+          "description": "List of domain model extensions provided by this asset",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["descriptorFile", "name"],
+            "properties": {
+              "descriptorFile": {
+                "type": "string",
+                "description": "Path to the extension descriptor YAML file (typically extension.yaml)",
+                "pattern": "^.+\\.ya?ml$"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable extension name"
+              }
+            }
+          }
+        }
+      }
+    },
+    "requires": {
+      "type": "array",
+      "description": "Dependencies required for this extension",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the dependency asset"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the dependency asset"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the dependency asset"
+          },
+          "ordId": {
+            "type": "string",
+            "description": "Optional ORD ID for better discoverability"
+          }
+        }
+      }
+    }
+  }
+}

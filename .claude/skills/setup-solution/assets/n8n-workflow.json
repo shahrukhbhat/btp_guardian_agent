@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "n8n-workflow Asset",
+  "description": "Schema for n8n-workflow asset definition",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "type", "sourceRoot", "provides"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "asset.sap/v1",
+      "description": "API version"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Asset",
+      "description": "Resource type, must be 'Asset'"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Identifying name for the asset",
+          "pattern": "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$"
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of this asset",
+          "default": "1.0.0"
+        }
+      }
+    },
+    "type": {
+      "type": "string",
+      "const": "n8n-workflow",
+      "description": "Asset type"
+    },
+    "sourceRoot": {
+      "type": "string",
+      "description": "Root directory where workflow files are located",
+      "default": "workflows"
+    },
+    "provides": {
+      "type": "object",
+      "required": ["workflows"],
+      "properties": {
+        "workflows": {
+          "type": "array",
+          "description": "List of workflows exposed by this asset",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["definitionFile", "name"],
+            "properties": {
+              "definitionFile": {
+                "type": "string",
+                "description": "Path to the n8n workflow JSON file (must end in .n8n.json)",
+                "pattern": "^.+\\.n8n\\.json$"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable workflow name"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
