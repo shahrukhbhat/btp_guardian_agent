@@ -24,9 +24,10 @@ env = {
 }
 
 port = sys.argv[1] if len(sys.argv) > 1 else "5000"
+env["PORT"] = port
 
 subprocess.run(
-    [sys.executable, str(MAIN_PY), "--port", port],
+    [sys.executable, str(MAIN_PY)],
     cwd=str(MAIN_PY.parent),
     env=env,
 )

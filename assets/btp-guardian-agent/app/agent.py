@@ -498,8 +498,19 @@ class BTPGuardianAgent:
     # Tool loading
     # ------------------------------------------------------------------
 
-    def _get_tools(self) -> list:
+    async def _get_tools(self) -> list:
         if self._tools is None:
+            # Local/test mode: serve mocked MCP tools from mcp-mock.json instead
+            # of hitting real BTP APIs (which need a destination service binding).
+            if os.environ.get("IBD_TESTING") == "1":
+                from mcp_tools import get_mcp_tools
+                self._tools = await get_mcp_tools()
+                logger.info(
+                    "Mock MCP tools loaded (IBD_TESTING=1): %d tool(s) — %s",
+                    len(self._tools),
+                    [t.name for t in self._tools],
+                )
+                return self._tools
             self._tools = _build_domain_tools(
                 accounts_client=self._accounts_client,
                 entitlements_client=self._entitlements_client,
@@ -546,7 +557,7 @@ class BTPGuardianAgent:
     async def _get_graph(self):
         if self._graph is None:
             llm = await self._get_llm()
-            tools = self._get_tools()
+            tools = await self._get_tools()
             self._graph = self._build_graph(tools, llm)
         return self._graph
 
