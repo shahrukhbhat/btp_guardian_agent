@@ -158,6 +158,7 @@ def _build_domain_tools(
             params["directoryGUID"] = directoryGUID
         if labelSelector:
             params["labelSelector"] = labelSelector
+        params["derivedAuthorizations"] = "any"
         result = await accounts_client.get("/accounts/v1/subaccounts", params=params)
         return json.dumps(result)
 

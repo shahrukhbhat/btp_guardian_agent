@@ -67,6 +67,7 @@ class Destination:
     sap_client: str | None = None
     proxy_type: str = "Internet"
     additional: dict[str, str] = field(default_factory=dict)
+    bearer_token: str | None = None  # injected by Destination Service for OAuth2 types
 
 
 @dataclass
@@ -140,6 +141,15 @@ class _DestinationResolver:
         d_url = (cfg.get("URL") or "").rstrip("/")
         if not d_url:
             raise RuntimeError(f"Destination '{name}' has no URL configured.")
+        # Extract bearer token injected by Destination Service for OAuth2 destination types
+        auth_tokens = body.get("authTokens") or []
+        bearer_token: str | None = None
+        if auth_tokens:
+            first = auth_tokens[0]
+            if not first.get("error"):
+                bearer_token = first.get("value")
+            else:
+                logger.warning("Destination '%s' authTokens error: %s", name, first.get("error"))
         well_known = {
             "URL", "Name", "Type", "Authentication", "ProxyType",
             "User", "Password", "sap-client", "SAP-Client", "sap_client",
@@ -153,6 +163,7 @@ class _DestinationResolver:
             sap_client=None,  # BTP REST APIs do not use sap-client
             proxy_type=cfg.get("ProxyType", "Internet"),
             additional=additional,
+            bearer_token=bearer_token,
         )
         self._dest_cache[name] = (dest, time.monotonic() + DEST_CACHE_TTL)
         return dest
@@ -194,8 +205,10 @@ class Client:
             return httpx.BasicAuth(dest.username, dest.password)
         return None
 
-    def _base_headers(self, user_identity: str | None) -> dict[str, str]:
+    def _base_headers(self, dest: Destination, user_identity: str | None) -> dict[str, str]:
         h = {"Accept": "application/json"}
+        if dest.bearer_token:
+            h["Authorization"] = f"Bearer {dest.bearer_token}"
         if user_identity:
             h["X-User-Identity"] = user_identity
         return h
@@ -212,7 +225,7 @@ class Client:
     ) -> dict[str, Any]:
         dest = await self.destination()
         merged: dict[str, Any] = dict(params or {})
-        headers = self._base_headers(user_identity)
+        headers = self._base_headers(dest, user_identity)
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             r = await client.get(
                 self._build_url(dest.url, service_path),
@@ -241,7 +254,7 @@ class Client:
         user_identity: str | None = None,
     ) -> dict[str, Any]:
         dest = await self.destination()
-        headers = self._base_headers(user_identity)
+        headers = self._base_headers(dest, user_identity)
         headers["Content-Type"] = "application/json"
         # CSRF_REQUIRED = False for all BTP REST APIs — no CSRF fetch needed
         async with httpx.AsyncClient(timeout=self._timeout) as client:

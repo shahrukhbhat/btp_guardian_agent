@@ -1,19 +1,36 @@
-__pycache__/
-*.pyc
-.pytest_cache/
-.coverage
-coverage.json
-test_report.json
-htmlcov/
+# Local dev environments
+.venv/
+.venv
+
+# Joule/Kyma-only vendored wheels (triggers vendored pip mode if present)
+vendor/
+vendor
+
+# Test infrastructure
 tests/
 prebuilt_tests/
 conftest.py
 pytest.ini
 .coveragerc
 requirements-test.txt
+coverage.json
+test_report.json
+.coverage
+htmlcov/
+
+# Joule/Kyma-only requirements (click version conflicts with CF)
 requirements-joule.txt
-migration-audit/
+
+# Dev/CI artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.pytest_cache/
+
+# Project/Joule metadata (not needed at runtime)
 README.md
 asset.yaml
 solution.yaml
-*.log
+uv.toml
+migration-audit/
