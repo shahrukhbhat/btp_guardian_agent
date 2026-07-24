@@ -64,6 +64,12 @@ def get_temperature() -> float:
     return 0.0
 
 
+# gen_ai_hub's init_llm defaults max_tokens to 256, which clips long answers
+# (topology/entitlement listings) mid-sentence. Set an explicit, larger cap.
+def get_max_tokens() -> int:
+    return int(os.environ.get("AGENT_LLM_MAX_TOKENS", "4096"))
+
+
 @prompt_section(
     key="prompts.system",
     label="System Prompt",
@@ -491,7 +497,9 @@ class BTPGuardianAgent:
         if self._llm is None:
             from aicore import init_llm_from_destination
             self._llm = await init_llm_from_destination(
-                get_model_name(), temperature=get_temperature()
+                get_model_name(),
+                temperature=get_temperature(),
+                max_tokens=get_max_tokens(),
             )
         return self._llm
 

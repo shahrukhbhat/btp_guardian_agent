@@ -103,15 +103,28 @@ process only).
   `contextId` across turns to preserve conversation context.
 - **`serve.py`** — tiny stdlib (`http.server`) proxy: serves `index.html` and
   forwards `POST /a2a` → the agent's A2A endpoint, streaming the SSE response straight
-  back to the browser (avoids CORS, since Starlette/A2A sends no CORS headers).
-- **Run (two terminals):**
+  back to the browser (avoids CORS, since Starlette/A2A sends no CORS headers). The
+  upstream agent target is configurable (see below); `GET /whoami` returns the resolved
+  target so the UI header can show local vs deployed.
+- **Target selection.** The UI always runs locally, but can point at either agent:
+  - **Local** (default): `python .local-chat-ui/serve.py 8000 8080` → `http://localhost:8080/`
+    (requires the local agent via `run_local.py 8080`).
+  - **Deployed CF** (real BTP data via Destination, no local agent needed):
+    `python .local-chat-ui/serve.py 8000 --target https://btp-guardian-agent.cfapps.eu10.hana.ondemand.com/`
+    or set `AGENT_URL=<cf-url>`. Precedence: `--target`/`--agent-url` flag > positional
+    URL > `AGENT_URL` env > `http://localhost:<agent-port>/`.
+  - The deployed route is recorded in `deploy_result.json`. The deployed A2A endpoint is
+    currently **unauthenticated** — anyone with the URL can query real BTP data through
+    it (fine for a demo; flag if it ever leaves demo use).
+- **Run (local, two terminals):**
   1. `uv run run_local.py 8080` — the agent.
   2. `python .local-chat-ui/serve.py 8000 8080` — UI proxy (`<ui-port> <agent-port>`,
      defaults 8000/8080). Open `http://localhost:8000`.
 - **SSE note:** the agent frames SSE events with CRLF (`\r\n\r\n`) separators, so the
   client normalizes `\r\n`→`\n` before splitting on blank lines. The final answer
   arrives as an `artifact-update` event (`result.artifact.parts[].text`), not the last
-  status message.
+  status message. This contract is identical for the local and deployed agents (same
+  A2A SDK).
 
 ## 4. BTP Platform Tools (13)
 

@@ -119,7 +119,7 @@
   <header>
     <span class="dot" id="statusDot"></span>
     <h1>BTP Guardian Agent</h1>
-    <span class="sub">local demo</span>
+    <span class="sub" id="targetLabel">connecting…</span>
   </header>
 
   <div id="chat">
@@ -154,6 +154,22 @@ const chatEl = document.getElementById("chat");
 const inputEl = document.getElementById("input");
 const sendBtn = document.getElementById("send");
 const statusDot = document.getElementById("statusDot");
+const targetLabel = document.getElementById("targetLabel");
+
+// Show which agent the proxy is pointed at (local vs deployed).
+fetch("/whoami")
+  .then(r => r.json())
+  .then(d => {
+    if (d.isLocal) {
+      targetLabel.textContent = "local · " + d.target;
+    } else {
+      let host = d.target;
+      try { host = new URL(d.target).host; } catch {}
+      targetLabel.textContent = "deployed · " + host;
+    }
+    targetLabel.title = d.target;
+  })
+  .catch(() => { targetLabel.textContent = "local demo"; });
 
 let contextId = null;   // reuse across turns to keep conversation context
 let busy = false;
