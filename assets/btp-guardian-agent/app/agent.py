@@ -91,7 +91,18 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
 - You are read-only — never suggest or imply write or modify operations on BTP resources.
 - When a query requires multiple API calls (e.g. topology then cost), chain them step by step
   and synthesise a single, cohesive answer.
-"""
+
+## Summary vs. detail
+- Entitlement and other large-list tools return a COMPACT SUMMARY by default: heavy nested
+  arrays are collapsed to counts (e.g. a "servicePlansCount" or per-subaccount count). When you
+  present a summary, say so and offer to drill into a specific service or subaccount for the
+  full breakdown.
+- To drill down, re-call the same tool with a scope filter set (e.g. assignedServiceName for
+  global assignments, subaccountGUID for subaccount assignments) AND detailLevel="detail".
+  detailLevel="detail" is ignored unless a scope filter is also set, so always narrow first.
+- If a tool result contains a "_truncated" note or a [TRUNCATED] marker, the data was capped to
+  fit context: tell the user it was capped and suggest narrowing by service, subaccount, or date
+  range."""
 
 
 # ---------------------------------------------------------------------------
@@ -123,6 +134,122 @@ def _enforce_page_size(params: dict, key: str = "$top") -> dict:
     return params
 
 
+# Hard ceiling on characters returned from any tool to the LLM. gpt-4o's 128K
+# context is ~512K chars; a single tool result must stay well under that so the
+# full message history (system prompt + prior turns + tool schemas) still fits.
+# One entitlements payload measured at ~1.5M tokens, which 400s AI Core — this
+# cap is the universal backstop that prevents any tool from overflowing.
+MAX_TOOL_RESULT_CHARS = int(os.environ.get("BTP_MAX_TOOL_RESULT_CHARS", "24000"))
+
+
+def _summarize_record(record, summary_fields, list_keys):
+    """Project one record to summary_fields, replacing heavy nested arrays.
+
+    Nested lists whose key is in list_keys (or, defensively, ANY list-valued
+    field not itself a summary_field) are replaced by an integer count under a
+    "<key>Count" key. Nested dicts/lists under summary_fields are recursed into
+    so nested per-plan arrays also get counted.
+    """
+    if not isinstance(record, dict):
+        return record
+
+    keep = set(summary_fields) if summary_fields else set(record.keys())
+    heavy = set(list_keys) if list_keys else set()
+    out: dict = {}
+    for key, value in record.items():
+        if isinstance(value, list) and (key in heavy or key not in keep):
+            out[f"{key}Count"] = len(value)
+            continue
+        if key not in keep:
+            continue
+        if isinstance(value, list):
+            out[key] = [
+                _summarize_record(v, summary_fields, list_keys) for v in value
+            ]
+        elif isinstance(value, dict):
+            out[key] = _summarize_record(value, summary_fields, list_keys)
+        else:
+            out[key] = value
+    return out
+
+
+def _shape_result(
+    result,
+    *,
+    record_keys=None,
+    summary_fields=None,
+    list_keys=None,
+    detail=False,
+    scoped=False,
+) -> str:
+    """Serialize a tool result for the LLM, shrinking oversized payloads.
+
+    - detail + scoped: return the raw payload untrimmed (the caller has narrowed
+      to one service/subaccount/etc., so it is small and safe).
+    - otherwise: for each record list named in record_keys, project every record
+      to summary_fields and replace heavy nested arrays (list_keys) with a count.
+    - universal backstop: if the serialized string still exceeds
+      MAX_TOOL_RESULT_CHARS, truncate the largest record list and append a
+      machine-readable note telling the model to narrow the query.
+    """
+    import json
+
+    def _dump(obj):
+        return json.dumps(obj, default=str)
+
+    # Detailed + scoped drill-down: caller narrowed the query, return as-is
+    # (still guarded by the char-cap backstop below).
+    if not (detail and scoped) and summary_fields and isinstance(result, dict):
+        shaped = dict(result)
+        keys = record_keys or [
+            k for k, v in result.items() if isinstance(v, list)
+        ]
+        for rk in keys:
+            recs = result.get(rk)
+            if isinstance(recs, list):
+                shaped[rk] = [
+                    _summarize_record(r, summary_fields, list_keys) for r in recs
+                ]
+        result = shaped
+
+    serialized = _dump(result)
+    if len(serialized) <= MAX_TOOL_RESULT_CHARS:
+        return serialized
+
+    # Backstop: still too big. Truncate the largest list-valued field and note it.
+    if isinstance(result, dict):
+        list_fields = [(k, v) for k, v in result.items() if isinstance(v, list)]
+        if list_fields:
+            biggest_key = max(list_fields, key=lambda kv: len(kv[1]))[0]
+            recs = result[biggest_key]
+            # Binary-ish shrink: keep halving the kept slice until it fits.
+            kept = len(recs)
+            while kept > 1:
+                trial = dict(result)
+                trial[biggest_key] = recs[:kept]
+                trial["_truncated"] = {
+                    "field": biggest_key,
+                    "returned": kept,
+                    "total": len(recs),
+                    "note": (
+                        "Result was capped to fit the model context. Narrow the "
+                        "query (by service name, subaccount, or date range) and "
+                        "set detailLevel='detail' to see specific records."
+                    ),
+                }
+                trial_str = _dump(trial)
+                if len(trial_str) <= MAX_TOOL_RESULT_CHARS:
+                    return trial_str
+                kept //= 2
+
+    # Non-dict or unshrinkable: hard truncate the string with a note.
+    note = (
+        '\n\n[TRUNCATED: result exceeded the context limit and was cut. '
+        "Narrow the query and set detailLevel='detail' to see specific records.]"
+    )
+    return serialized[: MAX_TOOL_RESULT_CHARS - len(note)] + note
+
+
 def _build_domain_tools(
     accounts_client: Client,
     entitlements_client: Client,
@@ -135,6 +262,29 @@ def _build_domain_tools(
     from langchain_core.tools import StructuredTool
     from pydantic import BaseModel, Field
 
+    DETAIL_LEVEL_DESC = (
+        "'summary' (default) returns compact fields with heavy nested arrays "
+        "replaced by counts; 'detail' returns full records but ONLY when a "
+        "specific scope filter is also set (e.g. assignedServiceName for "
+        "entitlements, subaccountGUID for subaccount assignments). Use 'detail' "
+        "on a follow-up turn when the user asks to drill into one service or "
+        "subaccount."
+    )
+
+    # Fields kept when summarizing entitlement records. Heavy nested per-subaccount
+    # assignment arrays (not in this set) are replaced by counts.
+    ENTITLEMENT_SUMMARY_FIELDS = [
+        "name",
+        "displayName",
+        "servicePlans",
+        "amount",
+        "remainingAmount",
+        "usedAmount",
+        "unitOfMeasure",
+        "autoAssign",
+        "category",
+    ]
+
     # -----------------------------------------------------------------------
     # Accounts Service tools
     # -----------------------------------------------------------------------
@@ -143,12 +293,11 @@ def _build_domain_tools(
         expand: bool = Field(default=False, description="Whether to expand child entities")
 
     async def get_global_account(expand: bool = False) -> str:
-        import json
         result = await accounts_client.get(
             "/accounts/v1/globalAccount",
             params={"expand": str(expand).lower()},
         )
-        return json.dumps(result)
+        return _shape_result(result)
 
     class GetSubaccountsInput(BaseModel):
         directoryGUID: str | None = Field(default=None, description="Filter by directory GUID")
@@ -158,7 +307,6 @@ def _build_domain_tools(
         directoryGUID: str | None = None,
         labelSelector: str | None = None,
     ) -> str:
-        import json
         params: dict = {}
         if directoryGUID:
             params["directoryGUID"] = directoryGUID
@@ -166,19 +314,18 @@ def _build_domain_tools(
             params["labelSelector"] = labelSelector
         params["derivedAuthorizations"] = "any"
         result = await accounts_client.get("/accounts/v1/subaccounts", params=params)
-        return json.dumps(result)
+        return _shape_result(result)
 
     class GetDirectoriesInput(BaseModel):
         expand: bool = Field(default=True, description="Whether to include subaccounts in response")
 
     async def get_directories(expand: bool = True) -> str:
-        import json
         # Directories are retrieved via global account with expand
         result = await accounts_client.get(
             "/accounts/v1/globalAccount",
             params={"expand": str(expand).lower()},
         )
-        return json.dumps(result)
+        return _shape_result(result)
 
     # -----------------------------------------------------------------------
     # Entitlements Service tools
@@ -191,19 +338,28 @@ def _build_domain_tools(
         assignedServiceName: str | None = Field(
             default=None, description="Filter by service technical name"
         )
+        detailLevel: Literal["summary", "detail"] = Field(
+            default="summary", description=DETAIL_LEVEL_DESC
+        )
 
     async def get_global_account_assignments(
         entitledServicesOnly: bool = False,
         assignedServiceName: str | None = None,
+        detailLevel: Literal["summary", "detail"] = "summary",
     ) -> str:
-        import json
         params: dict = {"entitledServicesOnly": str(entitledServicesOnly).lower()}
         if assignedServiceName:
             params["assignedServiceName"] = assignedServiceName
         result = await entitlements_client.get(
             "/entitlements/v1/globalAccountAssignments", params=params
         )
-        return json.dumps(result)
+        return _shape_result(
+            result,
+            record_keys=["entitledServices", "assignments"],
+            summary_fields=ENTITLEMENT_SUMMARY_FIELDS,
+            detail=(detailLevel == "detail"),
+            scoped=bool(assignedServiceName),
+        )
 
     class GetSubaccountAssignmentsInput(BaseModel):
         subaccountGUID: str | None = Field(
@@ -212,19 +368,28 @@ def _build_domain_tools(
         entitledServicesOnly: bool = Field(
             default=False, description="Return only entitled services"
         )
+        detailLevel: Literal["summary", "detail"] = Field(
+            default="summary", description=DETAIL_LEVEL_DESC
+        )
 
     async def get_subaccount_assignments(
         subaccountGUID: str | None = None,
         entitledServicesOnly: bool = False,
+        detailLevel: Literal["summary", "detail"] = "summary",
     ) -> str:
-        import json
         params: dict = {"entitledServicesOnly": str(entitledServicesOnly).lower()}
         if subaccountGUID:
             params["subaccountGUID"] = subaccountGUID
         result = await entitlements_client.get(
             "/entitlements/v1/assignments", params=params
         )
-        return json.dumps(result)
+        return _shape_result(
+            result,
+            record_keys=["entitledServices", "assignments"],
+            summary_fields=ENTITLEMENT_SUMMARY_FIELDS,
+            detail=(detailLevel == "detail"),
+            scoped=bool(subaccountGUID),
+        )
 
     # -----------------------------------------------------------------------
     # Resource Consumption tools
@@ -240,7 +405,6 @@ def _build_domain_tools(
         top: int = 100,
         skip: int | None = None,
     ) -> str:
-        import json
         params: dict = _enforce_page_size({"$top": top}, "$top")
         if filter:
             params["$filter"] = filter
@@ -249,7 +413,7 @@ def _build_domain_tools(
         result = await consumption_client.get(
             "/odata/MonthlySubaccountCmCosts", params=params
         )
-        return json.dumps(result)
+        return _shape_result(result)
 
     class MonthlyUsageInput(BaseModel):
         fromDate: str | None = Field(
@@ -263,14 +427,13 @@ def _build_domain_tools(
         fromDate: str | None = None,
         toDate: str | None = None,
     ) -> str:
-        import json
         params: dict = {}
         if fromDate:
             params["fromDate"] = fromDate
         if toDate:
             params["toDate"] = toDate
         result = await consumption_client.get("/reports/v1/monthlyUsage", params=params)
-        return json.dumps(result)
+        return _shape_result(result)
 
     class CloudCreditsDetailsInput(BaseModel):
         viewPhases: str | None = Field(
@@ -278,14 +441,13 @@ def _build_domain_tools(
         )
 
     async def cloud_credits_details(viewPhases: str | None = None) -> str:
-        import json
         params: dict = {}
         if viewPhases:
             params["viewPhases"] = viewPhases
         result = await consumption_client.get(
             "/reports/v1/cloudCreditsDetails", params=params
         )
-        return json.dumps(result)
+        return _shape_result(result)
 
     # -----------------------------------------------------------------------
     # Metrics API tools
@@ -296,22 +458,20 @@ def _build_domain_tools(
         appName: str = Field(description="Application name")
 
     async def get_app_metrics(subaccountName: str, appName: str) -> str:
-        import json
         result = await metrics_client.get(
             f"/accounts/{subaccountName}/apps/{appName}/metrics"
         )
-        return json.dumps(result)
+        return _shape_result(result)
 
     class GetAppStateInput(BaseModel):
         subaccountName: str = Field(description="Subaccount technical name")
         appName: str = Field(description="Application name")
 
     async def get_app_state(subaccountName: str, appName: str) -> str:
-        import json
         result = await metrics_client.get(
             f"/accounts/{subaccountName}/apps/{appName}/state"
         )
-        return json.dumps(result)
+        return _shape_result(result)
 
     # -----------------------------------------------------------------------
     # Usage Records tools
@@ -321,10 +481,9 @@ def _build_domain_tools(
         limit: int = Field(default=100, description="Maximum number of records (max 100)")
 
     async def get_usage_records(limit: int = 100) -> str:
-        import json
         params = _enforce_page_size({"limit": limit}, "limit")
         result = await usage_records_client.get("/usage-records", params=params)
-        return json.dumps(result)
+        return _shape_result(result)
 
     # -----------------------------------------------------------------------
     # Provisioning Service tools
@@ -336,22 +495,20 @@ def _build_domain_tools(
         )
 
     async def get_environment_instances(subaccountGUID: str | None = None) -> str:
-        import json
         params: dict = {}
         if subaccountGUID:
             params["subaccountGUID"] = subaccountGUID
         result = await provisioning_client.get(
             "/provisioning/v1/environments", params=params
         )
-        return json.dumps(result)
+        return _shape_result(result)
 
     class GetAvailableEnvironmentsInput(BaseModel):
         pass
 
     async def get_available_environments() -> str:
-        import json
         result = await provisioning_client.get("/provisioning/v1/availableEnvironments")
-        return json.dumps(result)
+        return _shape_result(result)
 
     # -----------------------------------------------------------------------
     # Assemble tool list

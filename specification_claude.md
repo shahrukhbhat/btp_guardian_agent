@@ -148,6 +148,31 @@ All backed by direct REST calls in CF mode; each service has its own destination
 
 Pagination is capped at 100 (`MAX_PAGE_SIZE`) on tools that accept `$top`/`limit`.
 
+### 4.1 Response shaping (summary/detail) — context-overflow guard
+
+Every tool routes its result through `_shape_result()` (in `agent.py`) before returning
+it to the LLM, instead of a blind `json.dumps(result)`. This prevents a single tool
+payload from overflowing gpt-4o's 128K context (a real entitlements payload measured at
+~1.5M tokens, which 400'd AI Core with `context_length_exceeded`).
+
+- **Summary by default.** Entitlement tools (`getGlobalAccountAssignments`,
+  `getSubaccountAssignments`) project each record to an allow-list of fields
+  (`ENTITLEMENT_SUMMARY_FIELDS`) and replace heavy nested per-subaccount arrays with an
+  integer `<key>Count`. Any list-valued field not in the allow-list is defensively
+  counted too, so unknown/future heavy fields can't reintroduce overflow.
+- **Drill-down on follow-up.** Both entitlement tools accept
+  `detailLevel: "summary" | "detail"` (default `summary`). `detail` returns the raw
+  record **only when a scope filter is also set** (`assignedServiceName` for global,
+  `subaccountGUID` for subaccount) — i.e. `detail` is ignored unless `scoped`. `contextId`
+  persistence lets the LLM issue the scoped detail call on the next turn.
+- **Universal char-cap backstop.** All 13 tools are bounded by
+  `MAX_TOOL_RESULT_CHARS` (default 24000, env `BTP_MAX_TOOL_RESULT_CHARS`). If a
+  serialized result still exceeds the cap, the largest record list is truncated and a
+  machine-readable `_truncated` note (or `[TRUNCATED]` marker for non-dict/unshrinkable
+  payloads) is appended, instructing the model to narrow by service/subaccount/date.
+- The system prompt (§7) documents this contract so the model summarizes, offers to drill
+  down, and surfaces capped-data notes to the user.
+
 ## 5. Deployment (Cloud Foundry, eu10)
 
 - **Manifest:** `manifest.yml` — 512M / 1G disk, 1 instance, python buildpack,
@@ -186,6 +211,12 @@ Pagination is capped at 100 (`MAX_PAGE_SIZE`) on tools that accept `$top`/`limit
      auth and ignored `authTokens`, causing 401/403 → surfaced as 404s).
 - ✅ Account topology, entitlements, consumption, and provisioning queries return
   real data.
+- ✅ **Context-overflow fixed** via summary/detail response shaping (§4.1). Entitlement
+  queries previously 400'd AI Core with `context_length_exceeded` (~1.5M-token payload);
+  all 13 tools now route through `_shape_result` (summary-by-default + drill-down +
+  universal char-cap backstop). Verified locally end-to-end against the real LLM:
+  summary answer, scoped `detailLevel="detail"` drill-down, and topology regression all
+  pass; unit-tested the backstop truncation + `_truncated` note.
 
 ### By design (not bugs)
 - 🔒 Agent is **read-only** — the system prompt forbids write/modify operations, so
@@ -198,6 +229,10 @@ Pagination is capped at 100 (`MAX_PAGE_SIZE`) on tools that accept `$top`/`limit
   end-to-end).
 - ⏳ Metrics/Usage/Consumption share the `account-budgets-service` host — validate the
   exact paths return data for the target global account.
+- ⏳ **Deployed verification of the overflow fix:** after `cf push`, re-run the coena
+  entitlements query via `.local-chat-ui --target <CF url>` and confirm in `cf logs` that
+  the AI Core `chat/completions` returns **200** (not 400 `context_length_exceeded`), plus
+  a scoped drill-down follow-up.
 
 ## 7. Constraints & Conventions
 
