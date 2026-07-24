@@ -1,6 +1,6 @@
 # BTP Guardian Agent — Project Specification & Current Status
 
-_Last updated: 2026-07-23_
+_Last updated: 2026-07-24_
 
 ## 1. Overview
 
@@ -173,6 +173,35 @@ payload from overflowing gpt-4o's 128K context (a real entitlements payload meas
 - The system prompt (§7) documents this contract so the model summarizes, offers to drill
   down, and surfaces capped-data notes to the user.
 
+### 4.2 API-spec conformance audit (2026-07-24)
+
+Before the last `cf push`, all 13 tools were audited against the authoritative OpenAPI
+specs in `specification/btp-guardian-agent/api-specs/` (verified directly against the JSON).
+Six discrepancies were found and fixed in `agent.py`:
+
+1. **Entitlements record keys.** The top-level response keys are `entitledServices[]` and
+   `assignedServices[]` (NOT `assignments`). Both entitlement tools now shape
+   `record_keys=["entitledServices", "assignedServices"]`. The heavy per-subaccount array
+   is `assignedServices[].servicePlans[].assignmentInfo[]`; entitled plans carry heavy
+   `dataCenters[]`/`resources[]`/`sourceEntitlements[]`. Fields `usedAmount`/`unitOfMeasure`
+   do **not** exist on plans. **This was the critical bug** — the wrong key silently
+   disabled summary shaping and would have reintroduced the 1.5M-token overflow.
+2. **`monthlyUsage`** — `fromDate` & `toDate` are **required** integers, format `YYYYMM`
+   (e.g. `202401`). Tool normalizes `YYYY-MM` → `YYYYMM` and sends integers.
+3. **`get_usage-records`** — pagination is `pageSize` (default 16, capped 100) + `pageNumber`
+   (1-based); there is no `limit` param. Response is a **bare array**, not `{value:[]}`.
+4. **`getEnvironmentInstances`** — the spec has **no query params**; `subaccountGUID`
+   filtering is done **client-side** over `environmentInstances[]`.
+5. **`cloudCreditsDetails`** — `viewPhases` is a single enum (`CURRENT` default | `ALL`),
+   not comma-separated.
+6. **`getSubaccounts`** — response is `{value: [SubaccountResponseObject]}` with
+   displayName/subdomain/guid; a `name` param does **client-side** case-insensitive
+   substring match (resolves names like "coena" → GUID without misusing `labelSelector`,
+   which must be a URL-encoded `key=value`).
+
+Non-issues verified OK: entitlements `subaccountGUID` param; metrics `/metrics|/state`
+paths; `MonthlySubaccountCmCosts` OData `$top/$skip/$filter/$select/$orderby/$count`.
+
 ## 5. Deployment (Cloud Foundry, eu10)
 
 - **Manifest:** `manifest.yml` — 512M / 1G disk, 1 instance, python buildpack,
@@ -217,6 +246,12 @@ payload from overflowing gpt-4o's 128K context (a real entitlements payload meas
   universal char-cap backstop). Verified locally end-to-end against the real LLM:
   summary answer, scoped `detailLevel="detail"` drill-down, and topology regression all
   pass; unit-tested the backstop truncation + `_truncated` note.
+- ✅ **API-spec conformance audit (§4.2)** — all 13 tools verified against the OpenAPI
+  specs; 6 discrepancies fixed (most critically the entitlements
+  `assignments`→`assignedServices` record-key bug that would have re-triggered the
+  overflow). Re-verified locally end-to-end: entitlements summary (clean "not found" for a
+  non-existent subaccount via client-side name match), drill-down, and topology regression
+  all pass with no errors. **Not yet `cf push`-ed** — pending user go-ahead.
 
 ### By design (not bugs)
 - 🔒 Agent is **read-only** — the system prompt forbids write/modify operations, so
