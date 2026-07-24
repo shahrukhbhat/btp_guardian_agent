@@ -126,6 +126,26 @@ process only).
   status message. This contract is identical for the local and deployed agents (same
   A2A SDK).
 
+### 3.5 Conversation memory (multi-turn)
+
+The LangGraph is compiled with an in-process `MemorySaver` checkpointer, and `_run_agent`
+threads `thread_id = <A2A context_id>` into `graph.ainvoke`. Only the new turn's
+`HumanMessage` is sent each call — the checkpointer replays prior turns — and the
+`SystemMessage` (system prompt + injected current date) is prepended **only on the first
+turn** of a thread (detected via `graph.aget_state`).
+
+- This keys off the A2A `context_id`, which is part of the protocol, so **every** A2A
+  client (Joule, Bruno, the demo UI) gets multi-turn memory — not just the demo UI.
+- Without this, `_run_agent` rebuilt messages from scratch every turn and ignored
+  `context_id`, so the model treated each message in isolation (asked redundant
+  "what are you looking for?" follow-ups, re-resolved the same subaccount repeatedly).
+- **Production caveat:** `MemorySaver` is in-process — memory is lost on app restart and
+  is **not shared across instances**. Fine for the current single-instance deployment,
+  but if the app scales to multiple instances, follow-up turns could land on an instance
+  without the thread's history. For durable/multi-instance memory, swap `MemorySaver` for
+  a persistent checkpointer (e.g. SQLite/Postgres/Redis-backed). No new dependency today:
+  `MemorySaver` ships inside the pinned `langgraph==1.1.9`.
+
 ## 4. BTP Platform Tools (13)
 
 All backed by direct REST calls in CF mode; each service has its own destination.

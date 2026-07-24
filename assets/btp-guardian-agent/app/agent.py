@@ -6,6 +6,7 @@ from typing import AsyncGenerator, Literal
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 from opentelemetry import trace
@@ -87,7 +88,10 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
 - Always set top or equivalent page-size parameters to a maximum of 100 on every tool call
   that accepts them; inform the user when this limit is applied.
 - Never hallucinate data. If a tool returns no results, explicitly state that no data was found.
-- When answering cost queries, always specify the time period and currency.
+- When answering cost queries, always specify the time period and currency. If a cost
+  tool (monthlySubaccountCmCosts / cloudCreditsDetails) returns no rows, do NOT just say
+  "no data": explain the account may be a subscription/commitment model with no
+  consumption-based cost, and offer the monthlyUsage report (usage metrics) instead.
 - Resolve relative dates ("this month", "last month", "this year") using the CURRENT
   DATE provided at the end of this prompt — never assume a fixed year. Cost/usage tools
   expect the period as YYYYMM (e.g. billingPeriod eq '202607' for July 2026); build the
@@ -811,7 +815,10 @@ class BTPGuardianAgent:
             "model", should_continue, {"tools": "tools", "__end__": END}
         )
         builder.add_edge("tools", "model")
-        return builder.compile()
+        # In-process checkpointer keyed by thread_id (=A2A context_id) so the
+        # agent remembers prior turns within a conversation. Lost on restart —
+        # fine for a single-instance demo.
+        return builder.compile(checkpointer=MemorySaver())
 
     async def _get_graph(self):
         if self._graph is None:
@@ -827,18 +834,26 @@ class BTPGuardianAgent:
     @tracer.start_as_current_span("btp-guardian.run-agent")
     async def _run_agent(self, query: str, context_id: str) -> str:
         """Execute the agent reasoning loop and return the final response string."""
-        today = datetime.now(timezone.utc)
-        system_prompt = (
-            f"{get_system_prompt()}\n\n"
-            f"## Current date\n"
-            f"Today is {today:%Y-%m-%d} (UTC). Current month as YYYYMM: {today:%Y%m}."
-        )
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=query),
-        ]
         graph = await self._get_graph()
-        result = await graph.ainvoke({"messages": messages})
+        # Thread the conversation by A2A context_id so the checkpointer replays
+        # prior turns. Only prepend the system prompt on the first turn of a
+        # thread; later turns already have it in the replayed history.
+        config = {"configurable": {"thread_id": context_id or "default"}}
+        existing = await graph.aget_state(config)
+        first_turn = not (existing and existing.values.get("messages"))
+
+        turn_messages = []
+        if first_turn:
+            today = datetime.now(timezone.utc)
+            system_prompt = (
+                f"{get_system_prompt()}\n\n"
+                f"## Current date\n"
+                f"Today is {today:%Y-%m-%d} (UTC). Current month as YYYYMM: {today:%Y%m}."
+            )
+            turn_messages.append(SystemMessage(content=system_prompt))
+        turn_messages.append(HumanMessage(content=query))
+
+        result = await graph.ainvoke({"messages": turn_messages}, config=config)
         response = result["messages"][-1].content
         logger.info("btp-guardian.run-agent completed for context_id=%s", context_id)
         return response
