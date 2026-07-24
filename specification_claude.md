@@ -1,6 +1,6 @@
 # BTP Guardian Agent — Project Specification & Current Status
 
-_Last updated: 2026-07-22_
+_Last updated: 2026-07-23_
 
 ## 1. Overview
 
@@ -89,6 +89,30 @@ BTP platform REST APIs (*.cfapps.eu10.hana.ondemand.com)
 - Sets `AICORE_*` from `config.json` and `IBD_TESTING=1` (→ mock MCP tools),
   then launches `main.py` with `PORT` in env.
 
+### 3.4 Local chat UI (`.local-chat-ui/`, repo root)
+
+A minimal browser chat front-end for demoing the agent locally. It talks to the
+agent purely over HTTP via a local proxy and never touches the deployed CF/Joule
+runtime, nor does it read any credentials (`config.json` stays with the agent
+process only).
+
+- **`index.html`** — self-contained chat UI (vanilla HTML/CSS/JS, no build step, no
+  dependencies). Posts to the proxy's `/a2a` route using the A2A `message/stream`
+  JSON-RPC method, parses the SSE stream, shows `working` status updates as a live
+  progress line, then renders the final `agent_result` artifact. Reuses the returned
+  `contextId` across turns to preserve conversation context.
+- **`serve.py`** — tiny stdlib (`http.server`) proxy: serves `index.html` and
+  forwards `POST /a2a` → the agent's A2A endpoint, streaming the SSE response straight
+  back to the browser (avoids CORS, since Starlette/A2A sends no CORS headers).
+- **Run (two terminals):**
+  1. `uv run run_local.py 8080` — the agent.
+  2. `python .local-chat-ui/serve.py 8000 8080` — UI proxy (`<ui-port> <agent-port>`,
+     defaults 8000/8080). Open `http://localhost:8000`.
+- **SSE note:** the agent frames SSE events with CRLF (`\r\n\r\n`) separators, so the
+  client normalizes `\r\n`→`\n` before splitting on blank lines. The final answer
+  arrives as an `artifact-update` event (`result.artifact.parts[].text`), not the last
+  status message.
+
 ## 4. BTP Platform Tools (13)
 
 All backed by direct REST calls in CF mode; each service has its own destination.
@@ -137,6 +161,8 @@ Pagination is capped at 100 (`MAX_PAGE_SIZE`) on tools that accept `$top`/`limit
 
 ### Working
 - ✅ Local run via `run_local.py 8080` — real AI Core LLM + mock MCP data.
+- ✅ Local chat UI (`.local-chat-ui/`) — verified end-to-end in
+  a browser against the local agent, including multi-turn `contextId` reuse.
 - ✅ CF deployment packaging (clean `.cfignore`, small droplet).
 - ✅ **BTP platform API calls succeed on CF** after two fixes:
   1. Destinations reconfigured to `OAuth2ClientCredentials` using the cis-central
