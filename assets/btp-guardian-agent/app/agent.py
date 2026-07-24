@@ -1,6 +1,7 @@
 import logging
 import os
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import AsyncGenerator, Literal
 
 from langchain_core.language_models import BaseChatModel
@@ -87,6 +88,10 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
   that accepts them; inform the user when this limit is applied.
 - Never hallucinate data. If a tool returns no results, explicitly state that no data was found.
 - When answering cost queries, always specify the time period and currency.
+- Resolve relative dates ("this month", "last month", "this year") using the CURRENT
+  DATE provided at the end of this prompt — never assume a fixed year. Cost/usage tools
+  expect the period as YYYYMM (e.g. billingPeriod eq '202607' for July 2026); build the
+  value from the current date, not from memory.
 - For governance queries, classify issues by severity: critical / warning / info.
 - You are read-only — never suggest or imply write or modify operations on BTP resources.
 - When a query requires multiple API calls (e.g. topology then cost), chain them step by step
@@ -429,23 +434,48 @@ def _build_domain_tools(
     # -----------------------------------------------------------------------
 
     class MonthlySubaccountCmCostsInput(BaseModel):
-        filter: str | None = Field(default=None, description="OData $filter expression")
-        top: int = Field(default=100, description="Maximum number of results (max 100)")
-        skip: int | None = Field(default=None, description="Number of results to skip")
+        fromDate: str = Field(
+            description="Start month, required. Format YYYYMM (e.g. 202607). "
+            "'YYYY-MM' is also accepted and normalized."
+        )
+        toDate: str = Field(
+            description="End month, required. Format YYYYMM (e.g. 202607). "
+            "'YYYY-MM' is also accepted and normalized. For a single month set "
+            "fromDate == toDate."
+        )
+        subaccountName: str | None = Field(
+            default=None,
+            description="Optional case-insensitive subaccount name to narrow results "
+            "to one subaccount (matched client-side on subaccountName).",
+        )
 
     async def monthly_subaccount_cm_costs(
-        filter: str | None = None,
-        top: int = 100,
-        skip: int | None = None,
+        fromDate: str,
+        toDate: str,
+        subaccountName: str | None = None,
     ) -> str:
-        params: dict = _enforce_page_size({"$top": top}, "$top")
-        if filter:
-            params["$filter"] = filter
-        if skip is not None:
-            params["$skip"] = skip
+        # /reports/v1/monthlySubaccountsCost expects fromDate/toDate as YYYYMM
+        # integers; the response wraps rows under "content". Each row carries a
+        # numeric "cost" + "currency" and the period as "reportYearMonth".
+        def _yyyymm(v: str) -> int:
+            return int(str(v).replace("-", "").strip())
+
+        params: dict = {"fromDate": _yyyymm(fromDate), "toDate": _yyyymm(toDate)}
         result = await consumption_client.get(
-            "/odata/MonthlySubaccountCmCosts", params=params
+            "/reports/v1/monthlySubaccountsCost", params=params
         )
+        if (
+            subaccountName
+            and isinstance(result, dict)
+            and isinstance(result.get("content"), list)
+        ):
+            needle = subaccountName.strip().lower()
+            matched = [
+                row
+                for row in result["content"]
+                if needle in str(row.get("subaccountName", "")).lower()
+            ]
+            result = {**result, "content": matched}
         return _shape_result(result)
 
     class MonthlyUsageInput(BaseModel):
@@ -608,7 +638,9 @@ def _build_domain_tools(
         StructuredTool.from_function(
             coroutine=monthly_subaccount_cm_costs,
             name="monthlySubaccountCmCosts",
-            description="Get monthly subaccount costs from consumption-based commercial model billing",
+            description="Get monthly cost per subaccount (in the global account's currency) "
+            "for a YYYYMM period range. Use for 'which subaccounts cost the most' / "
+            "cost-by-subaccount questions.",
             args_schema=MonthlySubaccountCmCostsInput,
         ),
         StructuredTool.from_function(
@@ -795,8 +827,14 @@ class BTPGuardianAgent:
     @tracer.start_as_current_span("btp-guardian.run-agent")
     async def _run_agent(self, query: str, context_id: str) -> str:
         """Execute the agent reasoning loop and return the final response string."""
+        today = datetime.now(timezone.utc)
+        system_prompt = (
+            f"{get_system_prompt()}\n\n"
+            f"## Current date\n"
+            f"Today is {today:%Y-%m-%d} (UTC). Current month as YYYYMM: {today:%Y%m}."
+        )
         messages = [
-            SystemMessage(content=get_system_prompt()),
+            SystemMessage(content=system_prompt),
             HumanMessage(content=query),
         ]
         graph = await self._get_graph()
