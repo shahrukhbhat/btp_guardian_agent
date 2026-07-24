@@ -91,6 +91,10 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
 - You are read-only — never suggest or imply write or modify operations on BTP resources.
 - When a query requires multiple API calls (e.g. topology then cost), chain them step by step
   and synthesise a single, cohesive answer.
+- To act on a subaccount referred to by NAME (e.g. "coena"), first call getSubaccounts with the
+  `name` parameter to resolve it to a GUID, then pass that GUID to subaccount-scoped tools like
+  getSubaccountAssignments(subaccountGUID=...). Never put a plain name in `labelSelector` — that
+  field only accepts key=value label selectors. If the name resolves to no subaccount, say so.
 
 ## Summary vs. detail
 - Entitlement and other large-list tools return a COMPACT SUMMARY by default: heavy nested
@@ -271,18 +275,22 @@ def _build_domain_tools(
         "subaccount."
     )
 
-    # Fields kept when summarizing entitlement records. Heavy nested per-subaccount
-    # assignment arrays (not in this set) are replaced by counts.
+    # Fields kept when summarizing entitlement records, matching the real
+    # Entitlements Service schema (EntitledAndAssignedServicesResponseObject).
+    # Any nested list NOT in this set — assignmentInfo, resources, dataCenters,
+    # sourceEntitlements — is collapsed to a "<key>Count" by _summarize_record.
     ENTITLEMENT_SUMMARY_FIELDS = [
         "name",
         "displayName",
+        "description",
         "servicePlans",
         "amount",
         "remainingAmount",
-        "usedAmount",
-        "unitOfMeasure",
         "autoAssign",
         "category",
+        "unlimited",
+        "provisioningMethod",
+        "uniqueIdentifier",
     ]
 
     # -----------------------------------------------------------------------
@@ -300,10 +308,22 @@ def _build_domain_tools(
         return _shape_result(result)
 
     class GetSubaccountsInput(BaseModel):
+        name: str | None = Field(
+            default=None,
+            description="Match a subaccount by its display name or subdomain "
+            "(case-insensitive substring). Use this to resolve a subaccount NAME "
+            "(e.g. 'coena') to its GUID before calling subaccount-scoped tools.",
+        )
         directoryGUID: str | None = Field(default=None, description="Filter by directory GUID")
-        labelSelector: str | None = Field(default=None, description="Label selector filter")
+        labelSelector: str | None = Field(
+            default=None,
+            description="Kubernetes-style label selector, e.g. 'env=prod'. Must be a "
+            "key=value (or key!=value) pair — do NOT pass a plain subaccount name here; "
+            "use the 'name' parameter for name lookups.",
+        )
 
     async def get_subaccounts(
+        name: str | None = None,
         directoryGUID: str | None = None,
         labelSelector: str | None = None,
     ) -> str:
@@ -314,6 +334,19 @@ def _build_domain_tools(
             params["labelSelector"] = labelSelector
         params["derivedAuthorizations"] = "any"
         result = await accounts_client.get("/accounts/v1/subaccounts", params=params)
+
+        # Client-side name match: the Accounts API has no display-name filter, so
+        # resolve a name (e.g. "coena") here instead of misusing labelSelector.
+        if name and isinstance(result, dict) and isinstance(result.get("value"), list):
+            needle = name.strip().lower()
+            matched = [
+                sa
+                for sa in result["value"]
+                if needle in str(sa.get("displayName", "")).lower()
+                or needle in str(sa.get("subdomain", "")).lower()
+            ]
+            result = {**result, "value": matched, "matchedName": name}
+
         return _shape_result(result)
 
     class GetDirectoriesInput(BaseModel):
@@ -355,7 +388,7 @@ def _build_domain_tools(
         )
         return _shape_result(
             result,
-            record_keys=["entitledServices", "assignments"],
+            record_keys=["entitledServices", "assignedServices"],
             summary_fields=ENTITLEMENT_SUMMARY_FIELDS,
             detail=(detailLevel == "detail"),
             scoped=bool(assignedServiceName),
@@ -385,7 +418,7 @@ def _build_domain_tools(
         )
         return _shape_result(
             result,
-            record_keys=["entitledServices", "assignments"],
+            record_keys=["entitledServices", "assignedServices"],
             summary_fields=ENTITLEMENT_SUMMARY_FIELDS,
             detail=(detailLevel == "detail"),
             scoped=bool(subaccountGUID),
@@ -416,36 +449,37 @@ def _build_domain_tools(
         return _shape_result(result)
 
     class MonthlyUsageInput(BaseModel):
-        fromDate: str | None = Field(
-            default=None, description="Start date (YYYY-MM format)"
+        fromDate: str = Field(
+            description="Start month, required. Format YYYYMM (e.g. 202401); "
+            "'YYYY-MM' is also accepted and normalized."
         )
-        toDate: str | None = Field(
-            default=None, description="End date (YYYY-MM format)"
+        toDate: str = Field(
+            description="End month, required. Format YYYYMM (e.g. 202412); "
+            "'YYYY-MM' is also accepted and normalized."
         )
 
-    async def monthly_usage(
-        fromDate: str | None = None,
-        toDate: str | None = None,
-    ) -> str:
-        params: dict = {}
-        if fromDate:
-            params["fromDate"] = fromDate
-        if toDate:
-            params["toDate"] = toDate
+    async def monthly_usage(fromDate: str, toDate: str) -> str:
+        # The API requires both as YYYYMM integers. Accept 'YYYY-MM' too.
+        def _yyyymm(v: str) -> int:
+            digits = str(v).replace("-", "").strip()
+            return int(digits)
+
+        params: dict = {"fromDate": _yyyymm(fromDate), "toDate": _yyyymm(toDate)}
         result = await consumption_client.get("/reports/v1/monthlyUsage", params=params)
         return _shape_result(result)
 
     class CloudCreditsDetailsInput(BaseModel):
-        viewPhases: str | None = Field(
-            default=None, description="Comma-separated view phases to include"
+        viewPhases: Literal["CURRENT", "ALL"] = Field(
+            default="CURRENT",
+            description="Which cloud-credit phases to show: 'CURRENT' (default, the "
+            "active phase) or 'ALL' (every phase). Single value only.",
         )
 
-    async def cloud_credits_details(viewPhases: str | None = None) -> str:
-        params: dict = {}
-        if viewPhases:
-            params["viewPhases"] = viewPhases
+    async def cloud_credits_details(
+        viewPhases: Literal["CURRENT", "ALL"] = "CURRENT",
+    ) -> str:
         result = await consumption_client.get(
-            "/reports/v1/cloudCreditsDetails", params=params
+            "/reports/v1/cloudCreditsDetails", params={"viewPhases": viewPhases}
         )
         return _shape_result(result)
 
@@ -478,10 +512,25 @@ def _build_domain_tools(
     # -----------------------------------------------------------------------
 
     class GetUsageRecordsInput(BaseModel):
-        limit: int = Field(default=100, description="Maximum number of records (max 100)")
+        pageSize: int = Field(
+            default=100, description="Records per page (max 100; API default is 16)"
+        )
+        pageNumber: int = Field(default=1, description="1-based page number to retrieve")
+        filter: str | None = Field(
+            default=None,
+            description="Optional filter expression, e.g. \"metricId eq 'API_CALLS'\" "
+            "or a date range on 'startedAt'.",
+        )
 
-    async def get_usage_records(limit: int = 100) -> str:
-        params = _enforce_page_size({"limit": limit}, "limit")
+    async def get_usage_records(
+        pageSize: int = 100,
+        pageNumber: int = 1,
+        filter: str | None = None,
+    ) -> str:
+        params: dict = _enforce_page_size({"pageSize": pageSize}, "pageSize")
+        params["pageNumber"] = pageNumber
+        if filter:
+            params["filter"] = filter
         result = await usage_records_client.get("/usage-records", params=params)
         return _shape_result(result)
 
@@ -491,16 +540,28 @@ def _build_domain_tools(
 
     class GetEnvironmentInstancesInput(BaseModel):
         subaccountGUID: str | None = Field(
-            default=None, description="Filter by subaccount GUID"
+            default=None,
+            description="Optional subaccount GUID. The provisioning API returns all "
+            "environments; results are filtered to this subaccount client-side.",
         )
 
     async def get_environment_instances(subaccountGUID: str | None = None) -> str:
-        params: dict = {}
-        if subaccountGUID:
-            params["subaccountGUID"] = subaccountGUID
-        result = await provisioning_client.get(
-            "/provisioning/v1/environments", params=params
-        )
+        # The provisioning API has no subaccountGUID query param (only headers), so
+        # fetch all environments and filter by subaccountGUID client-side.
+        result = await provisioning_client.get("/provisioning/v1/environments")
+
+        if (
+            subaccountGUID
+            and isinstance(result, dict)
+            and isinstance(result.get("environmentInstances"), list)
+        ):
+            matched = [
+                env
+                for env in result["environmentInstances"]
+                if env.get("subaccountGUID") == subaccountGUID
+            ]
+            result = {**result, "environmentInstances": matched}
+
         return _shape_result(result)
 
     class GetAvailableEnvironmentsInput(BaseModel):
