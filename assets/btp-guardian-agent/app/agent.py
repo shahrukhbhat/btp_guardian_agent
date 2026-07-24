@@ -148,11 +148,14 @@ def _enforce_page_size(params: dict, key: str = "$top") -> dict:
 
 
 # Hard ceiling on characters returned from any tool to the LLM. gpt-4o's 128K
-# context is ~512K chars; a single tool result must stay well under that so the
-# full message history (system prompt + prior turns + tool schemas) still fits.
-# One entitlements payload measured at ~1.5M tokens, which 400s AI Core — this
-# cap is the universal backstop that prevents any tool from overflowing.
-MAX_TOOL_RESULT_CHARS = int(os.environ.get("BTP_MAX_TOOL_RESULT_CHARS", "24000"))
+# context is ~512K chars. After reserving room for the system prompt, tool
+# schemas, growing multi-turn history, and the output, a single tool result can
+# safely be ~80K chars — enough to fit a full summarized entitlements payload
+# for a large global account (~50K chars) without the backstop shredding it,
+# while still catching pathological raw payloads (the ~1.5M-token entitlements
+# dump is ~6M chars, far above this cap, so the backstop still fires when it
+# genuinely must). Env-overridable for tuning without a redeploy.
+MAX_TOOL_RESULT_CHARS = int(os.environ.get("BTP_MAX_TOOL_RESULT_CHARS", "80000"))
 
 
 def _summarize_record(record, summary_fields, list_keys):
@@ -235,14 +238,13 @@ def _shape_result(
         if list_fields:
             biggest_key = max(list_fields, key=lambda kv: len(kv[1]))[0]
             recs = result[biggest_key]
-            # Binary-ish shrink: keep halving the kept slice until it fits.
-            kept = len(recs)
-            while kept > 1:
-                trial = dict(result)
-                trial[biggest_key] = recs[:kept]
-                trial["_truncated"] = {
+
+            def _trial(n):
+                t = dict(result)
+                t[biggest_key] = recs[:n]
+                t["_truncated"] = {
                     "field": biggest_key,
-                    "returned": kept,
+                    "returned": n,
                     "total": len(recs),
                     "note": (
                         "Result was capped to fit the model context. Narrow the "
@@ -250,10 +252,19 @@ def _shape_result(
                         "set detailLevel='detail' to see specific records."
                     ),
                 }
-                trial_str = _dump(trial)
+                return t
+
+            # Proportionally estimate how many records fit (keeps far more than a
+            # blind halving), then shrink by 10% steps until it actually fits.
+            fit_ratio = MAX_TOOL_RESULT_CHARS / len(serialized)
+            kept = max(1, int(len(recs) * fit_ratio * 0.9))
+            while kept >= 1:
+                trial_str = _dump(_trial(kept))
                 if len(trial_str) <= MAX_TOOL_RESULT_CHARS:
                     return trial_str
-                kept //= 2
+                if kept == 1:
+                    break
+                kept = max(1, int(kept * 0.9))
 
     # Non-dict or unshrinkable: hard truncate the string with a note.
     note = (
