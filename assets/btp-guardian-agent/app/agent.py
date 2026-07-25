@@ -100,7 +100,9 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
 - For governance queries, classify issues by severity: critical / warning / info.
 - For audit log queries, default to the last 7 days if no time range is specified.
   When calling getAuditLogRecords without a specific category, set surfaceNotable=True
-  to surface notable events. Present the returned markdown as-is without reformatting.
+  to surface notable events. The tool returns pre-formatted markdown — copy it verbatim
+  into your response without summarising, paraphrasing, or reformatting it. Never
+  describe what the table contains instead of showing it.
 - You are read-only — never suggest or imply write or modify operations on BTP resources.
 - When a query requires multiple API calls (e.g. topology then cost), chain them step by step
   and synthesise a single, cohesive answer.
@@ -335,13 +337,22 @@ def _surface_notable_audit_events(records: list) -> str:
     warning: list = []
     info: list = []
     ROLE_KEYWORDS = {"role", "trust", "binding", "permission", "scope", "credential"}
+    # Keywords in the raw message that indicate a genuine security incident vs.
+    # normal OAuth token issuance (which also carries category=audit.security-events).
+    INCIDENT_KEYWORDS = {"fail", "denied", "unauthorized", "revok", "invalid", "error",
+                         "reject", "block", "suspend", "lockout"}
 
     for raw in records:
         r = _parse_audit_record(raw)
         cat = r.get("category", "")
         attrs = r.get("attributes", [])
         attr_names = {a.get("name", "").lower() for a in attrs if isinstance(a, dict)}
-        if cat == "audit.security-events":
+        # Only flag security-events as critical when the message content signals an
+        # actual incident — routine token issuance is security-events but not notable.
+        msg_lower = str(raw.get("message", "")).lower()
+        is_incident = any(kw in msg_lower for kw in INCIDENT_KEYWORDS)
+
+        if cat == "audit.security-events" and is_incident:
             critical.append(r)
         elif cat == "audit.configuration" and attr_names & ROLE_KEYWORDS:
             warning.append(r)
@@ -351,20 +362,26 @@ def _surface_notable_audit_events(records: list) -> str:
     sections = [
         "## Audit Log — Notable Events Summary", "",
         f"**Total records analysed:** {len(records)}  ",
-        f"**Critical:** {len(critical)} | **Warning:** {len(warning)} | **Info:** {len(info)}",
+        f"**Critical (security incidents):** {len(critical)} | "
+        f"**Warning (config/role changes):** {len(warning)} | "
+        f"**Info (routine):** {len(info)}",
         "",
     ]
     if critical:
-        sections += ["### 🔴 Critical — Security Events",
-                     _format_audit_log_markdown(critical, title=""), ""]
+        sections += ["### 🔴 Critical — Security Incidents",
+                     _format_audit_log_markdown(critical[:20], title=""),
+                     f"_Showing {min(20, len(critical))} of {len(critical)}_", ""]
     if warning:
         sections += ["### 🟡 Warning — Configuration Changes (role/trust/binding)",
-                     _format_audit_log_markdown(warning, title=""), ""]
+                     _format_audit_log_markdown(warning[:20], title=""),
+                     f"_Showing {min(20, len(warning))} of {len(warning)}_", ""]
     if info:
         sections += [
-            f"### ℹ️ Info — Other Events ({len(info)} record(s), showing first 10)",
+            f"### ℹ️ Info — Routine Events (showing first 10 of {len(info)})",
             _format_audit_log_markdown(info[:10], title=""),
         ]
+    if not critical and not warning:
+        sections.append("_No security incidents or notable configuration changes detected._")
     return "\n".join(sections)
 
 
