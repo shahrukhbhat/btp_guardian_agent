@@ -5,3 +5,4 @@ __pycache__/
 *.pyo
 .venv/
 .playwright-mcp/
+btp_account_admin_capabilities.md

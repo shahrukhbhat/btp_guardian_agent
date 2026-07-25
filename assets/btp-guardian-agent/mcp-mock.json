@@ -2,11 +2,15 @@
   "servers": {
     "accounts-service": {
       "mcp_server_name": "sap.mcp/accounts_service",
-      "description": "SAP BTP Accounts Service — account topology (global account, directories, subaccounts)",
+      "description": "SAP BTP Accounts Service \u2014 account topology (global account, directories, subaccounts)",
       "tools": {
         "getGlobalAccount": {
           "description": "Get information for the global account",
-          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
           "mock_response": {
             "guid": "ga-0001-mock",
             "displayName": "BTP Guardian Demo Global Account",
@@ -22,7 +26,11 @@
         },
         "getSubaccounts": {
           "description": "Get all subaccounts in the global account",
-          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
           "mock_response": {
             "value": [
               {
@@ -75,7 +83,11 @@
         },
         "getDirectories": {
           "description": "Get all directories in the global account",
-          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
           "mock_response": {
             "value": [
               {
@@ -99,11 +111,15 @@
     },
     "entitlements-service": {
       "mcp_server_name": "sap.mcp/entitlements_service",
-      "description": "SAP BTP Entitlements Service — quota assignments and utilization",
+      "description": "SAP BTP Entitlements Service \u2014 quota assignments and utilization",
       "tools": {
         "getGlobalAccountAssignments": {
           "description": "Get details about all entitlements assigned to the global account",
-          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
           "mock_response": {
             "entitledServices": [
               {
@@ -156,9 +172,14 @@
           "input_schema": {
             "type": "object",
             "properties": {
-              "subaccountGUID": {"type": "string", "description": "Subaccount GUID"}
+              "subaccountGUID": {
+                "type": "string",
+                "description": "Subaccount GUID"
+              }
             },
-            "required": ["subaccountGUID"]
+            "required": [
+              "subaccountGUID"
+            ]
           },
           "mock_response": {
             "entitledServices": [
@@ -182,15 +203,21 @@
     },
     "resource-consumption": {
       "mcp_server_name": "sap.mcp/resource_consumption",
-      "description": "SAP BTP Resource Consumption — monthly cost and usage reports",
+      "description": "SAP BTP Resource Consumption \u2014 monthly cost and usage reports",
       "tools": {
         "monthlySubaccountCmCosts": {
           "description": "Get monthly cost reporting data for all subaccounts",
           "input_schema": {
             "type": "object",
             "properties": {
-              "fromDate": {"type": "string", "description": "Start month (YYYY-MM)"},
-              "toDate": {"type": "string", "description": "End month (YYYY-MM)"}
+              "fromDate": {
+                "type": "string",
+                "description": "Start month (YYYY-MM)"
+              },
+              "toDate": {
+                "type": "string",
+                "description": "End month (YYYY-MM)"
+              }
             },
             "required": []
           },
@@ -249,7 +276,10 @@
           "input_schema": {
             "type": "object",
             "properties": {
-              "month": {"type": "string", "description": "Report month (YYYY-MM)"}
+              "month": {
+                "type": "string",
+                "description": "Report month (YYYY-MM)"
+              }
             },
             "required": []
           },
@@ -281,7 +311,11 @@
         },
         "cloudCreditsDetails": {
           "description": "Get cloud credit usage and remaining balance",
-          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
           "mock_response": {
             "cloudCreditsForIaas": "100000.00",
             "availableCredits": "74890.50",
@@ -294,23 +328,47 @@
     },
     "metrics-api": {
       "mcp_server_name": "sap.mcp/metrics_api",
-      "description": "SAP BTP Metrics API — runtime metrics for apps and service instances",
+      "description": "SAP BTP Metrics API \u2014 runtime metrics for apps and service instances",
       "tools": {
         "GET_accounts-subaccountName-apps-appName-metrics": {
           "description": "Get runtime metrics for an application in a subaccount",
           "input_schema": {
             "type": "object",
             "properties": {
-              "subaccountName": {"type": "string", "description": "Subaccount subdomain"},
-              "appName": {"type": "string", "description": "Application name"}
+              "subaccountName": {
+                "type": "string",
+                "description": "Subaccount subdomain"
+              },
+              "appName": {
+                "type": "string",
+                "description": "Application name"
+              }
             },
-            "required": ["subaccountName", "appName"]
+            "required": [
+              "subaccountName",
+              "appName"
+            ]
           },
           "mock_response": {
             "metrics": [
-              {"name": "CPU_USAGE_PERCENT", "value": 72.5, "unit": "percent", "timestamp": 1747612800000},
-              {"name": "MEMORY_USAGE_PERCENT", "value": 65.2, "unit": "percent", "timestamp": 1747612800000},
-              {"name": "DISK_USAGE_PERCENT", "value": 38.1, "unit": "percent", "timestamp": 1747612800000}
+              {
+                "name": "CPU_USAGE_PERCENT",
+                "value": 72.5,
+                "unit": "percent",
+                "timestamp": 1747612800000
+              },
+              {
+                "name": "MEMORY_USAGE_PERCENT",
+                "value": 65.2,
+                "unit": "percent",
+                "timestamp": 1747612800000
+              },
+              {
+                "name": "DISK_USAGE_PERCENT",
+                "value": 38.1,
+                "unit": "percent",
+                "timestamp": 1747612800000
+              }
             ]
           }
         },
@@ -319,10 +377,17 @@
           "input_schema": {
             "type": "object",
             "properties": {
-              "subaccountName": {"type": "string"},
-              "appName": {"type": "string"}
+              "subaccountName": {
+                "type": "string"
+              },
+              "appName": {
+                "type": "string"
+              }
             },
-            "required": ["subaccountName", "appName"]
+            "required": [
+              "subaccountName",
+              "appName"
+            ]
           },
           "mock_response": {
             "state": "STARTED",
@@ -334,16 +399,25 @@
     },
     "usage-records": {
       "mcp_server_name": "sap.mcp/usage_records",
-      "description": "SAP BTP Usage Records — granular service usage data",
+      "description": "SAP BTP Usage Records \u2014 granular service usage data",
       "tools": {
         "get_usage-records": {
           "description": "Retrieve usage records for services",
           "input_schema": {
             "type": "object",
             "properties": {
-              "$top": {"type": "integer", "description": "Max records to return"},
-              "$skip": {"type": "integer", "description": "Records to skip"},
-              "$filter": {"type": "string", "description": "OData filter expression"}
+              "$top": {
+                "type": "integer",
+                "description": "Max records to return"
+              },
+              "$skip": {
+                "type": "integer",
+                "description": "Records to skip"
+              },
+              "$filter": {
+                "type": "string",
+                "description": "OData filter expression"
+              }
             },
             "required": []
           },
@@ -389,11 +463,15 @@
     },
     "provisioning-service": {
       "mcp_server_name": "sap.mcp/provisioning_service",
-      "description": "SAP BTP Provisioning Service — environments and service plan assignments",
+      "description": "SAP BTP Provisioning Service \u2014 environments and service plan assignments",
       "tools": {
         "getEnvironmentInstances": {
           "description": "Get all provisioned environments",
-          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
           "mock_response": {
             "environmentInstances": [
               {
@@ -431,18 +509,35 @@
         },
         "getAvailableEnvironments": {
           "description": "Get available environment types for the global account",
-          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
           "mock_response": {
             "availableEnvironments": [
-              {"type": "cloudfoundry", "planName": "standard"},
-              {"type": "kyma", "planName": "aws"},
-              {"type": "kyma", "planName": "gcp"}
+              {
+                "type": "cloudfoundry",
+                "planName": "standard"
+              },
+              {
+                "type": "kyma",
+                "planName": "aws"
+              },
+              {
+                "type": "kyma",
+                "planName": "gcp"
+              }
             ]
           }
         },
         "getServicePlanAssignments": {
           "description": "Get service plan assignments across all environments",
-          "input_schema": {"type": "object", "properties": {}, "required": []},
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
           "mock_response": {
             "assignments": [
               {
@@ -465,6 +560,252 @@
                 "subaccountGUID": "sa-0005-sandbox",
                 "amount": 2,
                 "usedAmount": 0
+              }
+            ]
+          }
+        }
+      }
+    },
+    "audit-logs": {
+      "mcp_server_name": "sap.mcp/audit_log",
+      "description": "SAP BTP Audit Log Retrieval \u2014 security, configuration, and data-access events",
+      "tools": {
+        "getAuditLogRecords": {
+          "description": "Retrieve audit log records for the BTP subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "timeFrom": {
+                "type": "string",
+                "description": "Start datetime ISO-8601"
+              },
+              "timeTo": {
+                "type": "string",
+                "description": "End datetime ISO-8601"
+              },
+              "category": {
+                "type": "string",
+                "description": "Optional category filter"
+              },
+              "surfaceNotable": {
+                "type": "boolean",
+                "description": "Surface notable events"
+              },
+              "pageSize": {
+                "type": "integer",
+                "description": "Records per page"
+              },
+              "pageNumber": {
+                "type": "integer",
+                "description": "Page number"
+              }
+            },
+            "required": [
+              "timeFrom",
+              "timeTo"
+            ]
+          },
+          "mock_response": {
+            "value": [
+              {
+                "id": "log-0001",
+                "time": "2026-07-25T08:12:34Z",
+                "category": "audit.security-events",
+                "tenant": "coe-na-subaccount",
+                "user": {
+                  "id": "john.doe@example.com"
+                },
+                "object": {
+                  "type": "XSUAA",
+                  "id": "auth-server-01"
+                },
+                "attributes": [
+                  {
+                    "name": "loginAttempt",
+                    "old": null,
+                    "new": "FAILED"
+                  },
+                  {
+                    "name": "reason",
+                    "old": null,
+                    "new": "invalid_credentials"
+                  }
+                ]
+              },
+              {
+                "id": "log-0002",
+                "time": "2026-07-24T14:05:00Z",
+                "category": "audit.configuration",
+                "tenant": "coe-na-subaccount",
+                "user": {
+                  "id": "admin@example.com"
+                },
+                "object": {
+                  "type": "RoleCollection",
+                  "id": "Subaccount_Admin"
+                },
+                "attributes": [
+                  {
+                    "name": "roleBinding",
+                    "old": null,
+                    "new": "user:jane.doe@example.com"
+                  },
+                  {
+                    "name": "scope",
+                    "old": "read",
+                    "new": "read,write"
+                  }
+                ]
+              },
+              {
+                "id": "log-0003",
+                "time": "2026-07-24T09:30:11Z",
+                "category": "audit.configuration",
+                "tenant": "coe-na-subaccount",
+                "user": {
+                  "id": "admin@example.com"
+                },
+                "object": {
+                  "type": "Subaccount",
+                  "id": "sa-coe-na"
+                },
+                "attributes": [
+                  {
+                    "name": "displayName",
+                    "old": "CoE NA Dev",
+                    "new": "CoE NA CloudTech Dev"
+                  },
+                  {
+                    "name": "description",
+                    "old": "",
+                    "new": "Updated subaccount description"
+                  }
+                ]
+              },
+              {
+                "id": "log-0004",
+                "time": "2026-07-23T16:45:22Z",
+                "category": "audit.data-access",
+                "tenant": "coe-na-subaccount",
+                "user": {
+                  "id": "svc-account@example.com"
+                },
+                "object": {
+                  "type": "ServiceInstance",
+                  "id": "hana-cloud-01"
+                },
+                "attributes": [
+                  {
+                    "name": "operation",
+                    "old": null,
+                    "new": "READ"
+                  },
+                  {
+                    "name": "resource",
+                    "old": null,
+                    "new": "connection-details"
+                  }
+                ]
+              },
+              {
+                "id": "log-0005",
+                "time": "2026-07-23T11:20:05Z",
+                "category": "audit.configuration",
+                "tenant": "coe-na-subaccount",
+                "user": {
+                  "id": "admin@example.com"
+                },
+                "object": {
+                  "type": "TrustConfiguration",
+                  "id": "sap-default-idp"
+                },
+                "attributes": [
+                  {
+                    "name": "trust",
+                    "old": "DISABLED",
+                    "new": "ENABLED"
+                  },
+                  {
+                    "name": "provider",
+                    "old": null,
+                    "new": "accounts.sap.com"
+                  }
+                ]
+              },
+              {
+                "id": "log-0006",
+                "time": "2026-07-22T08:00:00Z",
+                "category": "audit.data-modification",
+                "tenant": "coe-na-subaccount",
+                "user": {
+                  "id": "developer@example.com"
+                },
+                "object": {
+                  "type": "ServiceBinding",
+                  "id": "binding-aicore-01"
+                },
+                "attributes": [
+                  {
+                    "name": "operation",
+                    "old": null,
+                    "new": "DELETE"
+                  },
+                  {
+                    "name": "serviceInstanceId",
+                    "old": "aicore-prod",
+                    "new": null
+                  }
+                ]
+              },
+              {
+                "id": "log-0007",
+                "time": "2026-07-21T17:10:44Z",
+                "category": "audit.security-events",
+                "tenant": "coe-na-subaccount",
+                "user": {
+                  "id": "unknown"
+                },
+                "object": {
+                  "type": "Token",
+                  "id": "token-refresh"
+                },
+                "attributes": [
+                  {
+                    "name": "tokenOperation",
+                    "old": null,
+                    "new": "REVOKED"
+                  },
+                  {
+                    "name": "reason",
+                    "old": null,
+                    "new": "suspicious_activity"
+                  }
+                ]
+              },
+              {
+                "id": "log-0008",
+                "time": "2026-07-20T12:55:30Z",
+                "category": "audit.data-access",
+                "tenant": "coe-na-subaccount",
+                "user": {
+                  "id": "monitor@example.com"
+                },
+                "object": {
+                  "type": "AuditLog",
+                  "id": "audit-log-export"
+                },
+                "attributes": [
+                  {
+                    "name": "operation",
+                    "old": null,
+                    "new": "READ"
+                  },
+                  {
+                    "name": "timeRange",
+                    "old": null,
+                    "new": "2026-07-01/2026-07-20"
+                  }
+                ]
               }
             ]
           }

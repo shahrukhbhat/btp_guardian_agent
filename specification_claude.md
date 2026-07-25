@@ -146,7 +146,7 @@ turn** of a thread (detected via `graph.aget_state`).
   a persistent checkpointer (e.g. SQLite/Postgres/Redis-backed). No new dependency today:
   `MemorySaver` ships inside the pinned `langgraph==1.1.9`.
 
-## 4. BTP Platform Tools (13)
+## 4. BTP Platform Tools (14)
 
 All backed by direct REST calls in CF mode; each service has its own destination.
 
@@ -165,6 +165,7 @@ All backed by direct REST calls in CF mode; each service has its own destination
 | `get_usage-records` | `GET /usage-records` | `BTP_USAGE_RECORDS` |
 | `getEnvironmentInstances` | `GET /provisioning/v1/environments` | `BTP_PROVISIONING` |
 | `getAvailableEnvironments` | `GET /provisioning/v1/availableEnvironments` | `BTP_PROVISIONING` |
+| `getAuditLogRecords` | `GET /auditlog/v2/auditlogrecords` | `BTP_AUDIT_LOGS` |
 
 Pagination is capped at 100 (`MAX_PAGE_SIZE`) on tools that accept `$top`/`limit`.
 
@@ -316,8 +317,48 @@ the implementation wraps ~9 APIs across 13 tools. Service Manager and Events Ser
 **Correctly implemented guardrail:** the read-only constraint (a real PRD requirement)
 is enforced via the system prompt.
 
-**Bottom line:** R1–R2 solid; R3 partial; **R4/R5/R6 unbuilt**; milestone logging and
-the proactive monitor are scaffolded but inert.
+**Bottom line:** R1–R2 solid; R3 partial; **R4 partially addressed** (audit log tool now
+wired, see §4.6); **R5/R6 unbuilt**; milestone logging and the proactive monitor are
+scaffolded but inert.
+
+### 4.6 Audit Log Retrieval tool (2026-07-25)
+
+Adds `getAuditLogRecords` (tool #14) to close part of the **PRD R4 governance gap**.
+
+**API:** Audit Log Retrieval API (CF environment) — `GET /auditlog/v2/auditlogrecords`.
+**Destination:** `BTP_AUDIT_LOGS` (`OAuth2ClientCredentials`, `auditlog-management`
+service key — `url` + `uaa.clientid/clientsecret/url`). **Scope:** subaccount-level
+(the service key is bound to the "coe na" subaccount).
+
+**Parameters:** `timeFrom` / `timeTo` (ISO-8601, required), `category` (one of
+`audit.security-events` | `audit.configuration` | `audit.data-access` |
+`audit.data-modification`, optional), `surfaceNotable` (bool, default `False`),
+`pageSize` / `pageNumber` (pagination, max 100).
+
+**Two response modes:**
+- **Filtered query** (`surfaceNotable=False`, default): returns all matching records as a
+  **markdown table** (Time / Category / User / Object / Change columns).
+- **Notable events** (`surfaceNotable=True`): classifies records by severity and returns
+  a structured markdown summary:
+  - 🔴 **Critical** — `audit.security-events` (login failures, token revocations)
+  - 🟡 **Warning** — `audit.configuration` records whose changed attribute names match
+    role/trust/binding/permission/scope/credential keywords
+  - ℹ️ **Info** — all other records (first 10 shown)
+
+**System prompt rule:** default to last 7 days if no time range given; use
+`surfaceNotable=True` when user asks for "all" logs or a governance/security overview;
+present the returned markdown as-is.
+
+**Helpers added (module-level in `agent.py`):** `_format_audit_log_markdown()` and
+`_surface_notable_audit_events()` — plain functions, not tools, not decorated.
+
+**Mock data:** 8 records in `mcp-mock.json` `"audit-logs"` server across all 4
+categories (2 security, 3 configuration incl. role binding + trust change, 2 data-access,
+1 data-modification) — both response paths exercisable locally with `IBD_TESTING=1`.
+
+**BTP-side prerequisite (user action):** create `BTP_AUDIT_LOGS` destination in the
+Destination Service pointing to the existing `auditlog-management` service key.
+Not yet `cf push`-ed.
 
 ## 5. Deployment (Cloud Foundry, eu10)
 
@@ -336,6 +377,7 @@ the proactive monitor are scaffolded but inert.
   | `BTP_METRICS` | `https://account-budgets-service.cfapps.eu10.hana.ondemand.com` |
   | `BTP_USAGE_RECORDS` | `https://account-budgets-service.cfapps.eu10.hana.ondemand.com` |
   | `BTP_PROVISIONING` | `https://provisioning-service.cfapps.eu10.hana.ondemand.com` (creds broken — see §6) |
+  | `BTP_AUDIT_LOGS` | `https://auditlog-management.cfapps.eu10.hana.ondemand.com` (`auditlog-management` key — **not yet created**) |
   | `aicore` | AI Core service URL (clientId/clientSecret/tokenServiceURL/AI-Resource-Group) |
 
 - **Packaging:** `.cfignore` excludes `.venv`, `vendor/`, tests, coverage,
@@ -392,6 +434,11 @@ the proactive monitor are scaffolded but inert.
   cached token self-heals instead of needing a `cf restart`. Confirmed on 2026-07-25:
   `getGlobalAccount` 401'd from a cached-expired token; a restart fixed it (proving stale
   token, not bad credential), and this retry now handles it automatically.
+- ✅ **Audit Log Retrieval tool — `getAuditLogRecords` (§4.6)** — tool #14; queries
+  `GET /auditlog/v2/auditlogrecords` via a new `BTP_AUDIT_LOGS` destination. Returns
+  filtered results as a markdown table, or a notable-events summary (🔴/🟡/ℹ️) when
+  `surfaceNotable=True`. Mock data (8 records, all 4 categories) added to `mcp-mock.json`.
+  Partially closes PRD R4 governance gap.
 
   **All agent.py / api_client.py changes above are uncommitted / not yet `cf push`-ed** —
   pending user go-ahead to push and test against real data.
@@ -419,12 +466,13 @@ the proactive monitor are scaffolded but inert.
   `uas-reporting.cfapps.eu10...`; accounts/entitlements verified working).
 
 ### PRD gaps (see §4.5 for detail)
-- ❌ **R4 Governance posture** — no Checks API / Monitor Log API tools. **Hallucination
-  risk observed (2026-07-25):** asked "are there any governance policy violations?", the
-  LLM fell back to `getGlobalAccount`, read the topology `state: "OK"` fields, and answered
-  "no violations detected" — a fabricated compliance verdict, not a real assessment. Fix is
-  under consideration by the user: either add real R4 tools, or a prompt rule to decline
-  governance questions until backed by a tool. **Deferred.**
+- ⚠️ **R4 Governance posture** — **partially addressed**: `getAuditLogRecords` (§4.6)
+  provides audit log retrieval with notable-event classification. Still missing: Checks
+  API / Monitor Log API tools. **Hallucination risk observed (2026-07-25):** when asked
+  "are there any governance policy violations?", the LLM fell back to `getGlobalAccount`
+  and fabricated a compliance verdict from topology state fields. With `getAuditLogRecords`
+  now available, the system prompt directs audit queries there; but a prompt rule to decline
+  governance questions that have no backing tool is still under consideration. **Deferred.**
 - ❌ **R5 Proactive alerting** — no Alerting Channels tool and no background monitor
   (agent is request/response only; `COST_ALERT_PCT` / `ENTITLEMENT_ALERT_PCT` unused).
 - ❌ **R6 Access/identity governance** — no Platform Authorization Management API tool.

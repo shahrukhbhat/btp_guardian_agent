@@ -40,6 +40,7 @@ DEST_RESOURCE_CONSUMPTION = os.environ.get(
 DEST_METRICS = os.environ.get("BTP_METRICS_DESTINATION_NAME", "BTP_METRICS")
 DEST_USAGE_RECORDS = os.environ.get("BTP_USAGE_RECORDS_DESTINATION_NAME", "BTP_USAGE_RECORDS")
 DEST_PROVISIONING = os.environ.get("BTP_PROVISIONING_DESTINATION_NAME", "BTP_PROVISIONING")
+DEST_AUDIT_LOGS = os.environ.get("BTP_AUDIT_LOGS_DESTINATION_NAME", "BTP_AUDIT_LOGS")
 
 MAX_PAGE_SIZE = int(os.environ.get("BTP_MAX_PAGE_SIZE", "100"))
 
@@ -97,6 +98,9 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
   expect the period as YYYYMM (e.g. billingPeriod eq '202607' for July 2026); build the
   value from the current date, not from memory.
 - For governance queries, classify issues by severity: critical / warning / info.
+- For audit log queries, default to the last 7 days if no time range is specified.
+  When calling getAuditLogRecords without a specific category, set surfaceNotable=True
+  to surface notable events. Present the returned markdown as-is without reformatting.
 - You are read-only — never suggest or imply write or modify operations on BTP resources.
 - When a query requires multiple API calls (e.g. topology then cost), chain them step by step
   and synthesise a single, cohesive answer.
@@ -274,6 +278,70 @@ def _shape_result(
     return serialized[: MAX_TOOL_RESULT_CHARS - len(note)] + note
 
 
+def _format_audit_log_markdown(records: list, title: str = "Audit Log Records") -> str:
+    """Render audit log records as a markdown table."""
+    if not records:
+        return f"## {title}\n\nNo audit log records found for the given filters."
+    lines = [
+        f"## {title}", "",
+        f"**{len(records)} record(s)**", "",
+        "| Time | Category | User | Object | Change |",
+        "|------|----------|------|--------|--------|",
+    ]
+    for r in records:
+        time_val = r.get("time", "")
+        cat = r.get("category", "")
+        user = r.get("user", {})
+        user_id = user.get("id", str(user)) if isinstance(user, dict) else str(user)
+        obj = r.get("object", {})
+        obj_str = f"{obj.get('type', '')} `{obj.get('id', '')}`" if isinstance(obj, dict) else str(obj)
+        attrs = r.get("attributes", [])
+        change = "; ".join(
+            f"{a.get('name')}: `{a.get('old')}` → `{a.get('new')}`"
+            for a in attrs[:3] if a.get("name")
+        ) or "—"
+        lines.append(f"| {time_val} | {cat} | {user_id} | {obj_str} | {change} |")
+    return "\n".join(lines)
+
+
+def _surface_notable_audit_events(records: list) -> str:
+    """Classify audit records by severity and render a notable-events markdown summary."""
+    critical: list = []
+    warning: list = []
+    info: list = []
+    ROLE_KEYWORDS = {"role", "trust", "binding", "permission", "scope", "credential"}
+
+    for r in records:
+        cat = r.get("category", "")
+        attrs = r.get("attributes", [])
+        attr_names = {a.get("name", "").lower() for a in attrs if isinstance(a, dict)}
+        if cat == "audit.security-events":
+            critical.append(r)
+        elif cat == "audit.configuration" and attr_names & ROLE_KEYWORDS:
+            warning.append(r)
+        else:
+            info.append(r)
+
+    sections = [
+        "## Audit Log — Notable Events Summary", "",
+        f"**Total records analysed:** {len(records)}  ",
+        f"**Critical:** {len(critical)} | **Warning:** {len(warning)} | **Info:** {len(info)}",
+        "",
+    ]
+    if critical:
+        sections += ["### 🔴 Critical — Security Events",
+                     _format_audit_log_markdown(critical, title=""), ""]
+    if warning:
+        sections += ["### 🟡 Warning — Configuration Changes (role/trust/binding)",
+                     _format_audit_log_markdown(warning, title=""), ""]
+    if info:
+        sections += [
+            f"### ℹ️ Info — Other Events ({len(info)} record(s), showing first 10)",
+            _format_audit_log_markdown(info[:10], title=""),
+        ]
+    return "\n".join(sections)
+
+
 def _build_domain_tools(
     accounts_client: Client,
     entitlements_client: Client,
@@ -281,6 +349,7 @@ def _build_domain_tools(
     metrics_client: Client,
     usage_records_client: Client,
     provisioning_client: Client,
+    audit_logs_client: Client,
 ) -> list:
     """Build LangChain StructuredTool instances backed by direct BTP REST clients."""
     from langchain_core.tools import StructuredTool
@@ -617,6 +686,62 @@ def _build_domain_tools(
         return _shape_result(result)
 
     # -----------------------------------------------------------------------
+    # Audit Log tools
+    # -----------------------------------------------------------------------
+
+    class GetAuditLogRecordsInput(BaseModel):
+        timeFrom: str = Field(
+            description="Start datetime ISO-8601, e.g. '2026-07-01T00:00:00'. Required. "
+            "Resolve relative terms ('last 7 days', 'this month') from the current date "
+            "in the system prompt."
+        )
+        timeTo: str = Field(
+            description="End datetime ISO-8601, e.g. '2026-07-25T23:59:59'. Required."
+        )
+        category: str | None = Field(
+            default=None,
+            description=(
+                "Optional event category filter. One of: 'audit.security-events', "
+                "'audit.configuration', 'audit.data-access', 'audit.data-modification'. "
+                "Omit to retrieve all categories."
+            ),
+        )
+        surfaceNotable: bool = Field(
+            default=False,
+            description=(
+                "When True, classify and surface only notable events "
+                "(critical/warning/info) with a markdown summary. Use True when the user "
+                "asks for 'all' logs or a governance/security overview."
+            ),
+        )
+        pageSize: int = Field(default=100, description="Records per page (max 100).")
+        pageNumber: int = Field(default=1, description="1-based page number.")
+
+    async def get_audit_log_records(
+        timeFrom: str,
+        timeTo: str,
+        category: str | None = None,
+        surfaceNotable: bool = False,
+        pageSize: int = 100,
+        pageNumber: int = 1,
+    ) -> str:
+        params: dict = {
+            "time_from": timeFrom,
+            "time_to": timeTo,
+            "$top": min(pageSize, MAX_PAGE_SIZE),
+            "$skip": (pageNumber - 1) * min(pageSize, MAX_PAGE_SIZE),
+        }
+        if category:
+            params["category"] = category
+        result = await audit_logs_client.get("/auditlog/v2/auditlogrecords", params=params)
+        if isinstance(result, dict) and result.get("error"):
+            return _shape_result(result)
+        records = result.get("value", []) if isinstance(result, dict) else []
+        if not surfaceNotable:
+            return _format_audit_log_markdown(records)
+        return _surface_notable_audit_events(records)
+
+    # -----------------------------------------------------------------------
     # Assemble tool list
     # -----------------------------------------------------------------------
     return [
@@ -700,6 +825,18 @@ def _build_domain_tools(
             description="Get available environment types that can be provisioned",
             args_schema=GetAvailableEnvironmentsInput,
         ),
+        StructuredTool.from_function(
+            coroutine=get_audit_log_records,
+            name="getAuditLogRecords",
+            description=(
+                "Retrieve audit log records for the BTP subaccount. Use for governance "
+                "queries: security events, configuration changes, role assignments, data access. "
+                "Set surfaceNotable=True when the user asks for 'all' logs or a security/"
+                "governance overview — classifies records into critical/warning/info severity. "
+                "Set category for targeted queries. Returns formatted markdown."
+            ),
+            args_schema=GetAuditLogRecordsInput,
+        ),
     ]
 
 
@@ -714,6 +851,7 @@ class BTPGuardianAgent:
         metrics_client: Client | None = None,
         usage_records_client: Client | None = None,
         provisioning_client: Client | None = None,
+        audit_logs_client: Client | None = None,
     ):
         self._accounts_client = accounts_client or Client(destination_name=DEST_ACCOUNTS)
         self._entitlements_client = entitlements_client or Client(destination_name=DEST_ENTITLEMENTS)
@@ -721,6 +859,7 @@ class BTPGuardianAgent:
         self._metrics_client = metrics_client or Client(destination_name=DEST_METRICS)
         self._usage_records_client = usage_records_client or Client(destination_name=DEST_USAGE_RECORDS)
         self._provisioning_client = provisioning_client or Client(destination_name=DEST_PROVISIONING)
+        self._audit_logs_client = audit_logs_client or Client(destination_name=DEST_AUDIT_LOGS)
 
         self._llm: BaseChatModel | None = None
         self._tools: list | None = None
@@ -792,6 +931,7 @@ class BTPGuardianAgent:
                 metrics_client=self._metrics_client,
                 usage_records_client=self._usage_records_client,
                 provisioning_client=self._provisioning_client,
+                audit_logs_client=self._audit_logs_client,
             )
             logger.info(
                 "Domain tools built: %d tool(s) — %s",
