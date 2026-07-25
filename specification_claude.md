@@ -260,6 +260,19 @@ more issues (three real bugs, one UX). All fixed in `agent.py`; **not yet `cf pu
    cost endpoints return empty, but `monthlyUsage` returns 278 usage records for the period.
 4. **Char-cap raised + proportional trim** (§4.1) — the "capped on every query" complaint.
 
+A fifth fix followed on 2026-07-25 in `api_client.py`:
+
+5. **401 retry-once with token refresh.** `Client.get`/`post` now retry a request **once**
+   on a **401** after invalidating the cached destination + shared xsuaa token
+   (`_DestinationResolver.invalidate` + `Client._refresh_destination`). Root cause: the
+   Destination-Service-injected bearer token is cached (`DEST_CACHE_TTL=300s`,
+   `TOKEN_TTL=600s`) and can expire *inside* the cache window, so the first call after
+   expiry got a **401** from the target API (observed on `getGlobalAccount` →
+   `accounts-service` on 2026-07-25; a `cf restart` — which clears the cache — fixed it,
+   confirming a stale token, not a bad credential). The retry re-resolves a fresh token and
+   self-heals without a restart. Bounded to one retry and only on 401 (403/5xx are not
+   retried), so a genuinely bad credential still surfaces as an error.
+
 ### 4.4 Conversation memory
 
 See §3.5 — the LangGraph now uses an in-process `MemorySaver` checkpointer keyed by the
@@ -374,9 +387,14 @@ the proactive monitor are scaffolded but inert.
 - ✅ **Char-cap raised (§4.1)** — `MAX_TOOL_RESULT_CHARS` 24000 → 80000 with a proportional
   backstop trim, so normal summaries (a 60-service GA ≈ 29K chars) are no longer
   needlessly capped.
+- ✅ **401 retry-once with token refresh (§4.3, `api_client.py`)** — `Client.get`/`post`
+  now re-resolve a fresh Destination-Service token and retry once on a 401, so a stale
+  cached token self-heals instead of needing a `cf restart`. Confirmed on 2026-07-25:
+  `getGlobalAccount` 401'd from a cached-expired token; a restart fixed it (proving stale
+  token, not bad credential), and this retry now handles it automatically.
 
-  **All agent.py changes above are uncommitted / not yet `cf push`-ed** — pending user
-  go-ahead to push and test against real data.
+  **All agent.py / api_client.py changes above are uncommitted / not yet `cf push`-ed** —
+  pending user go-ahead to push and test against real data.
 
 ### By design (not bugs)
 - 🔒 Agent is **read-only** — the system prompt forbids write/modify operations, so
@@ -401,7 +419,12 @@ the proactive monitor are scaffolded but inert.
   `uas-reporting.cfapps.eu10...`; accounts/entitlements verified working).
 
 ### PRD gaps (see §4.5 for detail)
-- ❌ **R4 Governance posture** — no Checks API / Monitor Log API tools.
+- ❌ **R4 Governance posture** — no Checks API / Monitor Log API tools. **Hallucination
+  risk observed (2026-07-25):** asked "are there any governance policy violations?", the
+  LLM fell back to `getGlobalAccount`, read the topology `state: "OK"` fields, and answered
+  "no violations detected" — a fabricated compliance verdict, not a real assessment. Fix is
+  under consideration by the user: either add real R4 tools, or a prompt rule to decline
+  governance questions until backed by a tool. **Deferred.**
 - ❌ **R5 Proactive alerting** — no Alerting Channels tool and no background monitor
   (agent is request/response only; `COST_ALERT_PCT` / `ENTITLEMENT_ALERT_PCT` unused).
 - ❌ **R6 Access/identity governance** — no Platform Authorization Management API tool.

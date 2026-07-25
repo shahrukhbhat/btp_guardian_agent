@@ -113,6 +113,14 @@ class _DestinationResolver:
         self._xsuaa_token = _CachedToken(token, time.monotonic() + TOKEN_TTL)
         return token
 
+    def invalidate(self, name: str) -> None:
+        """Drop the cached destination (and the shared xsuaa token) so the next
+        resolve() re-fetches a fresh Destination-Service-injected bearer token.
+        Called after a 401 from a target API, which usually means the cached
+        token expired mid-cache-window."""
+        self._dest_cache.pop(name, None)
+        self._xsuaa_token = None
+
     async def resolve(self, name: str) -> Destination:
         cached = self._dest_cache.get(name)
         if cached and time.monotonic() < cached[1]:
@@ -195,6 +203,12 @@ class Client:
             self._destination = await self._resolver.resolve(self._destination_name)
         return self._destination
 
+    async def _refresh_destination(self) -> Destination:
+        """Invalidate caches and re-resolve, yielding a fresh bearer token."""
+        self._resolver.invalidate(self._destination_name)
+        self._destination = None
+        return await self.destination()
+
     def _build_url(self, base_url: str, service_path: str) -> str:
         if not service_path.startswith("/"):
             service_path = "/" + service_path
@@ -223,16 +237,29 @@ class Client:
         params: dict[str, Any] | None = None,
         user_identity: str | None = None,
     ) -> dict[str, Any]:
-        dest = await self.destination()
         merged: dict[str, Any] = dict(params or {})
-        headers = self._base_headers(dest, user_identity)
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            r = await client.get(
-                self._build_url(dest.url, service_path),
-                auth=self._auth(dest),
-                headers=headers,
-                params=merged,
+
+        async def _do(dest: Destination) -> httpx.Response:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                return await client.get(
+                    self._build_url(dest.url, service_path),
+                    auth=self._auth(dest),
+                    headers=self._base_headers(dest, user_identity),
+                    params=merged,
+                )
+
+        dest = await self.destination()
+        r = await _do(dest)
+        # A 401 usually means the Destination-Service-injected bearer token
+        # expired inside the cache window; drop caches, re-resolve once, retry.
+        if r.status_code == 401:
+            logger.info(
+                "401 from '%s' on %s; refreshing destination token and retrying once",
+                self._destination_name,
+                service_path,
             )
+            dest = await self._refresh_destination()
+            r = await _do(dest)
         if r.status_code >= 400:
             return {
                 "error": True,
@@ -253,17 +280,28 @@ class Client:
         service_root: str = "",
         user_identity: str | None = None,
     ) -> dict[str, Any]:
+        async def _do(dest: Destination) -> httpx.Response:
+            headers = self._base_headers(dest, user_identity)
+            headers["Content-Type"] = "application/json"
+            # CSRF_REQUIRED = False for all BTP REST APIs — no CSRF fetch needed
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                return await client.post(
+                    self._build_url(dest.url, service_path),
+                    json=body,
+                    auth=self._auth(dest),
+                    headers=headers,
+                )
+
         dest = await self.destination()
-        headers = self._base_headers(dest, user_identity)
-        headers["Content-Type"] = "application/json"
-        # CSRF_REQUIRED = False for all BTP REST APIs — no CSRF fetch needed
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            r = await client.post(
-                self._build_url(dest.url, service_path),
-                json=body,
-                auth=self._auth(dest),
-                headers=headers,
+        r = await _do(dest)
+        if r.status_code == 401:
+            logger.info(
+                "401 from '%s' on %s; refreshing destination token and retrying once",
+                self._destination_name,
+                service_path,
             )
+            dest = await self._refresh_destination()
+            r = await _do(dest)
         if r.status_code >= 400:
             return {"error": True, "status_code": r.status_code, "message": r.text}
         try:
