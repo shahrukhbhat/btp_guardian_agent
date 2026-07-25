@@ -157,7 +157,7 @@ All backed by direct REST calls in CF mode; each service has its own destination
 | `getDirectories` | `GET /accounts/v1/globalAccount?expand` | `BTP_ACCOUNTS` |
 | `getGlobalAccountAssignments` | `GET /entitlements/v1/globalAccountAssignments` | `BTP_ENTITLEMENTS` |
 | `getSubaccountAssignments` | `GET /entitlements/v1/assignments` | `BTP_ENTITLEMENTS` |
-| `monthlySubaccountCmCosts` | `GET /odata/MonthlySubaccountCmCosts` | `BTP_RESOURCE_CONSUMPTION` |
+| `monthlySubaccountCmCosts` | `GET /reports/v1/monthlySubaccountsCost` | `BTP_RESOURCE_CONSUMPTION` |
 | `monthlyUsage` | `GET /reports/v1/monthlyUsage` | `BTP_RESOURCE_CONSUMPTION` |
 | `cloudCreditsDetails` | `GET /reports/v1/cloudCreditsDetails` | `BTP_RESOURCE_CONSUMPTION` |
 | `GET_accounts-…-metrics` | `GET /accounts/{sa}/apps/{app}/metrics` | `BTP_METRICS` |
@@ -186,10 +186,19 @@ payload from overflowing gpt-4o's 128K context (a real entitlements payload meas
   `subaccountGUID` for subaccount) — i.e. `detail` is ignored unless `scoped`. `contextId`
   persistence lets the LLM issue the scoped detail call on the next turn.
 - **Universal char-cap backstop.** All 13 tools are bounded by
-  `MAX_TOOL_RESULT_CHARS` (default 24000, env `BTP_MAX_TOOL_RESULT_CHARS`). If a
-  serialized result still exceeds the cap, the largest record list is truncated and a
-  machine-readable `_truncated` note (or `[TRUNCATED]` marker for non-dict/unshrinkable
-  payloads) is appended, instructing the model to narrow by service/subaccount/date.
+  `MAX_TOOL_RESULT_CHARS` (default **80000**, env `BTP_MAX_TOOL_RESULT_CHARS`). gpt-4o's
+  128K context is ~512K chars; after reserving room for the system prompt, tool schemas,
+  growing multi-turn history, and output, ~80K is safe for one tool result — enough to fit
+  a full summarized large-GA entitlements payload (~50–70K) without truncation, while still
+  catching pathological raw payloads (the ~1.5M-token dump is ~6M chars). **Was 24000**,
+  which was over-conservative: it truncated even normal summaries (a realistic 60-service GA
+  is ~29K chars), so the model reported "capped" on nearly every entitlement/usage query.
+- **Proportional truncation.** If a serialized result still exceeds the cap, the largest
+  record list is trimmed: the backstop estimates how many records fit (from the fit ratio)
+  and shrinks by 10% steps, keeping far more records than the old blind halving
+  (~121/200 vs ~8/200 in a worst case). A machine-readable `_truncated` note (or a
+  `[TRUNCATED]` marker for non-dict/unshrinkable payloads) is appended, telling the model
+  to narrow by service/subaccount/date.
 - The system prompt (§7) documents this contract so the model summarizes, offers to drill
   down, and surfaces capped-data notes to the user.
 
@@ -220,24 +229,100 @@ Six discrepancies were found and fixed in `agent.py`:
    which must be a URL-encoded `key=value`).
 
 Non-issues verified OK: entitlements `subaccountGUID` param; metrics `/metrics|/state`
-paths; `MonthlySubaccountCmCosts` OData `$top/$skip/$filter/$select/$orderby/$count`.
+paths.
+
+### 4.3 Post-deploy runtime fixes (2026-07-24, verified against real CF data)
+
+After the audit push, live testing via `.local-chat-ui --target <CF url>` surfaced four
+more issues (three real bugs, one UX). All fixed in `agent.py`; **not yet `cf push`-ed**.
+
+1. **Cost tool endpoint switched.** `monthlySubaccountCmCosts` now calls
+   `GET /reports/v1/monthlySubaccountsCost` with **required `fromDate`/`toDate` (YYYYMM)**,
+   not the OData `/odata/MonthlySubaccountCmCosts`. Root cause: the cost entity has no
+   `billingPeriod` field (the period column is `reportYearMonth`), so the LLM's invented
+   `$filter=billingPeriod eq '...'` returned **400 Bad Request**. The `monthlySubaccountsCost`
+   report is purpose-built ("monthly cost for all subaccounts"), takes YYYYMM directly (no
+   fragile hand-built `$filter`), wraps rows under `content[]`, and carries richer fields
+   (`cost`, `currency`, `paygCost`, `cloudCreditsCost`, `reportYearMonth`, `subaccountName`).
+   An optional `subaccountName` narrows client-side. **Note:** the UAS Reporting Service
+   host (`uas-reporting.cfapps.eu10...`) serves all `/reports/v1/*` + `/odata/*` consumption
+   endpoints; the `BTP_RESOURCE_CONSUMPTION` destination must point there with a credential
+   authorized for cost reporting (the cis-central creds returned **403** on the cost
+   endpoint; the **Usage Data Management Service** service key resolves it).
+2. **Current-date injection.** `_run_agent` appends a `## Current date` block
+   (`Today is YYYY-MM-DD (UTC). Current month as YYYYMM: YYYYMM.`) to the system prompt at
+   runtime, and a prompt rule tells the model to resolve "this month"/"last month" from it
+   as YYYYMM. Root cause: the LLM was hallucinating stale dates (queried `202310` for "this
+   month" when today is 2026-07).
+3. **Empty-cost UX.** A prompt rule: when a cost tool returns no rows, explain the account
+   may be a subscription/commitment model with no consumption-based cost and offer the
+   `monthlyUsage` report instead — rather than a bare "no data." Confirmed real for this GA:
+   cost endpoints return empty, but `monthlyUsage` returns 278 usage records for the period.
+4. **Char-cap raised + proportional trim** (§4.1) — the "capped on every query" complaint.
+
+### 4.4 Conversation memory
+
+See §3.5 — the LangGraph now uses an in-process `MemorySaver` checkpointer keyed by the
+A2A `context_id`, so multi-turn follow-ups ("what about last month", "who are these assigned
+to") retain context instead of being answered in isolation.
+
+### 4.5 PRD gap analysis (2026-07-24)
+
+Audit of the current implementation against `product-requirements-document.md`
+(dated 2026-05-19). All 13 tools in `agent.py`, the milestone helpers, and the
+proactive-monitor / extensibility claims were checked.
+
+**Requirements R1–R6:**
+
+| Req | PRD APIs | Status | Gap |
+|-----|----------|--------|-----|
+| **R1** Account topology | Accounts + Provisioning | ✅ Met | `getGlobalAccount`, `getSubaccounts`, `getDirectories`, `getEnvironmentInstances`, `getAvailableEnvironments` (Provisioning creds broken — see §6). |
+| **R2** Consumption & cost | Consumption + Resource Consumption + Usage Records | ✅ Met | `monthlySubaccountCmCosts`, `monthlyUsage`, `cloudCreditsDetails`, `get_usage-records`. |
+| **R3** Entitlement utilization | Entitlements + **Entitlement Consumptions API** | ⚠️ Partial | Assigned-quota tools exist (`getGlobalAccountAssignments` / `getSubaccountAssignments`), but there is **no Entitlement Consumptions tool**, so the used/assigned ratio the AC requires cannot be computed. Plan objects have no `usedAmount` field (per §4.2), so "over-provisioned" cannot be answered as specified. |
+| **R4** Governance posture | **Checks API + Monitor Log API** | ❌ Missing | No tools for either API. The prompt's severity-classification rule has nothing to classify. |
+| **R5** Proactive alerting | Metrics + **Alerting Channels API** | ❌ Missing | Reactive per-app `get_app_metrics` / `get_app_state` only. No Alerting Channels tool, no background monitor, no threshold emission. |
+| **R6** Access/identity governance | **Platform Authorization Management API** | ❌ Missing | No tool at all. |
+
+**Milestone logging (M1–M5):** Helper methods `milestone_account_topology` …
+`milestone_proactive_alert` exist and emit the exact `[MID].[achieved|missed]` pattern
+under OTel spans — **but they are never called** anywhere in the reasoning loop, so the
+milestone logs never fire. Dead scaffolding until wired into the tool/answer path.
+
+**Proactive Monitor:** ❌ Not implemented. The agent is purely request/response A2A —
+no background polling task, no threshold loop. The `COST_ALERT_PCT=80` /
+`ENTITLEMENT_ALERT_PCT=85` constants are defined but unused.
+
+**Extensibility layer:** ❌ Not implemented. Tools are hard-coded in
+`_build_domain_tools`; there is no registry/plugin mechanism for adding tools without
+editing core code.
+
+**Coverage vs. PRD claim:** the PRD claims 17 wrapped APIs ("all BTP platform APIs");
+the implementation wraps ~9 APIs across 13 tools. Service Manager and Events Service
+(listed as integration points) have no tools.
+
+**Correctly implemented guardrail:** the read-only constraint (a real PRD requirement)
+is enforced via the system prompt.
+
+**Bottom line:** R1–R2 solid; R3 partial; **R4/R5/R6 unbuilt**; milestone logging and
+the proactive monitor are scaffolded but inert.
 
 ## 5. Deployment (Cloud Foundry, eu10)
 
 - **Manifest:** `manifest.yml` — 512M / 1G disk, 1 instance, python buildpack,
   gunicorn+uvicorn, health check on `/.well-known/agent.json`.
 - **Bound service:** `proj-vector-destination-service` (Destination Service).
-- **Destinations** (all `OAuth2ClientCredentials`, same clientid/secret/token URL
-  from the cis-central `client_credentials` binding):
+- **Destinations** (all `OAuth2ClientCredentials`. Accounts/Entitlements use the
+  cis-central `client_credentials` binding; **`BTP_RESOURCE_CONSUMPTION` uses the Usage
+  Data Management Service key** — cis-central creds return 403 on the cost endpoint):
 
   | Destination | URL |
   |-------------|-----|
   | `BTP_ACCOUNTS` | `https://accounts-service.cfapps.eu10.hana.ondemand.com` |
   | `BTP_ENTITLEMENTS` | `https://entitlements-service.cfapps.eu10.hana.ondemand.com` |
-  | `BTP_RESOURCE_CONSUMPTION` | `https://account-budgets-service.cfapps.eu10.hana.ondemand.com` |
+  | `BTP_RESOURCE_CONSUMPTION` | `https://uas-reporting.cfapps.eu10.hana.ondemand.com` (UDM key) |
   | `BTP_METRICS` | `https://account-budgets-service.cfapps.eu10.hana.ondemand.com` |
   | `BTP_USAGE_RECORDS` | `https://account-budgets-service.cfapps.eu10.hana.ondemand.com` |
-  | `BTP_PROVISIONING` | `https://provisioning-service.cfapps.eu10.hana.ondemand.com` |
+  | `BTP_PROVISIONING` | `https://provisioning-service.cfapps.eu10.hana.ondemand.com` (creds broken — see §6) |
   | `aicore` | AI Core service URL (clientId/clientSecret/tokenServiceURL/AI-Resource-Group) |
 
 - **Packaging:** `.cfignore` excludes `.venv`, `vendor/`, tests, coverage,
@@ -248,8 +333,9 @@ paths; `MonthlySubaccountCmCosts` OData `$top/$skip/$filter/$select/$orderby/$co
 
 ### Working
 - ✅ Local run via `run_local.py 8080` — real AI Core LLM + mock MCP data.
-- ✅ Local chat UI (`.local-chat-ui/`) — verified end-to-end in
-  a browser against the local agent, including multi-turn `contextId` reuse.
+- ✅ Local chat UI (`.local-chat-ui/`) — verified end-to-end in a browser against the
+  local agent, including multi-turn `contextId` reuse (now backed by the MemorySaver
+  checkpointer, §3.5).
 - ✅ CF deployment packaging (clean `.cfignore`, small droplet).
 - ✅ **BTP platform API calls succeed on CF** after two fixes:
   1. Destinations reconfigured to `OAuth2ClientCredentials` using the cis-central
@@ -271,7 +357,26 @@ paths; `MonthlySubaccountCmCosts` OData `$top/$skip/$filter/$select/$orderby/$co
   `assignments`→`assignedServices` record-key bug that would have re-triggered the
   overflow). Re-verified locally end-to-end: entitlements summary (clean "not found" for a
   non-existent subaccount via client-side name match), drill-down, and topology regression
-  all pass with no errors. **Not yet `cf push`-ed** — pending user go-ahead.
+  all pass with no errors.
+- ✅ **Multi-turn conversation memory (§3.5, §4.4)** — the graph now compiles with an
+  in-process `MemorySaver` checkpointer keyed by `thread_id` (= A2A `context_id`), and
+  `_run_agent` injects the system prompt only on the first turn. The LLM no longer loses
+  context or re-asks resolved follow-up questions. Verified locally: memory carries across
+  turns and stays isolated between different `context_id`s.
+- ✅ **Cost tool fixed (§4.3)** — `monthlySubaccountCmCosts` switched from the OData
+  `MonthlySubaccountCmCosts` `$filter=billingPeriod` endpoint (which 403'd on cis creds and
+  400'd on UDM creds — the cost entity has no `billingPeriod` field) to
+  `GET /reports/v1/monthlySubaccountsCost` with required `fromDate`/`toDate` (YYYYMM).
+  Empty results now explained as a subscription/commitment account with usage offered.
+- ✅ **Current-date injection (§4.3)** — `_run_agent` appends today's date + current YYYYMM
+  to the first-turn system prompt, and a prompt rule tells the model to resolve relative
+  dates from it. Fixes the stale-year hallucination (e.g. "202310" for "this month").
+- ✅ **Char-cap raised (§4.1)** — `MAX_TOOL_RESULT_CHARS` 24000 → 80000 with a proportional
+  backstop trim, so normal summaries (a 60-service GA ≈ 29K chars) are no longer
+  needlessly capped.
+
+  **All agent.py changes above are uncommitted / not yet `cf push`-ed** — pending user
+  go-ahead to push and test against real data.
 
 ### By design (not bugs)
 - 🔒 Agent is **read-only** — the system prompt forbids write/modify operations, so
@@ -279,15 +384,31 @@ paths; `MonthlySubaccountCmCosts` OData `$top/$skip/$filter/$select/$orderby/$co
   relaxing the prompt rule and adding write tools.
 
 ### Open / follow-ups
-- ⏳ Confirm all six BTP_* destinations updated to `OAuth2ClientCredentials` (accounts
-  verified working; entitlements/consumption/metrics/usage/provisioning to confirm
-  end-to-end).
-- ⏳ Metrics/Usage/Consumption share the `account-budgets-service` host — validate the
-  exact paths return data for the target global account.
-- ⏳ **Deployed verification of the overflow fix:** after `cf push`, re-run the coena
-  entitlements query via `.local-chat-ui --target <CF url>` and confirm in `cf logs` that
-  the AI Core `chat/completions` returns **200** (not 400 `context_length_exceeded`), plus
-  a scoped drill-down follow-up.
+- ⏳ **`cf push` + deployed verification of this session's fixes:** push the uncommitted
+  agent.py changes (memory, date injection, cost endpoint, empty-cost UX, char-cap), then
+  re-run via `.local-chat-ui --target <CF url>` and confirm in `cf logs`:
+  - entitlements query → AI Core `chat/completions` returns **200** (not 400
+    `context_length_exceeded`), plus a scoped drill-down follow-up;
+  - cost query → `GET /reports/v1/monthlySubaccountsCost` returns 200 (or an explained
+    empty result), no 400/403;
+  - a multi-turn conversation no longer re-asks resolved questions.
+- ❌ **`BTP_PROVISIONING` destination — "Bad credentials".** CF logs show the Destination
+  Service returns an `authTokens` error (`Bad credentials`) for this destination, so
+  provisioning tools will fail until the credential is fixed on the BTP side.
+  **Deferred** by the user until the current fixes are pushed and tested.
+- ⏳ Confirm all six BTP_* destinations updated to `OAuth2ClientCredentials`
+  (`BTP_RESOURCE_CONSUMPTION` now uses the Usage Data Management Service key →
+  `uas-reporting.cfapps.eu10...`; accounts/entitlements verified working).
+
+### PRD gaps (see §4.5 for detail)
+- ❌ **R4 Governance posture** — no Checks API / Monitor Log API tools.
+- ❌ **R5 Proactive alerting** — no Alerting Channels tool and no background monitor
+  (agent is request/response only; `COST_ALERT_PCT` / `ENTITLEMENT_ALERT_PCT` unused).
+- ❌ **R6 Access/identity governance** — no Platform Authorization Management API tool.
+- ⚠️ **R3 Entitlement utilization** — assigned-quota only; missing the Entitlement
+  Consumptions API needed for the used/assigned ratio.
+- ⚠️ **Milestone logging (M1–M5)** — helper methods exist but are never called, so no
+  milestone logs fire. Wire them into the reasoning/answer path to activate.
 
 ## 7. Constraints & Conventions
 
