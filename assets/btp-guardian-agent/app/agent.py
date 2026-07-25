@@ -278,6 +278,30 @@ def _shape_result(
     return serialized[: MAX_TOOL_RESULT_CHARS - len(note)] + note
 
 
+def _parse_audit_record(r: dict) -> dict:
+    """Normalise a raw Audit Log API record into a flat shape for rendering.
+
+    The API returns object/attributes nested inside a JSON-encoded 'message'
+    string rather than as top-level fields. This function parses that string
+    and hoists the key fields up so the formatters can access them uniformly.
+    """
+    import json as _json
+    out = dict(r)
+    msg_str = r.get("message", "")
+    if msg_str:
+        try:
+            msg = _json.loads(msg_str)
+            out.setdefault("object", msg.get("object", {}))
+            out.setdefault("attributes", msg.get("attributes", []))
+            out.setdefault("data", msg.get("data", {}))
+        except Exception:
+            out["message_raw"] = msg_str[:200]
+    # user is a plain string in this API (service account name), not a dict
+    if isinstance(out.get("user"), str):
+        out["user"] = {"id": out["user"]}
+    return out
+
+
 def _format_audit_log_markdown(records: list, title: str = "Audit Log Records") -> str:
     """Render audit log records as a markdown table."""
     if not records:
@@ -288,7 +312,8 @@ def _format_audit_log_markdown(records: list, title: str = "Audit Log Records") 
         "| Time | Category | User | Object | Change |",
         "|------|----------|------|--------|--------|",
     ]
-    for r in records:
+    for raw in records:
+        r = _parse_audit_record(raw)
         time_val = r.get("time", "")
         cat = r.get("category", "")
         user = r.get("user", {})
@@ -298,7 +323,7 @@ def _format_audit_log_markdown(records: list, title: str = "Audit Log Records") 
         attrs = r.get("attributes", [])
         change = "; ".join(
             f"{a.get('name')}: `{a.get('old')}` → `{a.get('new')}`"
-            for a in attrs[:3] if a.get("name")
+            for a in attrs[:3] if isinstance(a, dict) and a.get("name")
         ) or "—"
         lines.append(f"| {time_val} | {cat} | {user_id} | {obj_str} | {change} |")
     return "\n".join(lines)
@@ -311,7 +336,8 @@ def _surface_notable_audit_events(records: list) -> str:
     info: list = []
     ROLE_KEYWORDS = {"role", "trust", "binding", "permission", "scope", "credential"}
 
-    for r in records:
+    for raw in records:
+        r = _parse_audit_record(raw)
         cat = r.get("category", "")
         attrs = r.get("attributes", [])
         attr_names = {a.get("name", "").lower() for a in attrs if isinstance(a, dict)}
@@ -736,7 +762,11 @@ def _build_domain_tools(
         result = await audit_logs_client.get("/auditlog/v2/auditlogrecords", params=params)
         if isinstance(result, dict) and result.get("error"):
             return _shape_result(result)
-        records = result.get("value", []) if isinstance(result, dict) else []
+        # The Audit Log Retrieval API returns a bare array, not {"value": [...]}
+        if isinstance(result, list):
+            records = result
+        else:
+            records = result.get("value", []) if isinstance(result, dict) else []
         if not surfaceNotable:
             return _format_audit_log_markdown(records)
         return _surface_notable_audit_events(records)
