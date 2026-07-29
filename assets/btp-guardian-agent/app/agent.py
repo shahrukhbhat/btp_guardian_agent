@@ -1977,13 +1977,13 @@ def _build_domain_tools(
             params["sortBy"] = sortBy
         if sortOrder:
             params["sortOrder"] = sortOrder
-        return _shape_result(await scim_client.get("/Groups", params=params))
+        return _shape_result(await scim_client.get("/scim/Groups", params=params))
 
     class GetScimGroupInput(BaseModel):
         groupId: str = Field(description="SCIM group ID (= role collection ID)")
 
     async def get_scim_group(groupId: str) -> str:
-        return _shape_result(await scim_client.get(f"/Groups/{_q(groupId, safe='')}"))
+        return _shape_result(await scim_client.get(f"/scim/Groups/{_q(groupId, safe='')}"))
 
     class CreateScimGroupInput(BaseModel):
         displayName: str = Field(description="Display name / name of the role collection")
@@ -1996,7 +1996,7 @@ def _build_domain_tools(
         }
         if description:
             body["externalId"] = description
-        return _shape_result(await scim_client.post("/Groups", body=body))
+        return _shape_result(await scim_client.post("/scim/Groups", body=body))
 
     class UpdateScimGroupInput(BaseModel):
         groupId: str = Field(
@@ -2020,7 +2020,7 @@ def _build_domain_tools(
             body["members"] = members
         if description is not None:
             body["description"] = description
-        return _shape_result(await scim_client.put(f"/Groups/{_q(groupId, safe='')}", body=body))
+        return _shape_result(await scim_client.put(f"/scim/Groups/{_q(groupId, safe='')}", body=body))
 
     class PatchScimGroupInput(BaseModel):
         groupId: str = Field(description="SCIM group ID to patch")
@@ -2033,7 +2033,7 @@ def _build_domain_tools(
             "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
             "Operations": operations,
         }
-        return _shape_result(await scim_client.patch(f"/Groups/{_q(groupId, safe='')}", body=body))
+        return _shape_result(await scim_client.patch(f"/scim/Groups/{_q(groupId, safe='')}", body=body))
 
     # ================================================================
     # SCIM API — Users = shadow users
@@ -2050,13 +2050,13 @@ def _build_domain_tools(
         params: dict = {"count": min(count, 500), "startIndex": startIndex}
         if filter:
             params["filter"] = filter
-        return _shape_result(await scim_client.get("/Users", params=params))
+        return _shape_result(await scim_client.get("/scim/Users", params=params))
 
     class GetScimUserInput(BaseModel):
         userId: str = Field(description="SCIM user ID (UUID)")
 
     async def get_scim_user(userId: str) -> str:
-        return _shape_result(await scim_client.get(f"/Users/{_q(userId, safe='')}"))
+        return _shape_result(await scim_client.get(f"/scim/Users/{_q(userId, safe='')}"))
 
     class CreateShadowUserInput(BaseModel):
         userName: str = Field(description="Login name / email for the new shadow user")
@@ -2081,7 +2081,7 @@ def _build_domain_tools(
             name["givenName"] = givenName
         if name:
             body["name"] = name
-        return _shape_result(await scim_client.post("/Users", body=body))
+        return _shape_result(await scim_client.post("/scim/Users", body=body))
 
     class UpdateShadowUserInput(BaseModel):
         userId: str = Field(
@@ -2112,7 +2112,7 @@ def _build_domain_tools(
             name["givenName"] = givenName
         if name:
             body["name"] = name
-        return _shape_result(await scim_client.put(f"/Users/{_q(userId, safe='')}", body=body))
+        return _shape_result(await scim_client.put(f"/scim/Users/{_q(userId, safe='')}", body=body))
 
     class PatchShadowUserInput(BaseModel):
         userId: str = Field(description="SCIM user ID (UUID)")
@@ -2125,7 +2125,7 @@ def _build_domain_tools(
             "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
             "Operations": operations,
         }
-        return _shape_result(await scim_client.patch(f"/Users/{_q(userId, safe='')}", body=body))
+        return _shape_result(await scim_client.patch(f"/scim/Users/{_q(userId, safe='')}", body=body))
 
     class DeleteShadowUserInput(BaseModel):
         userId: str = Field(
@@ -2133,7 +2133,7 @@ def _build_domain_tools(
         )
 
     async def delete_shadow_user(userId: str) -> str:
-        return _shape_result(await scim_client.delete(f"/Users/{_q(userId, safe='')}"))
+        return _shape_result(await scim_client.delete(f"/scim/Users/{_q(userId, safe='')}"))
 
     # ================================================================
     # Identity Provider Management API (TrustConfigurationAPI)
