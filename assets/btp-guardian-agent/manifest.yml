@@ -25,3 +25,9 @@ applications:
       BTP_PROVISIONING_DESTINATION_NAME: BTP_PROVISIONING
       AICORE_DESTINATION_NAME: aicore
       LOG_LEVEL: INFO
+      # Write capability — off by default (demo is read-only).
+      # Set BTP_ALLOW_WRITES=1 and configure BTP_AUTHORIZATION and BTP_SCIM destinations
+      # (xsuaa apiaccess plan) to enable role-collection and user management tools.
+      BTP_ALLOW_WRITES: "0"
+      BTP_AUTHORIZATION_DESTINATION_NAME: BTP_AUTHORIZATION
+      BTP_SCIM_DESTINATION_NAME: BTP_SCIM

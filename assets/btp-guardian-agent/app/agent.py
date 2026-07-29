@@ -41,8 +41,15 @@ DEST_METRICS = os.environ.get("BTP_METRICS_DESTINATION_NAME", "BTP_METRICS")
 DEST_USAGE_RECORDS = os.environ.get("BTP_USAGE_RECORDS_DESTINATION_NAME", "BTP_USAGE_RECORDS")
 DEST_PROVISIONING = os.environ.get("BTP_PROVISIONING_DESTINATION_NAME", "BTP_PROVISIONING")
 DEST_AUDIT_LOGS = os.environ.get("BTP_AUDIT_LOGS_DESTINATION_NAME", "BTP_AUDIT_LOGS")
+# XSUAA Authorization API (xsuaa apiaccess plan) — per-subaccount XSUAA tenant
+DEST_AUTHORIZATION = os.environ.get("BTP_AUTHORIZATION_DESTINATION_NAME", "BTP_AUTHORIZATION")
+# XSUAA SCIM User Management API — same XSUAA tenant base URL
+DEST_SCIM = os.environ.get("BTP_SCIM_DESTINATION_NAME", "BTP_SCIM")
 
 MAX_PAGE_SIZE = int(os.environ.get("BTP_MAX_PAGE_SIZE", "100"))
+# When True, write tools (role collections, user assignment, shadow users) are registered.
+# Default off: the demo agent is read-only until this flag is set.
+ALLOW_WRITES = os.environ.get("BTP_ALLOW_WRITES", "").lower() in ("1", "true", "yes")
 
 # ---------------------------------------------------------------------------
 # Agent model / config / prompt decorators
@@ -80,7 +87,24 @@ def get_max_tokens() -> int:
     validation={"format": "markdown", "max_length": 5000},
 )
 def get_system_prompt() -> str:
-    return """You are BTP Guardian, an expert AI assistant for SAP BTP platform teams and FinOps stakeholders.
+    write_policy = (
+        """- Write operations are ENABLED (BTP_ALLOW_WRITES=1). You may create/delete role
+  collections, assign/unassign users and roles, and create/delete shadow users using the
+  provided tools. For DESTRUCTIVE operations (deleteRoleCollection, unassignUserFromRoleCollection,
+  unassignRoleFromRoleCollection, deleteShadowUser): before calling the tool, echo back
+  exactly what you are about to do — resource name, user, and IdP origin — and require the
+  user to confirm with an explicit 'yes' before proceeding."""
+        if ALLOW_WRITES else
+        """- You are currently READ-ONLY: this guardrail is enforced here in the system prompt, so
+  you must not perform any write or modify operation on BTP resources. When a user asks for
+  a modify/write action (e.g. add or remove a user, create or delete a role collection,
+  assign or unassign a role), do NOT attempt it. Instead: (1) state clearly that you are
+  currently read-only because this restriction is set in the prompt, and (2) confirm that
+  the capability exists and WOULD work once the read-only guardrail is lifted — briefly
+  describe exactly what you would do (the target resource, the user/idp, and the operation),
+  so the user knows it is ready to be enabled."""
+    )
+    return f"""You are BTP Guardian, an expert AI assistant for SAP BTP platform teams and FinOps stakeholders.
 
 You provide accurate, real-time insights into BTP cloud consumption, costs, account topology,
 entitlements, and governance posture by calling BTP platform APIs as tools.
@@ -103,7 +127,7 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
   to surface notable events. The tool returns pre-formatted markdown — copy it verbatim
   into your response without summarising, paraphrasing, or reformatting it. Never
   describe what the table contains instead of showing it.
-- You are read-only — never suggest or imply write or modify operations on BTP resources.
+{write_policy}
 - When a query requires multiple API calls (e.g. topology then cost), chain them step by step
   and synthesise a single, cohesive answer.
 - To act on a subaccount referred to by NAME (e.g. "coena"), first call getSubaccounts with the
@@ -393,6 +417,8 @@ def _build_domain_tools(
     usage_records_client: Client,
     provisioning_client: Client,
     audit_logs_client: Client,
+    authorization_client: Client | None = None,
+    scim_client: Client | None = None,
 ) -> list:
     """Build LangChain StructuredTool instances backed by direct BTP REST clients."""
     from langchain_core.tools import StructuredTool
@@ -789,6 +815,777 @@ def _build_domain_tools(
         return _surface_notable_audit_events(records)
 
     # -----------------------------------------------------------------------
+    # XSUAA / Authorization & Trust Management tools
+    # All 4 APIs share the same base URL (BTP_AUTHORIZATION destination).
+    # Only registered when BTP_ALLOW_WRITES=1 (authorization_client provided).
+    # -----------------------------------------------------------------------
+
+    write_tools: list = []
+
+    if authorization_client and scim_client:
+        from urllib.parse import quote as _q
+
+        # ================================================================
+        # Authorization API — Applications
+        # ================================================================
+
+        class GetAppsInput(BaseModel):
+            onlyForOrgId: str | None = Field(default=None, description="Filter to a specific CF org GUID")
+            onlyWithClientId: bool = Field(default=True, description="If False, include apps without an OAuth client")
+
+        async def get_apps(onlyForOrgId: str | None = None, onlyWithClientId: bool = True) -> str:
+            params: dict = {"onlyWithClientId": str(onlyWithClientId).lower()}
+            if onlyForOrgId:
+                params["onlyForOrgId"] = onlyForOrgId
+            return _shape_result(await authorization_client.get("/sap/rest/authorization/v2/apps", params=params))
+
+        class GetAppInput(BaseModel):
+            appId: str = Field(description="Application ID (e.g. myapp!t1234)")
+
+        async def get_app(appId: str) -> str:
+            return _shape_result(await authorization_client.get(f"/sap/rest/authorization/v2/apps/{_q(appId, safe='')}"))
+
+        class GetAppScopesInput(BaseModel):
+            appId: str = Field(description="Application ID")
+            scopeName: str | None = Field(default=None, description="Optional: return a single scope by name")
+
+        async def get_app_scopes(appId: str, scopeName: str | None = None) -> str:
+            path = f"/sap/rest/authorization/v2/apps/{_q(appId, safe='')}/scopes"
+            if scopeName:
+                path += f"/{_q(scopeName, safe='')}"
+            return _shape_result(await authorization_client.get(path))
+
+        class GetAppAuthoritiesInput(BaseModel):
+            appId: str = Field(description="Application ID receiving granted authorities")
+            grantedByAppId: str | None = Field(default=None, description="Application ID of the granting app")
+
+        async def get_app_authorities(appId: str, grantedByAppId: str | None = None) -> str:
+            params: dict = {}
+            if grantedByAppId:
+                params["grantedByAppId"] = grantedByAppId
+            return _shape_result(await authorization_client.get(
+                f"/sap/rest/authorization/v2/apps/{_q(appId, safe='')}/authorities", params=params
+            ))
+
+        class GetOwnAppInput(BaseModel):
+            includeUsage: bool = Field(default=False, description="If True, also return usage information")
+
+        async def get_own_app(includeUsage: bool = False) -> str:
+            path = "/sap/rest/authorization/v2/ownapp"
+            if includeUsage:
+                path += "/usage"
+            return _shape_result(await authorization_client.get(path))
+
+        # ================================================================
+        # Authorization API — Role Collections
+        # ================================================================
+
+        class GetRoleCollectionsInput(BaseModel):
+            page: int | None = Field(default=None, description="Page number for paginated results")
+
+        async def get_role_collections(page: int | None = None) -> str:
+            if page is not None:
+                return _shape_result(await authorization_client.get(
+                    f"/sap/rest/authorization/v2/rolecollections/pages/{page}"
+                ))
+            return _shape_result(await authorization_client.get("/sap/rest/authorization/v2/rolecollections"))
+
+        class GetRoleCollectionInput(BaseModel):
+            name: str = Field(description="Exact name of the role collection")
+
+        async def get_role_collection(name: str) -> str:
+            return _shape_result(await authorization_client.get(
+                f"/sap/rest/authorization/v2/rolecollections/{_q(name, safe='')}"
+            ))
+
+        class CreateRoleCollectionInput(BaseModel):
+            name: str = Field(description="Unique name for the new role collection")
+            description: str | None = Field(default=None, description="Optional description")
+
+        async def create_role_collection(name: str, description: str | None = None) -> str:
+            body: dict = {"name": name}
+            if description:
+                body["description"] = description
+            return _shape_result(await authorization_client.post(
+                "/sap/rest/authorization/v2/rolecollections", body=body
+            ))
+
+        class UpdateRoleCollectionInput(BaseModel):
+            name: str = Field(description="Name of the role collection to update")
+            newDescription: str | None = Field(default=None, description="New description")
+            newName: str | None = Field(default=None, description="New name for the role collection")
+
+        async def update_role_collection(name: str, newDescription: str | None = None, newName: str | None = None) -> str:
+            body: dict = {}
+            if newDescription is not None:
+                body["description"] = newDescription
+            if newName is not None:
+                body["name"] = newName
+            return _shape_result(await authorization_client.put(
+                f"/sap/rest/authorization/v2/rolecollections/{_q(name, safe='')}", body=body
+            ))
+
+        class DeleteRoleCollectionInput(BaseModel):
+            name: str = Field(description="Exact name of the role collection to delete")
+
+        async def delete_role_collection(name: str) -> str:
+            return _shape_result(await authorization_client.delete(
+                f"/sap/rest/authorization/v2/rolecollections/{_q(name, safe='')}"
+            ))
+
+        class GetRoleCollectionRolesInput(BaseModel):
+            roleCollectionName: str = Field(description="Name of the role collection")
+
+        async def get_role_collection_roles(roleCollectionName: str) -> str:
+            return _shape_result(await authorization_client.get(
+                f"/sap/rest/authorization/v2/rolecollections/{_q(roleCollectionName, safe='')}/roles"
+            ))
+
+        class AssignRoleToCollectionInput(BaseModel):
+            roleCollectionName: str = Field(description="Name of the target role collection")
+            roleTemplateName: str = Field(description="Role template name, e.g. 'Viewer'")
+            roleTemplateAppId: str = Field(description="App ID of the role template, e.g. 'myapp!t1234'")
+            roleName: str | None = Field(default=None, description="Role name (defaults to roleTemplateName if omitted)")
+
+        async def assign_role_to_collection(
+            roleCollectionName: str, roleTemplateName: str, roleTemplateAppId: str, roleName: str | None = None
+        ) -> str:
+            body = [{"roleTemplateName": roleTemplateName, "roleTemplateAppId": roleTemplateAppId,
+                     "roleName": roleName or roleTemplateName}]
+            return _shape_result(await authorization_client.put(
+                f"/sap/rest/authorization/v2/rolecollections/{_q(roleCollectionName, safe='')}/roles",
+                body=body,
+            ))
+
+        class UnassignRoleFromCollectionInput(BaseModel):
+            roleCollectionName: str = Field(description="Name of the role collection")
+            roleTemplateAppId: str = Field(description="App ID of the role template")
+            roleName: str = Field(description="Role name")
+            roleTemplateName: str = Field(description="Role template name")
+
+        async def unassign_role_from_collection(
+            roleCollectionName: str, roleTemplateAppId: str, roleName: str, roleTemplateName: str
+        ) -> str:
+            return _shape_result(await authorization_client.delete(
+                f"/sap/rest/authorization/v2/rolecollections/{_q(roleCollectionName, safe='')}"
+                f"/roles/{_q(roleTemplateAppId, safe='')}/{_q(roleName, safe='')}/{_q(roleTemplateName, safe='')}"
+            ))
+
+        class GetRoleCollectionsByRoleInput(BaseModel):
+            appId: str = Field(description="Application ID")
+            roleTemplateName: str = Field(description="Role template name")
+            roleName: str = Field(description="Role name")
+
+        async def get_role_collections_by_role(appId: str, roleTemplateName: str, roleName: str) -> str:
+            return _shape_result(await authorization_client.get(
+                f"/sap/rest/authorization/v2/rolecollections/roles"
+                f"/{_q(appId, safe='')}/{_q(roleTemplateName, safe='')}/{_q(roleName, safe='')}"
+            ))
+
+        # ================================================================
+        # Authorization API — Roles
+        # ================================================================
+
+        class GetRolesInput(BaseModel):
+            appId: str | None = Field(default=None, description="Filter roles by application ID")
+
+        async def get_roles(appId: str | None = None) -> str:
+            if appId:
+                return _shape_result(await authorization_client.get(
+                    f"/sap/rest/authorization/v2/apps/{_q(appId, safe='')}/roles"
+                ))
+            return _shape_result(await authorization_client.get("/sap/rest/authorization/v2/roles"))
+
+        class CreateRoleInput(BaseModel):
+            roleTemplateName: str = Field(description="Role template name to base the role on")
+            roleTemplateAppId: str = Field(description="App ID that owns the role template")
+            name: str = Field(description="Name for the new role")
+            description: str | None = Field(default=None, description="Optional description")
+
+        async def create_role(roleTemplateName: str, roleTemplateAppId: str, name: str, description: str | None = None) -> str:
+            body: dict = {
+                "roleTemplateName": roleTemplateName,
+                "roleTemplateAppId": roleTemplateAppId,
+                "name": name,
+            }
+            if description:
+                body["description"] = description
+            return _shape_result(await authorization_client.post("/sap/rest/authorization/v2/apps/roles", body=body))
+
+        class GetRoleInput(BaseModel):
+            appId: str = Field(description="Application ID")
+            templateName: str = Field(description="Role template name")
+            roleName: str = Field(description="Role name")
+
+        async def get_role(appId: str, templateName: str, roleName: str) -> str:
+            return _shape_result(await authorization_client.get(
+                f"/sap/rest/authorization/v2/apps/{_q(appId, safe='')}"
+                f"/roletemplates/{_q(templateName, safe='')}/roles/{_q(roleName, safe='')}"
+            ))
+
+        class UpdateRoleInput(BaseModel):
+            appId: str = Field(description="Application ID")
+            templateName: str = Field(description="Role template name")
+            roleName: str = Field(description="Role name to update")
+            description: str | None = Field(default=None, description="New description")
+
+        async def update_role(appId: str, templateName: str, roleName: str, description: str | None = None) -> str:
+            body: dict = {"name": roleName}
+            if description is not None:
+                body["description"] = description
+            return _shape_result(await authorization_client.put(
+                f"/sap/rest/authorization/v2/apps/{_q(appId, safe='')}"
+                f"/roletemplates/{_q(templateName, safe='')}/roles/{_q(roleName, safe='')}",
+                body=body,
+            ))
+
+        class DeleteRoleInput(BaseModel):
+            appId: str = Field(description="Application ID")
+            templateName: str = Field(description="Role template name")
+            roleName: str = Field(description="Role name to delete")
+
+        async def delete_role(appId: str, templateName: str, roleName: str) -> str:
+            return _shape_result(await authorization_client.delete(
+                f"/sap/rest/authorization/v2/apps/{_q(appId, safe='')}"
+                f"/roletemplates/{_q(templateName, safe='')}/roles/{_q(roleName, safe='')}"
+            ))
+
+        # ================================================================
+        # Authorization API — Role Templates
+        # ================================================================
+
+        class GetRoleTemplatesInput(BaseModel):
+            appId: str | None = Field(default=None, description="Filter by application ID; omit for all apps")
+            templateName: str | None = Field(default=None, description="Get a specific template by name (requires appId)")
+            showRoles: bool = Field(default=False, description="Include associated roles in the response")
+
+        async def get_role_templates(
+            appId: str | None = None, templateName: str | None = None, showRoles: bool = False
+        ) -> str:
+            if appId and templateName:
+                return _shape_result(await authorization_client.get(
+                    f"/sap/rest/authorization/v2/apps/{_q(appId, safe='')}/roletemplates/{_q(templateName, safe='')}"
+                ))
+            if appId:
+                return _shape_result(await authorization_client.get(
+                    f"/sap/rest/authorization/v2/apps/{_q(appId, safe='')}/roletemplates"
+                ))
+            return _shape_result(await authorization_client.get(
+                "/sap/rest/authorization/v2/apps/roletemplates",
+                params={"showRoles": str(showRoles).lower()},
+            ))
+
+        # ================================================================
+        # Authorization API — Attribute Mapping (IdP attribute → role collection)
+        # ================================================================
+
+        class GetAttributeMappingsInput(BaseModel):
+            origin: str = Field(description="Identity provider origin key, e.g. 'sap.default'")
+            attributeName: str | None = Field(default=None, description="Filter by attribute name")
+            attributeValue: str | None = Field(default=None, description="Filter by attribute value (requires attributeName)")
+            roleCollectionName: str | None = Field(default=None, description="Filter by role collection name")
+
+        async def get_attribute_mappings(
+            origin: str,
+            attributeName: str | None = None,
+            attributeValue: str | None = None,
+            roleCollectionName: str | None = None,
+        ) -> str:
+            if attributeName and attributeValue and roleCollectionName:
+                return _shape_result(await authorization_client.get(
+                    f"/sap/rest/authorization/v2/identity-providers/{_q(origin, safe='')}"
+                    f"/attributes/{_q(attributeName, safe='')}"
+                    f"/rolecollections/{_q(roleCollectionName, safe='')}"
+                ))
+            if attributeName and attributeValue:
+                return _shape_result(await authorization_client.get(
+                    f"/sap/rest/authorization/v2/identity-providers/{_q(origin, safe='')}"
+                    f"/attributes/{_q(attributeName, safe='')}/{_q(attributeValue, safe='')}"
+                ))
+            if roleCollectionName:
+                return _shape_result(await authorization_client.get(
+                    f"/sap/rest/authorization/v2/identity-providers/{_q(origin, safe='')}"
+                    f"/rolecollections/{_q(roleCollectionName, safe='')}"
+                ))
+            return _shape_result(await authorization_client.get(
+                f"/sap/rest/authorization/v2/identity-providers/{_q(origin, safe='')}/attributes/rolecollections"
+            ))
+
+        class CreateAttributeMappingInput(BaseModel):
+            origin: str = Field(description="Identity provider origin key")
+            attributeName: str = Field(description="IdP attribute name to map, e.g. 'department'")
+            attributeValue: str = Field(description="Attribute value that triggers the mapping")
+            operator: str = Field(default="equals", description="Operator: 'equals' or 'contains'")
+            roleCollectionName: str = Field(description="Role collection to assign when attribute matches")
+
+        async def create_attribute_mapping(
+            origin: str, attributeName: str, attributeValue: str, operator: str, roleCollectionName: str
+        ) -> str:
+            body = {
+                "attributeName": attributeName,
+                "attributeValue": attributeValue,
+                "operator": operator,
+                "roleCollectionName": roleCollectionName,
+            }
+            return _shape_result(await authorization_client.post(
+                f"/sap/rest/authorization/v2/identity-providers/{_q(origin, safe='')}/attributes",
+                body=body,
+            ))
+
+        class DeleteAttributeMappingInput(BaseModel):
+            origin: str = Field(description="Identity provider origin key")
+            attributeName: str = Field(description="Attribute name of the mapping to delete")
+            operator: str = Field(description="Operator used in the mapping: 'equals' or 'contains'")
+            attributeValue: str = Field(description="Attribute value of the mapping to delete")
+            roleCollectionName: str = Field(description="Role collection name of the mapping to delete")
+
+        async def delete_attribute_mapping(
+            origin: str, attributeName: str, operator: str, attributeValue: str, roleCollectionName: str
+        ) -> str:
+            return _shape_result(await authorization_client.delete(
+                f"/sap/rest/authorization/v2/identity-providers/{_q(origin, safe='')}"
+                f"/attributes/{_q(attributeName, safe='')}/{_q(operator, safe='')}"
+                f"/{_q(attributeValue, safe='')}/rolecollections/{_q(roleCollectionName, safe='')}"
+            ))
+
+        # ================================================================
+        # SCIM API (PlatformAPI) — Groups = role collections
+        # ================================================================
+
+        class GetScimGroupsInput(BaseModel):
+            count: int = Field(default=100, description="Max results per page (max 500)")
+            startIndex: int = Field(default=1, description="1-based index of first result")
+            sortBy: str | None = Field(default=None, description="Sort attribute; only 'displayName' supported")
+            sortOrder: str | None = Field(default=None, description="'ascending' or 'descending'")
+
+        async def get_scim_groups(
+            count: int = 100, startIndex: int = 1, sortBy: str | None = None, sortOrder: str | None = None
+        ) -> str:
+            params: dict = {"count": min(count, 500), "startIndex": startIndex}
+            if sortBy:
+                params["sortBy"] = sortBy
+            if sortOrder:
+                params["sortOrder"] = sortOrder
+            return _shape_result(await scim_client.get("/Groups", params=params))
+
+        class GetScimGroupInput(BaseModel):
+            groupId: str = Field(description="SCIM group ID (= role collection ID)")
+
+        async def get_scim_group(groupId: str) -> str:
+            return _shape_result(await scim_client.get(f"/Groups/{_q(groupId, safe='')}"))
+
+        class CreateScimGroupInput(BaseModel):
+            displayName: str = Field(description="Display name / name of the role collection")
+            description: str | None = Field(default=None, description="Optional description")
+
+        async def create_scim_group(displayName: str, description: str | None = None) -> str:
+            body: dict = {
+                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+                "displayName": displayName,
+            }
+            if description:
+                body["externalId"] = description
+            return _shape_result(await scim_client.post("/Groups", body=body))
+
+        class UpdateScimGroupInput(BaseModel):
+            groupId: str = Field(description="SCIM group ID to update")
+            members: list | None = Field(
+                default=None,
+                description='List of member objects to set. Each entry: {"value": "<userId>", "type": "USER"}. '
+                "Members NOT in this list are removed — provide the full desired member list.",
+            )
+            description: str | None = Field(default=None, description="New description")
+
+        async def update_scim_group(
+            groupId: str, members: list | None = None, description: str | None = None
+        ) -> str:
+            body: dict = {"schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"]}
+            if members is not None:
+                body["members"] = members
+            if description is not None:
+                body["description"] = description
+            return _shape_result(await scim_client.put(f"/Groups/{_q(groupId, safe='')}", body=body))
+
+        class PatchScimGroupInput(BaseModel):
+            groupId: str = Field(description="SCIM group ID to patch")
+            operations: list = Field(
+                description='SCIM patch operations list, e.g. [{"op":"add","path":"members","value":[{"value":"<userId>","type":"USER"}]}]'
+            )
+
+        async def patch_scim_group(groupId: str, operations: list) -> str:
+            body = {
+                "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                "Operations": operations,
+            }
+            return _shape_result(await scim_client.patch(f"/Groups/{_q(groupId, safe='')}", body=body))
+
+        # ================================================================
+        # SCIM API — Users = shadow users
+        # ================================================================
+
+        class GetScimUsersInput(BaseModel):
+            filter: str | None = Field(default=None, description="SCIM filter, e.g. 'userName eq \"alice@example.com\"'")
+            count: int = Field(default=100, description="Max results per page (max 500)")
+            startIndex: int = Field(default=1, description="1-based start index")
+
+        async def get_scim_users(
+            filter: str | None = None, count: int = 100, startIndex: int = 1
+        ) -> str:
+            params: dict = {"count": min(count, 500), "startIndex": startIndex}
+            if filter:
+                params["filter"] = filter
+            return _shape_result(await scim_client.get("/Users", params=params))
+
+        class GetScimUserInput(BaseModel):
+            userId: str = Field(description="SCIM user ID (UUID)")
+
+        async def get_scim_user(userId: str) -> str:
+            return _shape_result(await scim_client.get(f"/Users/{_q(userId, safe='')}"))
+
+        class CreateShadowUserInput(BaseModel):
+            userName: str = Field(description="Login name / email for the new shadow user")
+            origin: str = Field(default="sap.default", description="Identity provider origin key")
+            familyName: str | None = Field(default=None, description="Optional last name")
+            givenName: str | None = Field(default=None, description="Optional first name")
+
+        async def create_shadow_user(
+            userName: str, origin: str = "sap.default",
+            familyName: str | None = None, givenName: str | None = None,
+        ) -> str:
+            body: dict = {
+                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+                "userName": userName,
+                "emails": [{"value": userName, "primary": True}],
+                "origin": origin,
+            }
+            name: dict = {}
+            if familyName:
+                name["familyName"] = familyName
+            if givenName:
+                name["givenName"] = givenName
+            if name:
+                body["name"] = name
+            return _shape_result(await scim_client.post("/Users", body=body))
+
+        class UpdateShadowUserInput(BaseModel):
+            userId: str = Field(description="SCIM user ID (UUID) of the user to update")
+            userName: str = Field(description="Username / email")
+            origin: str = Field(default="sap.default", description="Identity provider origin key")
+            active: bool | None = Field(default=None, description="Set to False to deactivate the user")
+            familyName: str | None = Field(default=None)
+            givenName: str | None = Field(default=None)
+
+        async def update_shadow_user(
+            userId: str, userName: str, origin: str = "sap.default",
+            active: bool | None = None, familyName: str | None = None, givenName: str | None = None,
+        ) -> str:
+            body: dict = {
+                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+                "userName": userName,
+                "origin": origin,
+            }
+            if active is not None:
+                body["active"] = active
+            name: dict = {}
+            if familyName:
+                name["familyName"] = familyName
+            if givenName:
+                name["givenName"] = givenName
+            if name:
+                body["name"] = name
+            return _shape_result(await scim_client.put(f"/Users/{_q(userId, safe='')}", body=body))
+
+        class PatchShadowUserInput(BaseModel):
+            userId: str = Field(description="SCIM user ID (UUID)")
+            operations: list = Field(
+                description='SCIM patch operations, e.g. [{"op":"replace","path":"active","value":false}]'
+            )
+
+        async def patch_shadow_user(userId: str, operations: list) -> str:
+            body = {
+                "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                "Operations": operations,
+            }
+            return _shape_result(await scim_client.patch(f"/Users/{_q(userId, safe='')}", body=body))
+
+        class DeleteShadowUserInput(BaseModel):
+            userId: str = Field(
+                description="SCIM user ID (UUID). Use getSCIMUsers to resolve a username to its ID first."
+            )
+
+        async def delete_shadow_user(userId: str) -> str:
+            return _shape_result(await scim_client.delete(f"/Users/{_q(userId, safe='')}"))
+
+        # ================================================================
+        # Identity Provider Management API (TrustConfigurationAPI)
+        # ================================================================
+
+        class GetIdentityProvidersInput(BaseModel):
+            activeOnly: bool = Field(default=False, description="If True, return only active identity providers")
+
+        async def get_identity_providers(activeOnly: bool = False) -> str:
+            return _shape_result(await authorization_client.get(
+                "/sap/rest/identity-providers", params={"activeOnly": str(activeOnly).lower()}
+            ))
+
+        class GetIdentityProviderInput(BaseModel):
+            idpId: str = Field(description="Identity provider ID (origin key)")
+
+        async def get_identity_provider(idpId: str) -> str:
+            return _shape_result(await authorization_client.get(
+                f"/sap/rest/identity-providers/{_q(idpId, safe='')}"
+            ))
+
+        class CreateIdentityProviderInput(BaseModel):
+            type: str = Field(description="Protocol type: 'oidc1.0' or 'saml2.0'")
+            name: str = Field(description="Display name for the identity provider")
+            originKey: str | None = Field(default=None, description="Origin key (unique identifier)")
+            active: bool = Field(default=True, description="Whether the IdP is active")
+            addShadowUserOnLogin: bool = Field(default=True, description="Auto-create shadow users on login")
+
+        async def create_identity_provider(
+            type: str, name: str, originKey: str | None = None,
+            active: bool = True, addShadowUserOnLogin: bool = True,
+        ) -> str:
+            body: dict = {"type": type, "name": name, "active": active,
+                          "addShadowUserOnLogin": addShadowUserOnLogin}
+            if originKey:
+                body["originKey"] = originKey
+            return _shape_result(await authorization_client.post("/sap/rest/identity-providers", body=body))
+
+        class UpdateIdentityProviderInput(BaseModel):
+            idpId: str = Field(description="Identity provider ID to update")
+            active: bool | None = Field(default=None, description="Enable or disable the IdP")
+            addShadowUserOnLogin: bool | None = Field(default=None, description="Toggle shadow user creation")
+            linkText: str | None = Field(default=None, description="Login button label text")
+
+        async def update_identity_provider(
+            idpId: str, active: bool | None = None,
+            addShadowUserOnLogin: bool | None = None, linkText: str | None = None,
+        ) -> str:
+            body: dict = {}
+            if active is not None:
+                body["active"] = active
+            if addShadowUserOnLogin is not None:
+                body["addShadowUserOnLogin"] = addShadowUserOnLogin
+            if linkText is not None:
+                body["linkText"] = linkText
+            return _shape_result(await authorization_client.put(
+                f"/sap/rest/identity-providers/{_q(idpId, safe='')}", body=body
+            ))
+
+        class DeleteIdentityProviderInput(BaseModel):
+            idpId: str = Field(description="Identity provider ID to delete")
+
+        async def delete_identity_provider(idpId: str) -> str:
+            return _shape_result(await authorization_client.delete(
+                f"/sap/rest/identity-providers/{_q(idpId, safe='')}"
+            ))
+
+        class GetIasTenantsInput(BaseModel):
+            pass
+
+        async def get_ias_tenants() -> str:
+            return _shape_result(await authorization_client.get("/sap/rest/identity-providers/ias"))
+
+        # ================================================================
+        # Security Settings API (SecuritySettingsAPI)
+        # ================================================================
+
+        class GetSecuritySettingsInput(BaseModel):
+            pass
+
+        async def get_security_settings() -> str:
+            return _shape_result(await authorization_client.get(
+                "/sap/rest/authorization/v2/securitySettings"
+            ))
+
+        class GetTrustedDomainsInput(BaseModel):
+            subdomain: str = Field(description="Subaccount subdomain (e.g. 'coena')")
+
+        async def get_trusted_domains(subdomain: str) -> str:
+            return _shape_result(await authorization_client.get(
+                "/sap/rest/authorization/v2/securitySettings/public",
+                params={"subdomain": subdomain},
+            ))
+
+        class UpdateSecuritySettingsInput(BaseModel):
+            iframeDomains: str | None = Field(default=None, description="Space-separated trusted iframe domains, e.g. 'https://*.example.com'")
+            defaultIdp: str | None = Field(default=None, description="Origin key of the default IdP for password grant flow")
+            tokenValidityInMinutes: int | None = Field(default=None, description="Access token validity in minutes")
+
+        async def update_security_settings(
+            iframeDomains: str | None = None,
+            defaultIdp: str | None = None,
+            tokenValidityInMinutes: int | None = None,
+        ) -> str:
+            body: dict = {}
+            if iframeDomains is not None:
+                body["iframeDomains"] = iframeDomains
+            if defaultIdp is not None:
+                body["defaultIdp"] = defaultIdp
+            if tokenValidityInMinutes is not None:
+                body["tokenPolicySettings"] = {"accessTokenValidity": tokenValidityInMinutes}
+            return _shape_result(await authorization_client.patch(
+                "/sap/rest/authorization/v2/securitySettings", body=body
+            ))
+
+        class TriggerKeyRotationInput(BaseModel):
+            pass
+
+        async def trigger_key_rotation() -> str:
+            return _shape_result(await authorization_client.post(
+                "/sap/rest/authorization/v2/securitySettings/keyRotation", body={}
+            ))
+
+        # ================================================================
+        # Assemble write_tools list
+        # ================================================================
+        write_tools = [
+            # Authorization API — Applications
+            StructuredTool.from_function(coroutine=get_apps, name="getXsuaaApps",
+                description="List XSUAA service instances (apps) registered in the subaccount",
+                args_schema=GetAppsInput),
+            StructuredTool.from_function(coroutine=get_app, name="getXsuaaApp",
+                description="Get details of a specific XSUAA application by app ID",
+                args_schema=GetAppInput),
+            StructuredTool.from_function(coroutine=get_app_scopes, name="getXsuaaAppScopes",
+                description="Get OAuth scopes of a XSUAA application, optionally a specific scope",
+                args_schema=GetAppScopesInput),
+            StructuredTool.from_function(coroutine=get_app_authorities, name="getXsuaaAppAuthorities",
+                description="Get authorities granted to a XSUAA application from another app",
+                args_schema=GetAppAuthoritiesInput),
+            StructuredTool.from_function(coroutine=get_own_app, name="getOwnXsuaaApp",
+                description="Get details of the service instance used to call this API; optionally include usage",
+                args_schema=GetOwnAppInput),
+            # Role Collections
+            StructuredTool.from_function(coroutine=get_role_collections, name="getRoleCollections",
+                description="List all role collections in the subaccount (paginated)",
+                args_schema=GetRoleCollectionsInput),
+            StructuredTool.from_function(coroutine=get_role_collection, name="getRoleCollection",
+                description="Get details of a specific role collection by name",
+                args_schema=GetRoleCollectionInput),
+            StructuredTool.from_function(coroutine=create_role_collection, name="createRoleCollection",
+                description="Create a new role collection",
+                args_schema=CreateRoleCollectionInput),
+            StructuredTool.from_function(coroutine=update_role_collection, name="updateRoleCollection",
+                description="Update the name or description of a role collection",
+                args_schema=UpdateRoleCollectionInput),
+            StructuredTool.from_function(coroutine=delete_role_collection, name="deleteRoleCollection",
+                description="Delete a role collection by name",
+                args_schema=DeleteRoleCollectionInput),
+            StructuredTool.from_function(coroutine=get_role_collection_roles, name="getRoleCollectionRoles",
+                description="List roles assigned to a role collection",
+                args_schema=GetRoleCollectionRolesInput),
+            StructuredTool.from_function(coroutine=assign_role_to_collection, name="assignRoleToRoleCollection",
+                description="Add a role to a role collection",
+                args_schema=AssignRoleToCollectionInput),
+            StructuredTool.from_function(coroutine=unassign_role_from_collection, name="unassignRoleFromRoleCollection",
+                description="Remove a role from a role collection",
+                args_schema=UnassignRoleFromCollectionInput),
+            StructuredTool.from_function(coroutine=get_role_collections_by_role, name="getRoleCollectionsByRole",
+                description="Find all role collections that contain a specific role",
+                args_schema=GetRoleCollectionsByRoleInput),
+            # Roles
+            StructuredTool.from_function(coroutine=get_roles, name="getXsuaaRoles",
+                description="List roles, optionally filtered by application ID",
+                args_schema=GetRolesInput),
+            StructuredTool.from_function(coroutine=create_role, name="createXsuaaRole",
+                description="Create a new role for an application based on a role template",
+                args_schema=CreateRoleInput),
+            StructuredTool.from_function(coroutine=get_role, name="getXsuaaRole",
+                description="Get a specific role by app ID, template name, and role name",
+                args_schema=GetRoleInput),
+            StructuredTool.from_function(coroutine=update_role, name="updateXsuaaRole",
+                description="Update the description of a role",
+                args_schema=UpdateRoleInput),
+            StructuredTool.from_function(coroutine=delete_role, name="deleteXsuaaRole",
+                description="Delete a role",
+                args_schema=DeleteRoleInput),
+            # Role Templates
+            StructuredTool.from_function(coroutine=get_role_templates, name="getRoleTemplates",
+                description="List role templates, optionally filtered by app and template name",
+                args_schema=GetRoleTemplatesInput),
+            # Attribute Mapping
+            StructuredTool.from_function(coroutine=get_attribute_mappings, name="getAttributeMappings",
+                description="Get IdP attribute-to-role-collection mappings for an identity provider",
+                args_schema=GetAttributeMappingsInput),
+            StructuredTool.from_function(coroutine=create_attribute_mapping, name="createAttributeMapping",
+                description="Create an IdP attribute mapping that assigns a role collection based on an attribute value",
+                args_schema=CreateAttributeMappingInput),
+            StructuredTool.from_function(coroutine=delete_attribute_mapping, name="deleteAttributeMapping",
+                description="Delete an IdP attribute-to-role-collection mapping",
+                args_schema=DeleteAttributeMappingInput),
+            # SCIM Groups (role collections)
+            StructuredTool.from_function(coroutine=get_scim_groups, name="getSCIMGroups",
+                description="List all role collections via SCIM Groups interface (includes member/user info)",
+                args_schema=GetScimGroupsInput),
+            StructuredTool.from_function(coroutine=get_scim_group, name="getSCIMGroup",
+                description="Get a specific role collection by SCIM group ID (includes current members)",
+                args_schema=GetScimGroupInput),
+            StructuredTool.from_function(coroutine=create_scim_group, name="createSCIMGroup",
+                description="Create a role collection via SCIM Groups interface",
+                args_schema=CreateScimGroupInput),
+            StructuredTool.from_function(coroutine=update_scim_group, name="updateSCIMGroup",
+                description="Update members or description of a role collection via SCIM (replaces full member list)",
+                args_schema=UpdateScimGroupInput),
+            StructuredTool.from_function(coroutine=patch_scim_group, name="patchSCIMGroup",
+                description="Add or remove individual members of a role collection via SCIM PATCH operations",
+                args_schema=PatchScimGroupInput),
+            # SCIM Users (shadow users)
+            StructuredTool.from_function(coroutine=get_scim_users, name="getSCIMUsers",
+                description="List shadow users, optionally filtered by SCIM filter expression",
+                args_schema=GetScimUsersInput),
+            StructuredTool.from_function(coroutine=get_scim_user, name="getSCIMUser",
+                description="Get a specific shadow user by SCIM user ID",
+                args_schema=GetScimUserInput),
+            StructuredTool.from_function(coroutine=create_shadow_user, name="createShadowUser",
+                description="Create a shadow user in the subaccount's XSUAA tenant",
+                args_schema=CreateShadowUserInput),
+            StructuredTool.from_function(coroutine=update_shadow_user, name="updateShadowUser",
+                description="Replace a shadow user's attributes (full update)",
+                args_schema=UpdateShadowUserInput),
+            StructuredTool.from_function(coroutine=patch_shadow_user, name="patchShadowUser",
+                description="Partially update a shadow user via SCIM PATCH operations",
+                args_schema=PatchShadowUserInput),
+            StructuredTool.from_function(coroutine=delete_shadow_user, name="deleteShadowUser",
+                description="Delete a shadow user by SCIM user ID",
+                args_schema=DeleteShadowUserInput),
+            # Identity Provider Management
+            StructuredTool.from_function(coroutine=get_identity_providers, name="getIdentityProviders",
+                description="List identity providers configured for the subaccount",
+                args_schema=GetIdentityProvidersInput),
+            StructuredTool.from_function(coroutine=get_identity_provider, name="getIdentityProvider",
+                description="Get configuration details of a specific identity provider",
+                args_schema=GetIdentityProviderInput),
+            StructuredTool.from_function(coroutine=create_identity_provider, name="createIdentityProvider",
+                description="Create a new identity provider (OIDC or SAML)",
+                args_schema=CreateIdentityProviderInput),
+            StructuredTool.from_function(coroutine=update_identity_provider, name="updateIdentityProvider",
+                description="Update an identity provider's active state, shadow-user setting, or link text",
+                args_schema=UpdateIdentityProviderInput),
+            StructuredTool.from_function(coroutine=delete_identity_provider, name="deleteIdentityProvider",
+                description="Delete an identity provider configuration",
+                args_schema=DeleteIdentityProviderInput),
+            StructuredTool.from_function(coroutine=get_ias_tenants, name="getIasTenants",
+                description="List available SAP Cloud Identity Services tenants for OIDC trust configuration",
+                args_schema=GetIasTenantsInput),
+            # Security Settings
+            StructuredTool.from_function(coroutine=get_security_settings, name="getSecuritySettings",
+                description="Get security settings of the XSUAA tenant (token policy, CORS, signing keys)",
+                args_schema=GetSecuritySettingsInput),
+            StructuredTool.from_function(coroutine=get_trusted_domains, name="getTrustedDomains",
+                description="Get trusted domains for a subaccount (public, no auth required)",
+                args_schema=GetTrustedDomainsInput),
+            StructuredTool.from_function(coroutine=update_security_settings, name="updateSecuritySettings",
+                description="Update security settings: iframe domains, default IdP, or token validity",
+                args_schema=UpdateSecuritySettingsInput),
+            StructuredTool.from_function(coroutine=trigger_key_rotation, name="triggerKeyRotation",
+                description="Schedule a token signing key rotation (fires within 24-48 hours)",
+                args_schema=TriggerKeyRotationInput),
+        ]
+
+    # -----------------------------------------------------------------------
     # Assemble tool list
     # -----------------------------------------------------------------------
     return [
@@ -884,7 +1681,7 @@ def _build_domain_tools(
             ),
             args_schema=GetAuditLogRecordsInput,
         ),
-    ]
+    ] + write_tools
 
 
 class BTPGuardianAgent:
@@ -899,6 +1696,8 @@ class BTPGuardianAgent:
         usage_records_client: Client | None = None,
         provisioning_client: Client | None = None,
         audit_logs_client: Client | None = None,
+        authorization_client: Client | None = None,
+        scim_client: Client | None = None,
     ):
         self._accounts_client = accounts_client or Client(destination_name=DEST_ACCOUNTS)
         self._entitlements_client = entitlements_client or Client(destination_name=DEST_ENTITLEMENTS)
@@ -907,6 +1706,13 @@ class BTPGuardianAgent:
         self._usage_records_client = usage_records_client or Client(destination_name=DEST_USAGE_RECORDS)
         self._provisioning_client = provisioning_client or Client(destination_name=DEST_PROVISIONING)
         self._audit_logs_client = audit_logs_client or Client(destination_name=DEST_AUDIT_LOGS)
+        # Write clients — only instantiated when BTP_ALLOW_WRITES=1
+        self._authorization_client = authorization_client or (
+            Client(destination_name=DEST_AUTHORIZATION) if ALLOW_WRITES else None
+        )
+        self._scim_client = scim_client or (
+            Client(destination_name=DEST_SCIM) if ALLOW_WRITES else None
+        )
 
         self._llm: BaseChatModel | None = None
         self._tools: list | None = None
@@ -979,6 +1785,8 @@ class BTPGuardianAgent:
                 usage_records_client=self._usage_records_client,
                 provisioning_client=self._provisioning_client,
                 audit_logs_client=self._audit_logs_client,
+                authorization_client=self._authorization_client,
+                scim_client=self._scim_client,
             )
             logger.info(
                 "Domain tools built: %d tool(s) — %s",

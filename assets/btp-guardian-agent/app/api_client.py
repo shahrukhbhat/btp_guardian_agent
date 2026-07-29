@@ -309,5 +309,111 @@ class Client:
         except Exception:
             return {"status_code": r.status_code, "raw": r.text}
 
+    async def put(
+        self,
+        service_path: str,
+        body: dict[str, Any],
+        user_identity: str | None = None,
+    ) -> dict[str, Any]:
+        async def _do(dest: Destination) -> httpx.Response:
+            headers = self._base_headers(dest, user_identity)
+            headers["Content-Type"] = "application/json"
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                return await client.put(
+                    self._build_url(dest.url, service_path),
+                    json=body,
+                    auth=self._auth(dest),
+                    headers=headers,
+                )
+
+        dest = await self.destination()
+        r = await _do(dest)
+        if r.status_code == 401:
+            logger.info(
+                "401 from '%s' on %s; refreshing destination token and retrying once",
+                self._destination_name,
+                service_path,
+            )
+            dest = await self._refresh_destination()
+            r = await _do(dest)
+        if r.status_code >= 400:
+            return {"error": True, "status_code": r.status_code, "message": r.text}
+        if r.status_code == 204 or not r.content:
+            return {"status_code": r.status_code, "success": True}
+        try:
+            return r.json()
+        except Exception:
+            return {"status_code": r.status_code, "raw": r.text}
+
+    async def delete(
+        self,
+        service_path: str,
+        params: dict[str, Any] | None = None,
+        user_identity: str | None = None,
+    ) -> dict[str, Any]:
+        async def _do(dest: Destination) -> httpx.Response:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                return await client.delete(
+                    self._build_url(dest.url, service_path),
+                    auth=self._auth(dest),
+                    headers=self._base_headers(dest, user_identity),
+                    params=params or {},
+                )
+
+        dest = await self.destination()
+        r = await _do(dest)
+        if r.status_code == 401:
+            logger.info(
+                "401 from '%s' on %s; refreshing destination token and retrying once",
+                self._destination_name,
+                service_path,
+            )
+            dest = await self._refresh_destination()
+            r = await _do(dest)
+        if r.status_code >= 400:
+            return {"error": True, "status_code": r.status_code, "message": r.text}
+        if r.status_code == 204 or not r.content:
+            return {"status_code": r.status_code, "success": True}
+        try:
+            return r.json()
+        except Exception:
+            return {"status_code": r.status_code, "raw": r.text}
+
+    async def patch(
+        self,
+        service_path: str,
+        body: dict[str, Any],
+        user_identity: str | None = None,
+    ) -> dict[str, Any]:
+        async def _do(dest: Destination) -> httpx.Response:
+            headers = self._base_headers(dest, user_identity)
+            headers["Content-Type"] = "application/json"
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                return await client.patch(
+                    self._build_url(dest.url, service_path),
+                    json=body,
+                    auth=self._auth(dest),
+                    headers=headers,
+                )
+
+        dest = await self.destination()
+        r = await _do(dest)
+        if r.status_code == 401:
+            logger.info(
+                "401 from '%s' on %s; refreshing destination token and retrying once",
+                self._destination_name,
+                service_path,
+            )
+            dest = await self._refresh_destination()
+            r = await _do(dest)
+        if r.status_code >= 400:
+            return {"error": True, "status_code": r.status_code, "message": r.text}
+        if r.status_code == 204 or not r.content:
+            return {"status_code": r.status_code, "success": True}
+        try:
+            return r.json()
+        except Exception:
+            return {"status_code": r.status_code, "raw": r.text}
+
 
 __all__ = ["Client", "Destination", "DEFAULT_DESTINATION_NAME", "_DestinationResolver", "_first_binding"]
