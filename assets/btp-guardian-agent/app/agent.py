@@ -127,6 +127,16 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
   to surface notable events. The tool returns pre-formatted markdown — copy it verbatim
   into your response without summarising, paraphrasing, or reformatting it. Never
   describe what the table contains instead of showing it.
+- For "who has role X" or "list users with Y access" queries: use getSCIMGroups with
+  filter='displayName eq "<role collection name>"' (or co for partial match). The response
+  includes a members[] array with the assigned users — read it directly. Do NOT use
+  getRoleCollections for this; it does not return members. If the exact role collection
+  name is unknown, try common BTP names first: "Subaccount Administrator", "Subaccount
+  Viewer", "Global Account Administrator", "Global Account Viewer".
+- The XSUAA/SCIM tools (getSCIMGroups, getRoleCollections, etc.) are scoped to a single
+  subaccount whose xsuaa apiaccess instance backs the BTP_AUTHORIZATION / BTP_SCIM
+  destinations. They cannot enumerate global account-level role assignments; if asked
+  about global account admins, explain this scope limitation clearly.
 {write_policy}
 - When a query requires multiple API calls (e.g. topology then cost), chain them step by step
   and synthesise a single, cohesive answer.
@@ -134,6 +144,11 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
   `name` parameter to resolve it to a GUID, then pass that GUID to subaccount-scoped tools like
   getSubaccountAssignments(subaccountGUID=...). Never put a plain name in `labelSelector` — that
   field only accepts key=value label selectors. If the name resolves to no subaccount, say so.
+- For app metrics/state queries (GET_accounts-…-metrics / GET_accounts-…-state), the
+  subaccountName parameter is the subaccount's TECHNICAL NAME (subdomain), not its display name
+  or GUID. Resolve it from the `subdomain` field in the getSubaccounts response.
+- XSUAA app IDs follow the format 'appname!tNNNN' (e.g. 'myapp!t1234'). Use getXsuaaApps to
+  enumerate them. Never guess an app ID.
 
 ## Summary vs. detail
 - Entitlement and other large-list tools return a COMPACT SUMMARY by default: heavy nested
@@ -671,8 +686,13 @@ def _build_domain_tools(
     # -----------------------------------------------------------------------
 
     class GetAppMetricsInput(BaseModel):
-        subaccountName: str = Field(description="Subaccount technical name")
-        appName: str = Field(description="Application name")
+        subaccountName: str = Field(
+            description="Subaccount technical name (subdomain), e.g. 'coena'. "
+            "Use getSubaccounts(name=...) to resolve a display name to its subdomain field first."
+        )
+        appName: str = Field(
+            description="Application name as registered in the metrics API, e.g. 'my-cf-app'."
+        )
 
     async def get_app_metrics(subaccountName: str, appName: str) -> str:
         result = await metrics_client.get(
@@ -681,8 +701,13 @@ def _build_domain_tools(
         return _shape_result(result)
 
     class GetAppStateInput(BaseModel):
-        subaccountName: str = Field(description="Subaccount technical name")
-        appName: str = Field(description="Application name")
+        subaccountName: str = Field(
+            description="Subaccount technical name (subdomain), e.g. 'coena'. "
+            "Use getSubaccounts(name=...) to resolve a display name to its subdomain field first."
+        )
+        appName: str = Field(
+            description="Application name as registered in the metrics API, e.g. 'my-cf-app'."
+        )
 
     async def get_app_state(subaccountName: str, appName: str) -> str:
         result = await metrics_client.get(
@@ -881,7 +906,12 @@ def _build_domain_tools(
         # ================================================================
 
         class GetRoleCollectionsInput(BaseModel):
-            page: int | None = Field(default=None, description="Page number for paginated results")
+            page: int | None = Field(
+                default=None,
+                description="1-based page number for paginated results. Omit to get the first page. "
+                "Use this tool to look up a role collection by name or to list all collections. "
+                "For 'who has role X' (members/users), use getSCIMGroups instead — it includes member lists."
+            )
 
         async def get_role_collections(page: int | None = None) -> str:
             if page is not None:
@@ -891,7 +921,10 @@ def _build_domain_tools(
             return _shape_result(await authorization_client.get("/sap/rest/authorization/v2/rolecollections"))
 
         class GetRoleCollectionInput(BaseModel):
-            name: str = Field(description="Exact name of the role collection")
+            name: str = Field(
+                description="Exact name of the role collection (case-sensitive). "
+                "Use getRoleCollections first to list available names if unknown."
+            )
 
         async def get_role_collection(name: str) -> str:
             return _shape_result(await authorization_client.get(
@@ -987,7 +1020,11 @@ def _build_domain_tools(
         # ================================================================
 
         class GetRolesInput(BaseModel):
-            appId: str | None = Field(default=None, description="Filter roles by application ID")
+            appId: str | None = Field(
+                default=None,
+                description="Filter roles by application ID, e.g. 'myapp!t1234'. "
+                "Use getXsuaaApps to list app IDs. Omit to get all roles across all apps."
+            )
 
         async def get_roles(appId: str | None = None) -> str:
             if appId:
@@ -997,8 +1034,14 @@ def _build_domain_tools(
             return _shape_result(await authorization_client.get("/sap/rest/authorization/v2/roles"))
 
         class CreateRoleInput(BaseModel):
-            roleTemplateName: str = Field(description="Role template name to base the role on")
-            roleTemplateAppId: str = Field(description="App ID that owns the role template")
+            roleTemplateName: str = Field(
+                description="Role template name to base the role on, e.g. 'Viewer'. "
+                "Use getRoleTemplates(appId=...) to list available templates for an app."
+            )
+            roleTemplateAppId: str = Field(
+                description="App ID that owns the role template, e.g. 'myapp!t1234'. "
+                "Use getXsuaaApps to list app IDs."
+            )
             name: str = Field(description="Name for the new role")
             description: str | None = Field(default=None, description="Optional description")
 
@@ -1013,9 +1056,9 @@ def _build_domain_tools(
             return _shape_result(await authorization_client.post("/sap/rest/authorization/v2/apps/roles", body=body))
 
         class GetRoleInput(BaseModel):
-            appId: str = Field(description="Application ID")
-            templateName: str = Field(description="Role template name")
-            roleName: str = Field(description="Role name")
+            appId: str = Field(description="Application ID, e.g. 'myapp!t1234'. Use getXsuaaApps to list.")
+            templateName: str = Field(description="Role template name. Use getRoleTemplates(appId=...) to list.")
+            roleName: str = Field(description="Role name. Use getXsuaaRoles(appId=...) to list.")
 
         async def get_role(appId: str, templateName: str, roleName: str) -> str:
             return _shape_result(await authorization_client.get(
@@ -1024,9 +1067,9 @@ def _build_domain_tools(
             ))
 
         class UpdateRoleInput(BaseModel):
-            appId: str = Field(description="Application ID")
-            templateName: str = Field(description="Role template name")
-            roleName: str = Field(description="Role name to update")
+            appId: str = Field(description="Application ID, e.g. 'myapp!t1234'. Use getXsuaaApps to list.")
+            templateName: str = Field(description="Role template name. Use getRoleTemplates(appId=...) to list.")
+            roleName: str = Field(description="Role name to update. Use getXsuaaRoles(appId=...) to list.")
             description: str | None = Field(default=None, description="New description")
 
         async def update_role(appId: str, templateName: str, roleName: str, description: str | None = None) -> str:
@@ -1040,9 +1083,9 @@ def _build_domain_tools(
             ))
 
         class DeleteRoleInput(BaseModel):
-            appId: str = Field(description="Application ID")
-            templateName: str = Field(description="Role template name")
-            roleName: str = Field(description="Role name to delete")
+            appId: str = Field(description="Application ID, e.g. 'myapp!t1234'. Use getXsuaaApps to list.")
+            templateName: str = Field(description="Role template name. Use getRoleTemplates(appId=...) to list.")
+            roleName: str = Field(description="Role name to delete. Use getXsuaaRoles(appId=...) to list.")
 
         async def delete_role(appId: str, templateName: str, roleName: str) -> str:
             return _shape_result(await authorization_client.delete(
@@ -1055,8 +1098,15 @@ def _build_domain_tools(
         # ================================================================
 
         class GetRoleTemplatesInput(BaseModel):
-            appId: str | None = Field(default=None, description="Filter by application ID; omit for all apps")
-            templateName: str | None = Field(default=None, description="Get a specific template by name (requires appId)")
+            appId: str | None = Field(
+                default=None,
+                description="Filter by application ID, e.g. 'myapp!t1234'. Use getXsuaaApps to list. "
+                "Omit to list templates across all apps."
+            )
+            templateName: str | None = Field(
+                default=None,
+                description="Get a specific template by name. Requires appId to be set."
+            )
             showRoles: bool = Field(default=False, description="Include associated roles in the response")
 
         async def get_role_templates(
@@ -1153,15 +1203,28 @@ def _build_domain_tools(
         # ================================================================
 
         class GetScimGroupsInput(BaseModel):
+            filter: str | None = Field(
+                default=None,
+                description=(
+                    'SCIM filter to narrow results. Use to find a role collection by name: '
+                    'displayName eq "Subaccount Administrator" '
+                    'or partial match: displayName co "Admin". '
+                    'For "who has role X" queries: filter by displayName, then read members[] '
+                    'from the returned group(s).'
+                ),
+            )
             count: int = Field(default=100, description="Max results per page (max 500)")
             startIndex: int = Field(default=1, description="1-based index of first result")
             sortBy: str | None = Field(default=None, description="Sort attribute; only 'displayName' supported")
             sortOrder: str | None = Field(default=None, description="'ascending' or 'descending'")
 
         async def get_scim_groups(
-            count: int = 100, startIndex: int = 1, sortBy: str | None = None, sortOrder: str | None = None
+            filter: str | None = None, count: int = 100, startIndex: int = 1,
+            sortBy: str | None = None, sortOrder: str | None = None
         ) -> str:
             params: dict = {"count": min(count, 500), "startIndex": startIndex}
+            if filter:
+                params["filter"] = filter
             if sortBy:
                 params["sortBy"] = sortBy
             if sortOrder:
@@ -1188,11 +1251,16 @@ def _build_domain_tools(
             return _shape_result(await scim_client.post("/Groups", body=body))
 
         class UpdateScimGroupInput(BaseModel):
-            groupId: str = Field(description="SCIM group ID to update")
+            groupId: str = Field(
+                description="SCIM group ID to update. Use getSCIMGroups(filter='displayName eq \"name\"') to get the ID."
+            )
             members: list | None = Field(
                 default=None,
-                description='List of member objects to set. Each entry: {"value": "<userId>", "type": "USER"}. '
-                "Members NOT in this list are removed — provide the full desired member list.",
+                description='FULL replacement member list — any user not in this list is REMOVED. '
+                'Each entry: {"value": "<scimUserId>", "type": "USER"}. '
+                'To add ONE user without removing others: first call getSCIMGroup to get current members, '
+                'then pass the full list including the new user. '
+                'To just add/remove individual members without fetching first, use patchSCIMGroup instead.',
             )
             description: str | None = Field(default=None, description="New description")
 
@@ -1268,12 +1336,15 @@ def _build_domain_tools(
             return _shape_result(await scim_client.post("/Users", body=body))
 
         class UpdateShadowUserInput(BaseModel):
-            userId: str = Field(description="SCIM user ID (UUID) of the user to update")
-            userName: str = Field(description="Username / email")
-            origin: str = Field(default="sap.default", description="Identity provider origin key")
-            active: bool | None = Field(default=None, description="Set to False to deactivate the user")
-            familyName: str | None = Field(default=None)
-            givenName: str | None = Field(default=None)
+            userId: str = Field(
+                description="SCIM user ID (UUID) of the user to update. "
+                "Use getSCIMUsers(filter='userName eq \"email\"') to resolve a username to its ID."
+            )
+            userName: str = Field(description="Username / email (required even for partial updates — this is a full PUT replace)")
+            origin: str = Field(default="sap.default", description="Identity provider origin key, e.g. 'sap.default'")
+            active: bool | None = Field(default=None, description="Set to False to deactivate the user, True to reactivate")
+            familyName: str | None = Field(default=None, description="User's last / family name")
+            givenName: str | None = Field(default=None, description="User's first / given name")
 
         async def update_shadow_user(
             userId: str, userName: str, origin: str = "sap.default",
@@ -1518,23 +1589,43 @@ def _build_domain_tools(
                 args_schema=DeleteAttributeMappingInput),
             # SCIM Groups (role collections)
             StructuredTool.from_function(coroutine=get_scim_groups, name="getSCIMGroups",
-                description="List all role collections via SCIM Groups interface (includes member/user info)",
+                description=(
+                    "Find role collections and their assigned users via the SCIM Groups interface. "
+                    "PREFERRED tool for 'who has role X' or 'list users with Y access' queries — "
+                    "each returned group includes a members[] array with the assigned users. "
+                    "Use the filter param to search by name, e.g. filter='displayName eq \"Subaccount Administrator\"' "
+                    "or filter='displayName co \"Admin\"'. Call without a filter to list all role collections with members."
+                ),
                 args_schema=GetScimGroupsInput),
             StructuredTool.from_function(coroutine=get_scim_group, name="getSCIMGroup",
-                description="Get a specific role collection by SCIM group ID (includes current members)",
+                description=(
+                    "Get a specific role collection by its SCIM group ID, including the full members[] list. "
+                    "Use when you already have the group ID from getSCIMGroups or getRoleCollections."
+                ),
                 args_schema=GetScimGroupInput),
             StructuredTool.from_function(coroutine=create_scim_group, name="createSCIMGroup",
                 description="Create a role collection via SCIM Groups interface",
                 args_schema=CreateScimGroupInput),
             StructuredTool.from_function(coroutine=update_scim_group, name="updateSCIMGroup",
-                description="Update members or description of a role collection via SCIM (replaces full member list)",
+                description=(
+                    "FULL REPLACE of a role collection's member list via SCIM PUT. "
+                    "WARNING: any member not in the new list is removed. "
+                    "To add a single user safely: call getSCIMGroup first to get the current members, "
+                    "then pass the complete updated list. To add/remove individual members without a "
+                    "read-first, use patchSCIMGroup instead."
+                ),
                 args_schema=UpdateScimGroupInput),
             StructuredTool.from_function(coroutine=patch_scim_group, name="patchSCIMGroup",
                 description="Add or remove individual members of a role collection via SCIM PATCH operations",
                 args_schema=PatchScimGroupInput),
             # SCIM Users (shadow users)
             StructuredTool.from_function(coroutine=get_scim_users, name="getSCIMUsers",
-                description="List shadow users, optionally filtered by SCIM filter expression",
+                description=(
+                    "List shadow users in the subaccount's XSUAA tenant, optionally filtered. "
+                    "Use to resolve a username/email to a SCIM user ID, or to enumerate all users. "
+                    "Filter examples: 'userName eq \"alice@example.com\"', 'emails.value co \"@company.com\"'. "
+                    "For 'who has role X', prefer getSCIMGroups with a displayName filter — it returns users and role collection in one call."
+                ),
                 args_schema=GetScimUsersInput),
             StructuredTool.from_function(coroutine=get_scim_user, name="getSCIMUser",
                 description="Get a specific shadow user by SCIM user ID",

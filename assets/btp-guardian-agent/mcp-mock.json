@@ -811,6 +811,1337 @@
           }
         }
       }
+    },
+    "xsuaa-authorization": {
+      "tools": {
+        "getXsuaaApps": {
+          "description": "List XSUAA service instances (apps) registered in the subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "onlyForOrgId": {
+                "type": "string"
+              },
+              "onlyWithClientId": {
+                "type": "boolean"
+              }
+            },
+            "required": []
+          },
+          "mock_response": [
+            {
+              "appId": "btpguardian!t9876",
+              "displayName": "BTP Guardian Agent",
+              "xsappname": "btpguardian",
+              "planName": "application",
+              "bindingCount": 1
+            },
+            {
+              "appId": "cockpit!t0001",
+              "displayName": "SAP BTP Cockpit",
+              "xsappname": "cockpit",
+              "planName": "broker",
+              "bindingCount": 3
+            }
+          ]
+        },
+        "getXsuaaApp": {
+          "description": "Get details of a specific XSUAA application by app ID",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "appId"
+            ]
+          },
+          "mock_response": {
+            "appId": "btpguardian!t9876",
+            "displayName": "BTP Guardian Agent",
+            "xsappname": "btpguardian",
+            "planName": "application",
+            "oauth2-configuration": {
+              "token-validity": 43200,
+              "redirect-uris": [
+                "https://btpguardian.example.com/**"
+              ]
+            },
+            "authorities": [],
+            "scopes": [
+              {
+                "name": "btpguardian!t9876.read",
+                "description": "Read access"
+              },
+              {
+                "name": "btpguardian!t9876.write",
+                "description": "Write access"
+              }
+            ]
+          }
+        },
+        "getXsuaaAppScopes": {
+          "description": "Get OAuth scopes of a XSUAA application",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string"
+              },
+              "scopeName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "appId"
+            ]
+          },
+          "mock_response": [
+            {
+              "name": "btpguardian!t9876.read",
+              "description": "Read BTP Guardian data",
+              "granted-apps": []
+            },
+            {
+              "name": "btpguardian!t9876.write",
+              "description": "Write BTP Guardian data",
+              "granted-apps": []
+            }
+          ]
+        },
+        "getXsuaaAppAuthorities": {
+          "description": "Get authorities granted to a XSUAA application from another app",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string"
+              },
+              "grantedByAppId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "appId"
+            ]
+          },
+          "mock_response": {
+            "authorities": [
+              "cockpit!t0001.read"
+            ]
+          }
+        },
+        "getOwnXsuaaApp": {
+          "description": "Get details of the service instance used to call this API",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "includeUsage": {
+                "type": "boolean"
+              }
+            },
+            "required": []
+          },
+          "mock_response": {
+            "appId": "btpguardian!t9876",
+            "displayName": "BTP Guardian Agent",
+            "xsappname": "btpguardian",
+            "planName": "apiaccess",
+            "usage": {
+              "bindingCount": 1,
+              "serviceInstanceCount": 1
+            }
+          }
+        },
+        "getRoleCollections": {
+          "description": "List all role collections in the subaccount (paginated)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer"
+              }
+            },
+            "required": []
+          },
+          "mock_response": [
+            {
+              "name": "Subaccount Administrator",
+              "description": "Full subaccount administrator access",
+              "roleReferences": [
+                {
+                  "roleTemplateAppId": "btpguardian!t9876",
+                  "roleTemplateName": "Subaccount_Admin",
+                  "name": "Subaccount_Admin"
+                }
+              ]
+            },
+            {
+              "name": "Subaccount Viewer",
+              "description": "Read-only subaccount viewer",
+              "roleReferences": [
+                {
+                  "roleTemplateAppId": "btpguardian!t9876",
+                  "roleTemplateName": "Subaccount_Viewer",
+                  "name": "Subaccount_Viewer"
+                }
+              ]
+            },
+            {
+              "name": "Cloud Connector Administrator",
+              "description": "Manage Cloud Connector",
+              "roleReferences": []
+            }
+          ]
+        },
+        "getRoleCollection": {
+          "description": "Get details of a specific role collection by name",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "mock_response": {
+            "name": "Subaccount Administrator",
+            "description": "Full subaccount administrator access",
+            "roleReferences": [
+              {
+                "roleTemplateAppId": "btpguardian!t9876",
+                "roleTemplateName": "Subaccount_Admin",
+                "name": "Subaccount_Admin",
+                "description": "Administer the subaccount"
+              }
+            ]
+          }
+        },
+        "createRoleCollection": {
+          "description": "Create a new role collection",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "mock_response": {
+            "name": "My New Role Collection",
+            "description": "Created via BTP Guardian",
+            "roleReferences": []
+          }
+        },
+        "updateRoleCollection": {
+          "description": "Update the name or description of a role collection",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "newDescription": {
+                "type": "string"
+              },
+              "newName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "mock_response": {
+            "name": "Subaccount Administrator",
+            "description": "Updated description",
+            "roleReferences": []
+          }
+        },
+        "deleteRoleCollection": {
+          "description": "Delete a role collection by name",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getRoleCollectionRoles": {
+          "description": "List roles assigned to a role collection",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "roleCollectionName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "roleCollectionName"
+            ]
+          },
+          "mock_response": [
+            {
+              "roleTemplateAppId": "btpguardian!t9876",
+              "roleTemplateName": "Subaccount_Admin",
+              "name": "Subaccount_Admin",
+              "description": "Administer the subaccount"
+            }
+          ]
+        },
+        "assignRoleToRoleCollection": {
+          "description": "Add a role to a role collection",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "roleCollectionName": {
+                "type": "string"
+              },
+              "roleTemplateName": {
+                "type": "string"
+              },
+              "roleTemplateAppId": {
+                "type": "string"
+              },
+              "roleName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "roleCollectionName",
+              "roleTemplateName",
+              "roleTemplateAppId"
+            ]
+          },
+          "mock_response": {
+            "name": "Subaccount Administrator",
+            "roleReferences": [
+              {
+                "roleTemplateAppId": "btpguardian!t9876",
+                "roleTemplateName": "Subaccount_Admin",
+                "name": "Subaccount_Admin"
+              }
+            ]
+          }
+        },
+        "unassignRoleFromRoleCollection": {
+          "description": "Remove a role from a role collection",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "roleCollectionName": {
+                "type": "string"
+              },
+              "roleTemplateAppId": {
+                "type": "string"
+              },
+              "roleName": {
+                "type": "string"
+              },
+              "roleTemplateName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "roleCollectionName",
+              "roleTemplateAppId",
+              "roleName",
+              "roleTemplateName"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getRoleCollectionsByRole": {
+          "description": "Find all role collections that contain a specific role",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string"
+              },
+              "roleTemplateName": {
+                "type": "string"
+              },
+              "roleName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "appId",
+              "roleTemplateName",
+              "roleName"
+            ]
+          },
+          "mock_response": [
+            {
+              "name": "Subaccount Administrator",
+              "description": "Full subaccount administrator access"
+            }
+          ]
+        },
+        "getXsuaaRoles": {
+          "description": "List roles, optionally filtered by application ID",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string"
+              }
+            },
+            "required": []
+          },
+          "mock_response": [
+            {
+              "name": "Subaccount_Admin",
+              "roleTemplateName": "Subaccount_Admin",
+              "appId": "btpguardian!t9876",
+              "description": "Administer the subaccount"
+            },
+            {
+              "name": "Subaccount_Viewer",
+              "roleTemplateName": "Subaccount_Viewer",
+              "appId": "btpguardian!t9876",
+              "description": "Read-only access to subaccount"
+            }
+          ]
+        },
+        "createXsuaaRole": {
+          "description": "Create a new role for an application based on a role template",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "roleTemplateName": {
+                "type": "string"
+              },
+              "roleTemplateAppId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "roleTemplateName",
+              "roleTemplateAppId",
+              "name"
+            ]
+          },
+          "mock_response": {
+            "name": "Custom_Admin_Role",
+            "roleTemplateName": "Subaccount_Admin",
+            "appId": "btpguardian!t9876",
+            "description": "Custom administrator role"
+          }
+        },
+        "getXsuaaRole": {
+          "description": "Get a specific role by app ID, template name, and role name",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string"
+              },
+              "templateName": {
+                "type": "string"
+              },
+              "roleName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "appId",
+              "templateName",
+              "roleName"
+            ]
+          },
+          "mock_response": {
+            "name": "Subaccount_Admin",
+            "roleTemplateName": "Subaccount_Admin",
+            "appId": "btpguardian!t9876",
+            "description": "Administer the subaccount",
+            "attributeList": []
+          }
+        },
+        "updateXsuaaRole": {
+          "description": "Update the description of a role",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string"
+              },
+              "templateName": {
+                "type": "string"
+              },
+              "roleName": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "appId",
+              "templateName",
+              "roleName"
+            ]
+          },
+          "mock_response": {
+            "name": "Subaccount_Admin",
+            "roleTemplateName": "Subaccount_Admin",
+            "appId": "btpguardian!t9876",
+            "description": "Updated description"
+          }
+        },
+        "deleteXsuaaRole": {
+          "description": "Delete a role",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string"
+              },
+              "templateName": {
+                "type": "string"
+              },
+              "roleName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "appId",
+              "templateName",
+              "roleName"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getRoleTemplates": {
+          "description": "List role templates, optionally filtered by app and template name",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string"
+              },
+              "templateName": {
+                "type": "string"
+              },
+              "showRoles": {
+                "type": "boolean"
+              }
+            },
+            "required": []
+          },
+          "mock_response": [
+            {
+              "name": "Subaccount_Admin",
+              "appId": "btpguardian!t9876",
+              "description": "Subaccount Administrator template",
+              "attributeList": [],
+              "roleList": [
+                "Subaccount_Admin"
+              ]
+            },
+            {
+              "name": "Subaccount_Viewer",
+              "appId": "btpguardian!t9876",
+              "description": "Subaccount Viewer template",
+              "attributeList": [],
+              "roleList": [
+                "Subaccount_Viewer"
+              ]
+            }
+          ]
+        },
+        "getAttributeMappings": {
+          "description": "Get IdP attribute-to-role-collection mappings for an identity provider",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "origin": {
+                "type": "string"
+              },
+              "attributeName": {
+                "type": "string"
+              },
+              "attributeValue": {
+                "type": "string"
+              },
+              "roleCollectionName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "origin"
+            ]
+          },
+          "mock_response": [
+            {
+              "origin": "custom-idp",
+              "attributeName": "department",
+              "attributeValue": "engineering",
+              "operator": "equals",
+              "roleCollectionName": "Subaccount Administrator"
+            },
+            {
+              "origin": "custom-idp",
+              "attributeName": "groups",
+              "attributeValue": "btp-admins",
+              "operator": "contains",
+              "roleCollectionName": "Subaccount Administrator"
+            }
+          ]
+        },
+        "createAttributeMapping": {
+          "description": "Create an IdP attribute mapping that assigns a role collection",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "origin": {
+                "type": "string"
+              },
+              "attributeName": {
+                "type": "string"
+              },
+              "attributeValue": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string"
+              },
+              "roleCollectionName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "origin",
+              "attributeName",
+              "attributeValue",
+              "roleCollectionName"
+            ]
+          },
+          "mock_response": {
+            "origin": "custom-idp",
+            "attributeName": "department",
+            "attributeValue": "engineering",
+            "operator": "equals",
+            "roleCollectionName": "Subaccount Administrator"
+          }
+        },
+        "deleteAttributeMapping": {
+          "description": "Delete an IdP attribute-to-role-collection mapping",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "origin": {
+                "type": "string"
+              },
+              "attributeName": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string"
+              },
+              "attributeValue": {
+                "type": "string"
+              },
+              "roleCollectionName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "origin",
+              "attributeName",
+              "operator",
+              "attributeValue",
+              "roleCollectionName"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getIdentityProviders": {
+          "description": "List identity providers configured for the subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "activeOnly": {
+                "type": "boolean"
+              }
+            },
+            "required": []
+          },
+          "mock_response": [
+            {
+              "originKey": "sap.default",
+              "name": "SAP ID Service",
+              "type": "saml2.0",
+              "active": true,
+              "addShadowUserOnLogin": true,
+              "linkText": "SAP ID Service"
+            },
+            {
+              "originKey": "custom-idp",
+              "name": "Custom OIDC IdP",
+              "type": "oidc1.0",
+              "active": true,
+              "addShadowUserOnLogin": true,
+              "linkText": "Login with Company SSO"
+            }
+          ]
+        },
+        "getIdentityProvider": {
+          "description": "Get configuration details of a specific identity provider",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "idpId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "idpId"
+            ]
+          },
+          "mock_response": {
+            "originKey": "custom-idp",
+            "name": "Custom OIDC IdP",
+            "type": "oidc1.0",
+            "active": true,
+            "addShadowUserOnLogin": true,
+            "linkText": "Login with Company SSO",
+            "oidcConfig": {
+              "discoveryEndpoint": "https://idp.example.com/.well-known/openid-configuration",
+              "clientId": "btp-client-001"
+            }
+          }
+        },
+        "createIdentityProvider": {
+          "description": "Create a new identity provider (OIDC or SAML)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "originKey": {
+                "type": "string"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "addShadowUserOnLogin": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "type",
+              "name"
+            ]
+          },
+          "mock_response": {
+            "originKey": "new-idp-mock",
+            "name": "New IdP",
+            "type": "oidc1.0",
+            "active": true,
+            "addShadowUserOnLogin": true
+          }
+        },
+        "updateIdentityProvider": {
+          "description": "Update an identity provider's active state, shadow-user setting, or link text",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "idpId": {
+                "type": "string"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "addShadowUserOnLogin": {
+                "type": "boolean"
+              },
+              "linkText": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "idpId"
+            ]
+          },
+          "mock_response": {
+            "originKey": "custom-idp",
+            "name": "Custom OIDC IdP",
+            "active": false,
+            "addShadowUserOnLogin": true,
+            "linkText": "Company SSO (disabled)"
+          }
+        },
+        "deleteIdentityProvider": {
+          "description": "Delete an identity provider configuration",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "idpId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "idpId"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getIasTenants": {
+          "description": "List available SAP Cloud Identity Services tenants for OIDC trust",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
+          "mock_response": [
+            {
+              "tenantId": "ias-tenant-mock-001",
+              "displayName": "Demo IAS Tenant",
+              "url": "https://demo.accounts.ondemand.com",
+              "type": "test"
+            }
+          ]
+        },
+        "getSecuritySettings": {
+          "description": "Get security settings of the XSUAA tenant",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
+          "mock_response": {
+            "iframeDomains": "",
+            "defaultIdp": "sap.default",
+            "tokenPolicySettings": {
+              "accessTokenValidity": 43200,
+              "refreshTokenValidity": 604800,
+              "externalSessionValidity": 43200
+            },
+            "samlConfig": {
+              "validateAssertionXmlSignature": true
+            }
+          }
+        },
+        "getTrustedDomains": {
+          "description": "Get trusted domains for a subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subdomain": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subdomain"
+            ]
+          },
+          "mock_response": {
+            "trustedDomains": [
+              "*.example.com",
+              "btpguardian.cfapps.eu10.hana.ondemand.com"
+            ]
+          }
+        },
+        "updateSecuritySettings": {
+          "description": "Update security settings: iframe domains, default IdP, or token validity",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "iframeDomains": {
+                "type": "string"
+              },
+              "defaultIdp": {
+                "type": "string"
+              },
+              "tokenValidityInMinutes": {
+                "type": "integer"
+              }
+            },
+            "required": []
+          },
+          "mock_response": {
+            "iframeDomains": "https://*.example.com",
+            "defaultIdp": "sap.default",
+            "tokenPolicySettings": {
+              "accessTokenValidity": 3600
+            }
+          }
+        },
+        "triggerKeyRotation": {
+          "description": "Schedule a token signing key rotation (fires within 24-48 hours)",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
+          "mock_response": {
+            "message": "Key rotation scheduled. New signing key will be active within 24-48 hours."
+          }
+        }
+      }
+    },
+    "xsuaa-scim": {
+      "tools": {
+        "getSCIMGroups": {
+          "description": "Find role collections and their assigned users via SCIM Groups",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filter": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer"
+              },
+              "startIndex": {
+                "type": "integer"
+              },
+              "sortBy": {
+                "type": "string"
+              },
+              "sortOrder": {
+                "type": "string"
+              }
+            },
+            "required": []
+          },
+          "mock_response": {
+            "totalResults": 2,
+            "startIndex": 1,
+            "itemsPerPage": 2,
+            "schemas": [
+              "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+            ],
+            "Resources": [
+              {
+                "id": "grp-0001-mock",
+                "displayName": "Subaccount Administrator",
+                "members": [
+                  {
+                    "value": "a1b2c3d4-0001-0001-0001-000000000001",
+                    "type": "USER",
+                    "display": "alice@example.com"
+                  },
+                  {
+                    "value": "a1b2c3d4-0002-0002-0002-000000000002",
+                    "type": "USER",
+                    "display": "bob@example.com"
+                  }
+                ]
+              },
+              {
+                "id": "grp-0002-mock",
+                "displayName": "Subaccount Viewer",
+                "members": [
+                  {
+                    "value": "a1b2c3d4-0002-0002-0002-000000000002",
+                    "type": "USER",
+                    "display": "bob@example.com"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "getSCIMGroup": {
+          "description": "Get a specific role collection by SCIM group ID including members",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "groupId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "groupId"
+            ]
+          },
+          "mock_response": {
+            "id": "grp-0001-mock",
+            "displayName": "Subaccount Administrator",
+            "schemas": [
+              "urn:ietf:params:scim:schemas:core:2.0:Group"
+            ],
+            "members": [
+              {
+                "value": "a1b2c3d4-0001-0001-0001-000000000001",
+                "type": "USER",
+                "display": "alice@example.com"
+              },
+              {
+                "value": "a1b2c3d4-0002-0002-0002-000000000002",
+                "type": "USER",
+                "display": "bob@example.com"
+              }
+            ]
+          }
+        },
+        "createSCIMGroup": {
+          "description": "Create a role collection via SCIM Groups interface",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "displayName": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "displayName"
+            ]
+          },
+          "mock_response": {
+            "id": "grp-new-mock",
+            "displayName": "New Role Collection",
+            "schemas": [
+              "urn:ietf:params:scim:schemas:core:2.0:Group"
+            ],
+            "members": []
+          }
+        },
+        "updateSCIMGroup": {
+          "description": "Full replace of a role collection's member list via SCIM PUT",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "groupId": {
+                "type": "string"
+              },
+              "members": {
+                "type": "array"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "groupId"
+            ]
+          },
+          "mock_response": {
+            "id": "grp-0001-mock",
+            "displayName": "Subaccount Administrator",
+            "schemas": [
+              "urn:ietf:params:scim:schemas:core:2.0:Group"
+            ],
+            "members": [
+              {
+                "value": "a1b2c3d4-0001-0001-0001-000000000001",
+                "type": "USER",
+                "display": "alice@example.com"
+              }
+            ]
+          }
+        },
+        "patchSCIMGroup": {
+          "description": "Add or remove individual members of a role collection via SCIM PATCH",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "groupId": {
+                "type": "string"
+              },
+              "operations": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "groupId",
+              "operations"
+            ]
+          },
+          "mock_response": {
+            "id": "grp-0001-mock",
+            "displayName": "Subaccount Administrator",
+            "schemas": [
+              "urn:ietf:params:scim:schemas:core:2.0:Group"
+            ],
+            "members": [
+              {
+                "value": "a1b2c3d4-0001-0001-0001-000000000001",
+                "type": "USER",
+                "display": "alice@example.com"
+              },
+              {
+                "value": "a1b2c3d4-0002-0002-0002-000000000002",
+                "type": "USER",
+                "display": "bob@example.com"
+              },
+              {
+                "value": "a1b2c3d4-0003-0003-0003-000000000003",
+                "type": "USER",
+                "display": "carol@example.com"
+              }
+            ]
+          }
+        },
+        "getSCIMUsers": {
+          "description": "List shadow users in the subaccount's XSUAA tenant",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filter": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer"
+              },
+              "startIndex": {
+                "type": "integer"
+              }
+            },
+            "required": []
+          },
+          "mock_response": {
+            "totalResults": 2,
+            "startIndex": 1,
+            "itemsPerPage": 2,
+            "schemas": [
+              "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+            ],
+            "Resources": [
+              {
+                "id": "a1b2c3d4-0001-0001-0001-000000000001",
+                "userName": "alice@example.com",
+                "name": {
+                  "familyName": "Smith",
+                  "givenName": "Alice"
+                },
+                "emails": [
+                  {
+                    "value": "alice@example.com",
+                    "primary": true
+                  }
+                ],
+                "active": true,
+                "origin": "sap.default"
+              },
+              {
+                "id": "a1b2c3d4-0002-0002-0002-000000000002",
+                "userName": "bob@example.com",
+                "name": {
+                  "familyName": "Jones",
+                  "givenName": "Bob"
+                },
+                "emails": [
+                  {
+                    "value": "bob@example.com",
+                    "primary": true
+                  }
+                ],
+                "active": true,
+                "origin": "sap.default"
+              }
+            ]
+          }
+        },
+        "getSCIMUser": {
+          "description": "Get a specific shadow user by SCIM user ID",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "userId"
+            ]
+          },
+          "mock_response": {
+            "id": "a1b2c3d4-0001-0001-0001-000000000001",
+            "userName": "alice@example.com",
+            "schemas": [
+              "urn:ietf:params:scim:schemas:core:2.0:User"
+            ],
+            "name": {
+              "familyName": "Smith",
+              "givenName": "Alice"
+            },
+            "emails": [
+              {
+                "value": "alice@example.com",
+                "primary": true
+              }
+            ],
+            "active": true,
+            "origin": "sap.default",
+            "groups": [
+              {
+                "value": "grp-0001-mock",
+                "display": "Subaccount Administrator",
+                "type": "DIRECT"
+              }
+            ]
+          }
+        },
+        "createShadowUser": {
+          "description": "Create a shadow user in the subaccount's XSUAA tenant",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "userName": {
+                "type": "string"
+              },
+              "origin": {
+                "type": "string"
+              },
+              "familyName": {
+                "type": "string"
+              },
+              "givenName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "userName"
+            ]
+          },
+          "mock_response": {
+            "id": "a1b2c3d4-0099-0099-0099-000000000099",
+            "userName": "carol@example.com",
+            "schemas": [
+              "urn:ietf:params:scim:schemas:core:2.0:User"
+            ],
+            "active": true,
+            "origin": "sap.default",
+            "emails": [
+              {
+                "value": "carol@example.com",
+                "primary": true
+              }
+            ]
+          }
+        },
+        "updateShadowUser": {
+          "description": "Replace a shadow user's attributes (full update)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string"
+              },
+              "userName": {
+                "type": "string"
+              },
+              "origin": {
+                "type": "string"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "familyName": {
+                "type": "string"
+              },
+              "givenName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "userId",
+              "userName"
+            ]
+          },
+          "mock_response": {
+            "id": "a1b2c3d4-0001-0001-0001-000000000001",
+            "userName": "alice@example.com",
+            "active": true,
+            "origin": "sap.default",
+            "name": {
+              "familyName": "Smith-Updated",
+              "givenName": "Alice"
+            }
+          }
+        },
+        "patchShadowUser": {
+          "description": "Partially update a shadow user via SCIM PATCH",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string"
+              },
+              "operations": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "userId",
+              "operations"
+            ]
+          },
+          "mock_response": {
+            "id": "a1b2c3d4-0001-0001-0001-000000000001",
+            "userName": "alice@example.com",
+            "active": false,
+            "origin": "sap.default"
+          }
+        },
+        "deleteShadowUser": {
+          "description": "Delete a shadow user by SCIM user ID",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "userId"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        }
+      }
     }
   },
   "metadata": {
