@@ -6,3 +6,4 @@ __pycache__/
 .venv/
 .playwright-mcp/
 btp_account_admin_capabilities.md
+btp-guardian-architecture.drawio
