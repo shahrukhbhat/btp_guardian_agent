@@ -1,0 +1,2656 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Provides functions to administrate the Authorization and Trust Management service (XSUAA) of SAP BTP, Cloud Foundry environment. You can manage service instances of the Authorization and Trust Management service. You can also manage roles, role templates, and role collections of your subaccount.\nTo access the API, use the SAP BTP command-line interface (btp CLI) to create API credentials. For more information, see [Get Access to the APIs](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/ebc9113a520e495ea5fb759b9a7929f2.html).",
+    "version": "1.0.0",
+    "title": "Authorization"
+  },
+  "externalDocs": {
+    "description": "Accessing Administration Using APIs of the SAP Authorization and Trust Management Service",
+    "url": "https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/dcb3bfd09c4b465e9d6f599485c5b6de.html?locale=en-US&state=PRODUCTION&version=Cloud"
+  },
+  "x-sap-api-type": "REST",
+  "x-sap-shortText": "Enables you to manage service instances, roles, templates, and collections.",
+  "host": "sandbox.api.sap.com",
+  "schemes": [
+    "https"
+  ],
+  "x-servers": [
+    {
+      "url": "https://api.authentication.{Landscape}.hana.ondemand.com",
+      "description": "REST API endpoint for the authorization API of the Authorization and Trust Management service.",
+      "templates": {
+        "Landscape": {
+          "description": "Region host. For more information, see [Regions and API Endpoints Available for the Cloud Foundry Environment](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/350356d1dc314d3199dca15bd2ab9b0e.html#f344a57233d34199b2123b9620d0bb41.html)."
+        }
+      }
+    }
+  ],
+  "basePath": "/SCPAuthtrustmgmt/platform",
+  "tags": [
+    {
+      "name": "Applications"
+    },
+    {
+      "name": "Role collections"
+    },
+    {
+      "name": "Roles"
+    },
+    {
+      "name": "Role templates"
+    },
+    {
+      "name": "Attribute Mapping"
+    }
+  ],
+  "paths": {
+    "/sap/rest/authorization/v2/apps": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Returns registered service instances of the current subaccount.",
+        "description": "Returns all service instances of the current subaccount, which are registered at the Authorization and Trust Management service with OAuth 2.0 clients. The system provides information about the XSUAA application and its OAuth client.",
+        "operationId": "getApps",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "onlyForOrgId",
+            "in": "query",
+            "description": "Set to return only apps that reside in the specified Cloud Foundry org. For example, xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Note that Cloud Foundry orgs and SAP BTP subaccounts have a 1:1 relationship.",
+            "required": false,
+            "type": "string",
+            "default": "*",
+            "allowEmptyValue": false
+          },
+          {
+            "name": "onlyWithClientId",
+            "in": "query",
+            "description": "Set to false to return apps that aren't associated with an OAuth client.",
+            "required": false,
+            "type": "boolean",
+            "default": true,
+            "allowEmptyValue": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the list of registered service instances.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/App"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No service instances could be found that match your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/apps/roles": {
+      "post": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Creates a role for an application.",
+        "description": "Create a role for an application based on a role template. You must define the role name and description as well as identify the application and the role template name that you want to include in the role. The role inherits the scopes of the role template. Refer to the model below to see limitations for individual parameter values.",
+        "operationId": "createRole",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "role",
+            "description": "The content of the role, including a name, description, the role template, and the application that defines the role template.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Role"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returns the role that the API created.",
+            "schema": {
+              "$ref": "#/definitions/Role"
+            }
+          },
+          "201": {
+            "description": "Created - The API created the role.",
+            "schema": {
+              "$ref": "#/definitions/Role"
+            }
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found."
+          },
+          "409": {
+            "description": "Conflict."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/apps/roletemplates": {
+      "get": {
+        "tags": [
+          "Role templates"
+        ],
+        "summary": "Returns all role templates",
+        "description": "Returns information about all role templates of applications protected by the service instance of the Authorization and Trust Management service.",
+        "operationId": "getRoleTemplates",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "showRoles",
+            "in": "query",
+            "description": "If the parameter is set, the API also returns information about the roles associated with the role templates.",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "allowEmptyValue": false,
+            "x-example": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the role template information.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RoleTemplate"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role templates were found."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/apps/{appId}/authorities": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Returns a list of authorities granted to an application.",
+        "description": "Returns a list of authorities that have been granted to an application protected by the service instance of the Authorization and Trust Management service. Identify a granting application by the grantedByAppGuid or grantedByAppId parameter. If you don't specify a granting application, the list is empty.",
+        "operationId": "getGrantedAuthorities",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The application ID of the application to check for granted authorities. This ID identifies the application receiving the authorities from another application.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "grantedByAppGuid",
+            "in": "query",
+            "description": "The application GUID of the application granting the authorities. If you don't identify a granting application, the list is empty.",
+            "required": false,
+            "type": "string",
+            "allowEmptyValue": false
+          },
+          {
+            "name": "grantedByAppId",
+            "in": "query",
+            "description": "The application ID of the application granting authorities. If you don't identify a granting application, the list is empty.",
+            "required": false,
+            "type": "string",
+            "allowEmptyValue": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the list of authorities granted to the specified application.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No application could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/apps/{appId}/roles": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Returns the roles of an application.",
+        "description": "Returns all roles of an application specified by the application ID.",
+        "operationId": "getRolesByAppId",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The application ID of the application to check for roles.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the list of roles.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Role"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No application could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/apps/{appId}/roletemplates": {
+      "get": {
+        "tags": [
+          "Role templates"
+        ],
+        "summary": "Returns role templates for an application.",
+        "description": "Returns information about all role templates for an application that is specified by the application ID.",
+        "operationId": "getRoleTemplateByAppName",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The ID of application.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the list of role templates.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RoleTemplate"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No service instance could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/apps/{appId}/roletemplates/{templateName}": {
+      "get": {
+        "tags": [
+          "Role templates"
+        ],
+        "summary": "Returns a role template of an application.",
+        "description": "Returns information about a role template of an application, which is specified by the application ID and the role template name.",
+        "operationId": "getRoleTemplateByName",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The ID of the application.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "templateName",
+            "in": "path",
+            "description": "The name of the role template.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the role template.",
+            "schema": {
+              "$ref": "#/definitions/RoleTemplate"
+            }
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No application or role template could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/apps/{appId}/roletemplates/{templateName}/roles/{roleName}": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Returns the role of an application.",
+        "description": "Returns the information about a role specified by the application ID, role template, and role name. The information includes the scopes contained in the role.",
+        "operationId": "getRoleByAppAndRoleTemplate",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The application ID of the application.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleName",
+            "in": "path",
+            "description": "Name of the role.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "templateName",
+            "in": "path",
+            "description": "Name of the role template.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned information about the role.",
+            "schema": {
+              "$ref": "#/definitions/Role"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: One of the search parameters application ID, role template name, or role name could be found in your request."
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Updates a role.",
+        "description": "Update the description of a role specified by application ID, role template name, and role name. Refer to the model below to see limitations for individual parameter values.",
+        "operationId": "updateRole",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The application ID is the xsappname plus the identifier, which consists of an exclamation mark (!), an identifier for the plan underwhich the application is deployed, and an index number.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "roleImport",
+            "description": "The content of the role. You can change the description.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RoleUpdate"
+            }
+          },
+          {
+            "name": "roleName",
+            "in": "path",
+            "description": "The name of the role.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "templateName",
+            "in": "path",
+            "description": "The Name of the role template.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API updated and returned the role.",
+            "schema": {
+              "$ref": "#/definitions/Role"
+            }
+          },
+          "201": {
+            "description": "Created - The API updated and returned the role."
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed or the role is read-only."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No application IDs, role template names, or role names could be found that match your request."
+          },
+          "409": {
+            "description": "Conflict."
+          }
+        },
+        "deprecated": false
+      },
+      "delete": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Deletes a role.",
+        "description": "Deletes a role specified by the application ID, role template name, and role name.",
+        "operationId": "deleteRoleByRoleName",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The application ID is the xsappname plus the identifier, which consists of an exclamation mark (!), an identifier for the plan underwhich the application is deployed, and an index number.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleName",
+            "in": "path",
+            "description": "The name of the role.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "templateName",
+            "in": "path",
+            "description": "The name of the role template.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API deleted the role.",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "204": {
+            "description": "No Content - The role doesn't exist."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No application IDs, role template names, or role names could be found that match your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/apps/{appId}/scopes": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Returns the scopes of an application.",
+        "description": "Returns all scopes of an application protected by a service instance of the Authorization and Trust Management service. ID.",
+        "operationId": "listScopes",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The application ID of the application to check for scopes. The application ID is the xsappname plus the identifier, which consists of an exclamation mark (!), an identifier for the plan underwhich the application is deployed, and an index number.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the scopes of the specified application.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Scope"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No applications could be found that match your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/apps/{appId}/scopes/{scopeName}": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Returns the scope of an application.",
+        "description": "Returns information about a specific scope of a specific application.",
+        "operationId": "getScope",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The application ID of the application to check for scopes. The application ID is the xsappname plus the identifier, which consists of an exclamation mark (!), an identifier for the plan underwhich the application is deployed, and an index number.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "scopeName",
+            "in": "path",
+            "description": "Name of the scope.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the scope of the specified application.",
+            "schema": {
+              "$ref": "#/definitions/Scope"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No service instance or scope could be found that match your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/apps/{id}": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Returns information about an XSUAA application instance.",
+        "description": "Returns information about an XSUAA application instance specified by the app ID or service instance ID. The XSUAA application instance paired with the information about its OAuth client defines a service instance of the Authorization and Trust Management service.",
+        "operationId": "getAppById",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "hideDetails",
+            "in": "query",
+            "description": "If this parameter is set to true, then the API only returns basic information about the app instance. The basic information doesn't include authorization information like role template, scope, and authority information.",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "allowEmptyValue": false,
+            "x-example": false
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The ID of the application or service instance. To use service instance ID, set the isServiceInstanceId parameter to true.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "isServiceInstanceId",
+            "in": "query",
+            "description": "If the parameter is set to true, the ID set in the path is interpreted as the service instance ID and not the XSUAA application instance ID.",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "allowEmptyValue": false,
+            "x-example": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the information about the XSUAA application instance.",
+            "schema": {
+              "$ref": "#/definitions/App"
+            }
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No XSUAA application instance or service instance could be found that match your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/ownapp": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Returns information about the service instance used to execute this API access.",
+        "description": "Returns information about the service instance, which is associated with the client credentials you submitted with this REST call.",
+        "operationId": "getOwnApp",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the service instance associated with your client credentials.",
+            "schema": {
+              "$ref": "#/definitions/App"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No service instance was found matching your client credentials."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/ownapp/usage": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Returns usage information for the service instance that is used to execute this API access.",
+        "description": "Returns the number of subscribers for the service instance, which is associated with the OAuth token you submitted with this REST call. Include the tenant or zone ID of your subaccount as a URL parameter.",
+        "operationId": "getAppByToken",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "query",
+            "description": "Tenant ID of your subaccount. The zoneId parameter is the same ID and can be used interchangably with tenant ID. For example, tenant=11a0bbba-6e3e-4460-8cf8-702803a9b12b.",
+            "required": true,
+            "type": "string",
+            "allowEmptyValue": false
+          },
+          {
+            "name": "listSubscriptions",
+            "in": "query",
+            "description": "Set this parameter to true list the details of subscriptions of your multitenant application.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "listCloneSubscriptions",
+            "in": "query",
+            "description": "Only relevant for reuse instances. Set this parameter to true to list details of following instances of your service instance, which uses the broker plan.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the usage information for the service instance.",
+            "schema": {
+              "$ref": "#/definitions/Subscriptions"
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid tenant"
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons, apps could be found that match your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/rolecollections": {
+      "get": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Returns role collections.",
+        "description": "Returns all role collections, which exist within the current subaccount.",
+        "operationId": "getRoleCollections",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "showGroups",
+            "in": "query",
+            "description": "Set this parameter to true, to include the groups to which the role collections are assigned.",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "allowEmptyValue": false
+          },
+          {
+            "name": "showRoles",
+            "in": "query",
+            "description": "Set this parameter to true, to include the roles, which are associated with the role collections.",
+            "required": false,
+            "type": "boolean",
+            "default": true,
+            "allowEmptyValue": false
+          },
+          {
+            "name": "showUsers",
+            "in": "query",
+            "description": "Set this parameter to true, to include the users to whom the role collections are assigned.",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "allowEmptyValue": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned role collections of the current subaccount.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RoleCollection"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons, no role collections could be found that match your request."
+          }
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Creates a role collection.",
+        "description": "Creates a role collection. You must include a role name at a minimum. The description is created as null if you don't include one. You can include role references as defined by the role name, the application ID, and role template name. To assign group members, use the /Groups endpoint. Groups are mapped to role collections in the Authorization and Trust Management service. For more information, see [Add Member](https://docs.cloudfoundry.org/api/uaa/version/74.4.0/index.html#add-member) in the documentation of Cloud Foundry or [User Management SCIM](https://api.sap.com/api/PlatformAPI/resource) SAP API Business Hub. Refer to the model below to see limitations for individual parameter values.",
+        "operationId": "createRoleCollection",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "roleCollection_import",
+            "description": "Defines the role collection. Role name is required. The description is optional. You can include references to existing roles as defined by role name, application ID, and role template name.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RoleCollectionImport"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API created the role collection and returned information about the role collection.",
+            "schema": {
+              "$ref": "#/definitions/RoleCollection"
+            }
+          },
+          "201": {
+            "description": "Created - The API created the role collection and returned information about the role collection.",
+            "schema": {
+              "$ref": "#/definitions/RoleCollection"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was poorly formed. For example, the API doesn't support setting isReadOnly to true."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons, no role collections could be found that match your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/rolecollections/pages": {
+      "get": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Returns role collections of a subaccount in paged format.",
+        "description": "Returns all role collections, which exist within the current subaccount. The result in paged, enabling you to handle large responses.",
+        "operationId": "getRoleCollectionsByPaging",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "showGroups",
+            "in": "query",
+            "description": "Set this parameter to true, to include the groups, to which the role collections are assigned.",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "allowEmptyValue": false
+          },
+          {
+            "name": "showRoles",
+            "in": "query",
+            "description": "Set this parameter to true, to include the roles, which are associated with the role collections.",
+            "required": false,
+            "type": "boolean",
+            "default": true,
+            "allowEmptyValue": false
+          },
+          {
+            "name": "showUsers",
+            "in": "query",
+            "description": "Set this parameter to true, to include the users to whom the role collections are assigned.",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "allowEmptyValue": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned role collections of the current subaccount.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RoleCollection"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons, no role collections could be found that match your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/rolecollections/pages/{pageId}": {
+      "get": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Returns a page of role collections.",
+        "description": "Returns the specified page of role collection search result. The role collections are the result of a previous paged GET request for role collections of the current subaccount.",
+        "operationId": "getRoleCollectionsByPaging_2",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "description": "The ID of a paged search result. The initial page of a result is 0. The following pages are identified by a sequential integer.",
+            "required": true,
+            "type": "integer",
+            "default": 0,
+            "format": "int32"
+          },
+          {
+            "name": "showGroups",
+            "in": "query",
+            "description": "Set this parameter to true, to include the groups, to which the role collections are assigned.",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "allowEmptyValue": false
+          },
+          {
+            "name": "showRoles",
+            "in": "query",
+            "description": "Set this parameter to true, to include the roles, which are associated with the roles collections.",
+            "required": false,
+            "type": "boolean",
+            "default": true,
+            "allowEmptyValue": false
+          },
+          {
+            "name": "showUsers",
+            "in": "query",
+            "description": "Set this parameter to true, to include the users, to whom the role collections are assigned.",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "allowEmptyValue": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned a page of role collection information.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RoleCollection"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons, no role collections could be found that match your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/rolecollections/roles/{appId}/{roleTemplateName}/{roleName}": {
+      "get": {
+        "tags": [
+          "Applications",
+          "Role collections"
+        ],
+        "summary": "Returns role collections referencing a role, application ID, and a role template.",
+        "description": "Returns information about all role collections containing a specific role. The role is identified by application ID, the name of the role template, and role name.",
+        "operationId": "getRoleCollectionsByAppIdTemplateNameAndRoleName",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The ID of the application of the role.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleName",
+            "in": "path",
+            "description": "The name of the role.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleTemplateName",
+            "in": "path",
+            "description": "The name of the role template.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned role collections that use the specified role.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RoleCollectionRoleDetails"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/rolecollections/{roleCollectionName}": {
+      "get": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Returns a role collection.",
+        "description": "Returns information about a role collection identified by the name of the role collection.",
+        "operationId": "getRoleCollectionByName",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "roleCollectionName",
+            "in": "path",
+            "description": "The name of collection to be returned.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "withUsers",
+            "in": "query",
+            "description": "Set this parameter to list the users assigned to this role collection.",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API retuned information about the role.",
+            "schema": {
+              "$ref": "#/definitions/RoleCollection"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role collection could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Updates the description of a role collection.",
+        "description": "Updates the description of a role collection specified by the name of the role collection. You can't change any other attribute of the role collection. Refer to the model below to see limitations for individual parameter values.",
+        "operationId": "changeRoleCollectionDescription",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "roleCollectionName",
+            "in": "path",
+            "description": "The name of the role collection.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "role_description",
+            "description": "The content of the role collection description. The description has a maximum length of 1000 characters.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RoleCollectionDescription"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API updated the role collection description.",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "201": {
+            "description": "Created - The API updated the role collection description."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role collection could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      },
+      "delete": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Deletes a role collection.",
+        "description": "Deletes a role collection specified by the name of the role collection.",
+        "operationId": "deleteRoleCollectionByName",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "roleCollectionName",
+            "in": "path",
+            "description": "The name of the role collection to be deleted.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API deleted the role collection.",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "204": {
+            "description": "No Content - The API deleted the role collection."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role collection could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/rolecollections/{roleCollectionName}/roles": {
+      "get": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Returns the roles of a role collection.",
+        "description": "Returns information about the roles of a role collection specified by the name of the role collection.",
+        "operationId": "getRolesByRoleCollectionName",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "roleCollectionName",
+            "in": "path",
+            "description": "Name of the role collection",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned roles for the role collection",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Role"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role collection could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Adds roles to a role collection.",
+        "description": "Updates a role collection with an array of roles. Specify the roles by role name, application ID, and role template name. These roles are added to the roles already included in the role collection.",
+        "operationId": "addRolesToRoleCollection",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "roleCollectionName",
+            "in": "path",
+            "description": "The name of the role collection to update.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "roleReferences",
+            "description": "The list of role references in an array, specified by the role name, application ID, and role template name.",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RoleReference"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API updated the role collection with the specified roles.",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "201": {
+            "description": "Created - The API updated the role collection with the specified roles."
+          },
+          "400": {
+            "description": "Bad Request - The request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role collection or role could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/rolecollections/{roleCollectionName}/roles/{roleTemplateAppID}/{roleName}/{roleTemplateName}": {
+      "put": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Adds a role to role a collection.",
+        "description": "Adds a role reference, specified by role name, application ID, and role template name, to a role collection.",
+        "operationId": "addRoleToRoleCollection",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "roleCollectionName",
+            "in": "path",
+            "description": "The name of the role collection to update. The name has a maximum length of 64 characters.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleName",
+            "in": "path",
+            "description": "The name of the role to add to the role collection.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleTemplateAppID",
+            "in": "path",
+            "description": "The application ID, with which the role is associated. The application ID is the xsappname plus the identifier, which consists of an exclamation mark (!), an identifier for the plan underwhich the application is deployed, and an index number.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleTemplateName",
+            "in": "path",
+            "description": "The name of the role template, with which the role is associated.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API updated the role collection with the specified role.",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "201": {
+            "description": "Created - The API updated the role collection with the specified role."
+          },
+          "400": {
+            "description": "Bad Request - The request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role collection or role could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      },
+      "delete": {
+        "tags": [
+          "Role collections"
+        ],
+        "summary": "Deletes a role from a role collection.",
+        "description": "Deletes a role specified by the role reference from a role collection.",
+        "operationId": "deleteRoleFromRoleCollection",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "roleCollectionName",
+            "in": "path",
+            "description": "The name of the role collection to update.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleName",
+            "in": "path",
+            "description": "The name of the role to remove from the role collection.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleTemplateAppID",
+            "in": "path",
+            "description": "The application ID, with which the role is associated. The application ID is the xsappname plus the identifier, which consists of an exclamation mark (!), an identifier for the plan underwhich the application is deployed, and an index number.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleTemplateName",
+            "in": "path",
+            "description": "The name of the role template, with which the role is associated.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API removed the role from the role collection.",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "204": {
+            "description": "No Content - The API removed the role from the role collection."
+          },
+          "400": {
+            "description": "Bad Request - The request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role collection or role could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/roles": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Returns the roles of all service instances.",
+        "description": "Returns all application roles for all service instances, which are registered at UAA as OAuth2 client. The roles that are returned are limited to the subaccount credentials that are used for this request.",
+        "operationId": "getRoles",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the roles.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Role"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons, no roles could be found."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/identity-providers/{origin}/attributes/rolecollections": {
+      "get": {
+        "tags": [
+          "Attribute Mapping"
+        ],
+        "summary": "Returns role collections and their attributes for an identity provider.",
+        "description": "Returns role collections and their attributes specified by the identity provider (origin).",
+        "operationId": "getIdpAttributeValues",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "origin",
+            "in": "path",
+            "description": "The origin key is the unique name of the identity provider (IdP).",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the list of role collections and their attributes.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RoleCollectionAttribute"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - No identity provider could be found matching your origin key."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/identity-providers/{origin}/rolecollections/{roleCollectionName}": {
+      "get": {
+        "tags": [
+          "Attribute Mapping"
+        ],
+        "summary": "Returns the attributes for a role collection.",
+        "description": "Returns the attributes for a specific role collection specified by the identity provider (origin) and the role collection name.",
+        "operationId": "getIdpAttributeValuesFromRoleCollection",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "origin",
+            "in": "path",
+            "description": "The origin key is the unique name of the identity provider (IdP).",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleCollectionName",
+            "in": "path",
+            "description": "The Name of the role collection.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the list of role collections.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RoleCollectionAttribute"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - No identity provider or role collection could be found matching your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/identity-providers/{origin}/attributes/{attributeName}/{attributeValue}": {
+      "get": {
+        "tags": [
+          "Attribute Mapping"
+        ],
+        "summary": "Returns all role collections with a specific attribute name and value.",
+        "description": "Returns all role collections of a specific identity provider that have a specific attribute name and value.",
+        "operationId": "getRoleCollectionByAttributeValue",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "origin",
+            "in": "path",
+            "description": "The origin key is the unique name of the identity provider (IdP).",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "attributeName",
+            "in": "path",
+            "description": "attribute name",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "attributeValue",
+            "in": "path",
+            "description": "IDP attribute value",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the list of registered service instances.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/App"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role collections could be found matching your attribute parameters or values."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/identity-providers/{origin}/attributes/{attributeName}/rolecollections/{roleCollectionName}": {
+      "get": {
+        "tags": [
+          "Attribute Mapping"
+        ],
+        "summary": "Returns a specific role collection that contains a specific attribute.",
+        "description": "Returns a role collection that contains a specific attribute, specified by the role collection name and attribute name.",
+        "operationId": "getIdpAttributeValuesFromRoleCollectionByAttribute",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "attributeName",
+            "in": "path",
+            "description": "The name of the attribute.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "origin",
+            "in": "path",
+            "description": "The origin key is the unique name of the identity provider (IdP).",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleCollectionName",
+            "in": "path",
+            "description": "The Name of the role collection.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the list of registered service instances.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/App"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No role collection could be found that matches your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/identity-providers/{origin}/attributes": {
+      "post": {
+        "tags": [
+          "Attribute Mapping"
+        ],
+        "summary": "Add an identity provider attribute with a value to a role collection.",
+        "description": "Add an attribute with a value to an identity provider and application role collection.",
+        "operationId": "addIdpAttributeToRoleCollection",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "attribute",
+            "in": "body",
+            "description": "The JSON contains the attribute name, value, and comparison operator.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/IdentityProviderMapping"
+            }
+          },
+          {
+            "name": "origin",
+            "in": "path",
+            "description": "The origin key is the unique name of the identity provider (IdP).",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API created the attribute mapping."
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/identity-providers/{origin}/attributes/{attributeName}/{operator}/{attributeValue}/rolecollections/{roleCollectionName}": {
+      "delete": {
+        "tags": [
+          "Attribute Mapping"
+        ],
+        "summary": "Deletes an attribute mapping from a role collection.",
+        "description": "Deletes an attribute mapping from a role collection specified by the attribute name, value, the operator, and the role collection name.",
+        "operationId": "deleteIdpAttributeToRoleCollection",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "attributeName",
+            "in": "path",
+            "description": "Name of the identity provider attribute.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "attributeValue",
+            "in": "path",
+            "description": "Value of the identity provider attribute.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "operator",
+            "in": "path",
+            "description": "Matching operator between the attribute name and attribute value.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "origin",
+            "in": "path",
+            "description": "The origin key is the unique name of the identity provider (IdP).",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "roleCollectionName",
+            "in": "path",
+            "description": "Name of the role collection",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API deleted the attribute.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/App"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Your request was poorly formed."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - Possible reasons: No attribute was found with the specified values."
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "securityDefinitions": {
+    "apiaccess": {
+      "type": "oauth2",
+      "description": "To use this API, get the OAuth client credentials (client ID and secret) with either the cockpit or command-line interface. Pass these credentials to the token endpoint to get the access token.",
+      "tokenUrl": "https://{Subdomain}.authentication.{Landscape}.hana.ondemand.com/oauth/token?grant_type=client_credentials&response_type=token",
+      "flow": "application",
+      "scopes": {
+        "uaa.resource": "Enables access to UAA resources.",
+        "xs_authorization.read": "Read authorization entities.",
+        "xs_authorization.write": "Write authorization entities.",
+        "xs_idp.read": "Read identity provider entities.",
+        "xs_idp.write": "Write identity provider entities.",
+        "xs_user.read": "Read user entities.",
+        "xs_user.write": "Write user entities."
+      }
+    }
+  },
+  "security": [
+    {
+      "apiaccess": [
+        "uaa.resource",
+        "xs_authorization.read",
+        "xs_authorization.write",
+        "xs_idp.read",
+        "xs_idp.write",
+        "xs_user.read",
+        "xs_user.write"
+      ]
+    }
+  ],
+  "definitions": {
+    "App": {
+      "type": "object",
+      "properties": {
+        "appid": {
+          "type": "string",
+          "description": "The application ID is the xsappname plus the identifier, which consists of an exclamation mark (!), an identifier for the plan underwhich the application is deployed, and an index number.",
+          "example": "product-list!a314"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AppAttribute"
+          }
+        },
+        "authorities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string",
+          "example": "This is an example application."
+        },
+        "foreign-scope-references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "instanceSecretLastUsedAt": {
+          "type": "string",
+          "description": "Date and time the instance secret was last used for the service. If the secret has never been used, the service returns null.",
+          "example": "2025-01-09T01:15:13.480+00:00"
+        },
+        "masterAppId": {
+          "type": "string"
+        },
+        "oauth2-configuration": {
+          "$ref": "#/definitions/OAuth2Configuration"
+        },
+        "orgId": {
+          "type": "string",
+          "example": "2294832d-1776-418a-835e-ec1b7b46a12e"
+        },
+        "planId": {
+          "type": "string",
+          "example": "HWEgt9/jJGFjzT8j+/x9pGivrAuKbUMUK8PgWEx3cLY="
+        },
+        "planName": {
+          "type": "string",
+          "example": "application"
+        },
+        "role-templates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleTemplate"
+          }
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Scope"
+          }
+        },
+        "serviceinstanceid": {
+          "type": "string",
+          "example": "38abaeac-27a4-4ead-8548-1928a03913bc"
+        },
+        "spaceId": {
+          "type": "string"
+        },
+        "tenant-mode": {
+          "type": "string",
+          "example": "dedicated"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "xsappname": {
+          "type": "string",
+          "description": "The name of the application as defined in the application security descriptor xs-security.json. The name has a maximum length of 128 characters. Only the following characters are allowed: alphanumeric characters (aA-zZ) and (0-9), hyphen (-), underscore (_), forward slash (/), and backslash (\\).",
+          "example": "product-list"
+        }
+      },
+      "title": "App"
+    },
+    "Subscriptions": {
+      "type": "object",
+      "properties": {
+        "cloneCount": {
+          "type": "integer",
+          "description": "Only relevant for reuse instances. Total number of following instances of your broker service instance. The service only returns this array if the service instance uses the broker plan.",
+          "example": "1"
+        },
+        "subscriptions": {
+          "type": "array",
+          "description": "An array of subscriptions to your multitenant application for this tenant. The service only returns this array if you set the listSubscriptions query paramter to true.",
+          "items": {
+            "$ref": "#/definitions/SubscriptionDetails"
+          }
+        },
+        "subscriptionCountForTenant": {
+          "type": "integer",
+          "description": "The number of subscriptions to your multitenant application for this tenant.",
+          "example": "1"
+        },
+        "cloneSubscriptions": {
+          "type": "array",
+          "description": "Only relevant for reuse instances. An array of following instances of your broker service instance. The service only returns this array if you set the listCloneSubscriptions query paramter to true and the service instance uses the broker plan.",
+          "items": {
+            "$ref": "#/definitions/CloneSubscriptionDetails"
+          }
+        },
+        "referenceCount": {
+          "type": "integer",
+          "description": "Total number of refrences to the broker service instance.",
+          "example": "1"
+        },
+        "cloneSubscriptionCount": {
+          "type": "integer",
+          "description": "Only relevant for reuse instances. Total number of subscriptions to following service instances.",
+          "example": "1"
+        },
+        "subscriptionCount": {
+          "type": "integer",
+          "description": "Total number of subscriptions to your multitenant application.",
+          "example": "1"
+        }
+      },
+      "title": "Subscriptions"
+    },
+    "SubscriptionDetails": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The identifier for the subscription to the application."
+        },
+        "appid": {
+          "type": "string",
+          "description": "The application ID is the xsappname plus the identifier, which consists of an exclamation mark (!), an identifier for the plan underwhich the application is deployed, and an index number.",
+          "example": "product-list!a314"
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "Tenant ID of your subaccount. The zoneId parameter is the same ID and can be used interchangably with tenant ID.",
+          "example": "11a0bbba-6e3e-4460-8cf8-702803a9b12b"
+        }
+      },
+      "title": "Subscription Details"
+    },
+    "CloneSubscriptionDetails": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Only relevant for reuse instances. The identifier for the following service instance."
+        },
+        "appid": {
+          "type": "string",
+          "description": "The application ID is the xsappname plus the identifier, which consists of an exclamation mark (!), an identifier for the plan underwhich the application is deployed, and an index number. The following and broker instances are identified by the clone- and broker- prefixes.",
+          "example": "clone-product-list!a314|broker-product-list!a314"
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "Tenant ID of your subaccount. The zoneId parameter is the same ID and can be used interchangably with tenant ID.",
+          "example": "11a0bbba-6e3e-4460-8cf8-702803a9b12b"
+        }
+      },
+      "title": "Clone Subscription Details"
+    },
+    "AppAttribute": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "valueRequired": {
+          "type": "boolean"
+        },
+        "valueType": {
+          "type": "string"
+        }
+      },
+      "title": "AppAttribute"
+    },
+    "AttributeReference": {
+      "type": "object",
+      "properties": {
+        "default-values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "valueRequired": {
+          "type": "boolean"
+        },
+        "valueType": {
+          "type": "string"
+        }
+      },
+      "title": "AttributeReference"
+    },
+    "OAuth2Configuration": {
+      "type": "object",
+      "properties": {
+        "allowedproviders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "autoapprove": {
+          "type": "boolean"
+        },
+        "grant-types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "redirect-uris": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "refresh-token-validity": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "system-attributes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "token-validity": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "OAuth2Configuration"
+    },
+    "Role": {
+      "type": "object",
+      "properties": {
+        "appDescription": {
+          "type": "string",
+          "example": "This is an example description of an application."
+        },
+        "appName": {
+          "type": "string",
+          "example": "product list"
+        },
+        "attributeList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleAttribute"
+          }
+        },
+        "description": {
+          "type": "string",
+          "example": "This is the viewer role."
+        },
+        "isReadOnly": {
+          "type": "boolean",
+          "example": false
+        },
+        "name": {
+          "type": "string",
+          "example": "ViewerRole",
+          "description": "The name has a maximum length of 64 characters. Only the following characters are allowed: alphanumeric characters (aA-zZ) and (0-9), underscore (_), period (.), and hyphen (-)."
+        },
+        "roleTemplateAppId": {
+          "type": "string",
+          "example": "product-list!a314"
+        },
+        "roleTemplateName": {
+          "type": "string",
+          "example": "ViewerTemplate",
+          "description": "The name has a maximum length of 64 characters. Only the following characters are allowed: alphanumeric characters (aA-zZ) and (0-9), underscore (_), period (.), and hyphen (-)."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Scope"
+          }
+        }
+      },
+      "title": "Role"
+    },
+    "RoleAttribute": {
+      "type": "object",
+      "properties": {
+        "attributeName": {
+          "type": "string",
+          "description": "The name has a maximum length of 64 characters. Only the following characters are allowed: alphanumeric characters (aA-zZ) and (0-9) and underscore (_)."
+        },
+        "attributeValueOrigin": {
+          "type": "string"
+        },
+        "attributeValues": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "valueRequired": {
+          "type": "boolean"
+        }
+      },
+      "title": "RoleAttribute"
+    },
+    "RoleCollection": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name has a maximum length of 64 characters.",
+          "example": "ProductListViewer"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description has a maximum length of 1000 characters.",
+          "example": "Enables users to view the items available for ordering in the user interface."
+        },
+        "groupReferences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GroupReference"
+          }
+        },
+        "roleReferences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleReference"
+          }
+        },
+        "userReferences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UserReference"
+          }
+        },
+        "samlAttrAssignment": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/samlAttrAssignment"
+          }
+        },
+        "isReadOnly": {
+          "type": "boolean",
+          "example": false
+        }
+      },
+      "title": "RoleCollection"
+    },
+    "RoleCollectionRoleDetails": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name has a maximum length of 64 characters.",
+          "example": "ProductListViewer"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description has a maximum length of 1000 characters.",
+          "example": "Enables users to view the items available for ordering in the user interface."
+        },
+        "roleReferences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleReference"
+          }
+        },
+        "isReadOnly": {
+          "type": "boolean",
+          "example": false
+        }
+      },
+      "title": "RoleCollectionRoleDetails"
+    },
+    "RoleCollectionImport": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name has a maximum length of 64 characters.",
+          "example": "ProductListViewer"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description has a maximum length of 1000 characters.",
+          "example": "Enables users to view the items available for ordering in the user interface."
+        },
+        "roleReferences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleReference"
+          }
+        }
+      },
+      "title": "RoleCollectionImport"
+    },
+    "RoleCollectionDescription": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "The description has a maximum length of 1000 characters.",
+          "example": "This is an example description of a role collection."
+        }
+      },
+      "title": "RoleCollectionDescription"
+    },
+    "RoleCollectionAttribute": {
+      "type": "object",
+      "properties": {
+        "comparisonOperator": {
+          "type": "string",
+          "example": "equals"
+        },
+        "roleCollectionIdentityZone": {
+          "type": "string",
+          "example": "5c70993f-a010-8509-8bb5-ec11dbb992c4"
+        },
+        "roleCollectionName": {
+          "type": "string",
+          "example": "ADMINS"
+        },
+        "samlAttrName": {
+          "type": "string",
+          "example": "This parameter is deprecated.",
+          "description": "This parameter is deprecated."
+        },
+        "attributeName": {
+          "type": "string",
+          "example": "Country",
+          "description": "The name of the attribute parameter."
+        },
+        "samlAttributeValue": {
+          "type": "string",
+          "example": "This parameter is deprecated.",
+          "description": "This parameter is deprecated."
+        },
+        "attributeValue": {
+          "type": "string",
+          "example": "DE",
+          "description": "The value of the attribute."
+        },
+        "samlEntityId": {
+          "type": "string",
+          "example": "https://accounts.sap.com"
+        }
+      },
+      "title": "RoleCollectionAttribute"
+    },
+    "RoleReference": {
+      "type": "object",
+      "properties": {
+        "roleTemplateAppId": {
+          "type": "string",
+          "example": "product-list!a314"
+        },
+        "roleTemplateName": {
+          "type": "string",
+          "description": "The name has a maximum length of 64 characters. Only the following characters are allowed: alphanumeric characters (aA-zZ) and (0-9), underscore (_), period (.), and hyphen (-).",
+          "example": "ViewerTemplate"
+        },
+        "description": {
+          "type": "string",
+          "example": "This role enabled the user to acces the view the application data."
+        },
+        "name": {
+          "type": "string",
+          "example": "Viewer"
+        }
+      },
+      "title": "RoleReference"
+    },
+    "RoleTemplate": {
+      "type": "object",
+      "properties": {
+        "appDescription": {
+          "type": "string",
+          "example": "This is an example description of an application."
+        },
+        "appId": {
+          "type": "string",
+          "description": "The application ID is the xsappname plus the identifier, which consists of an exclamation mark (!), an identifier for the plan underwhich the application is deployed, and an index number.",
+          "example": "product-list!a314"
+        },
+        "appName": {
+          "type": "string",
+          "example": "product list"
+        },
+        "attribute-references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AttributeReference"
+          }
+        },
+        "default-role-name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name has a maximum length of 64 characters. Only the following characters are allowed: alphanumeric characters (aA-zZ) and (0-9) and underscore (_)."
+        },
+        "role-references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Role"
+          }
+        },
+        "scope-references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "title": "RoleTemplate"
+    },
+    "RoleUpdate": {
+      "type": "object",
+      "properties": {
+        "attributeList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleAttribute"
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "The description has a maximum length of 1000 characters."
+        }
+      },
+      "title": "RoleUpdate"
+    },
+    "Scope": {
+      "type": "object",
+      "properties": {
+        "custom-grant-as-authority-to-apps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "custom-granted-apps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string",
+          "example": "Display values"
+        },
+        "grant-as-authority-to-apps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "granted-apps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the application and scope as defined in the application security descriptor xs-security.json. The name has a maximum length of 193 characters, including the fully qualified application name. The fully qualified scope name starts with the application ID followed by an optional number of components and finally the scope, each separated by a period (.). For example: service-manager!b105.entitlement.notify. Only the following characters are allowed: alphanumeric characters (aA-zZ) and (0-9), hyphen (-), underscore (_), forward slash (/), backslash (\\), and colon (:).",
+          "example": "product-list!a314.User"
+        }
+      },
+      "title": "Scope"
+    },
+    "UserReference": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "d84de71a-59b1-4344-b29e-635fdc02a7cb"
+        },
+        "username": {
+          "type": "string",
+          "example": "julie.armstrong@example.com"
+        },
+        "zoneId": {
+          "type": "string",
+          "example": "5cef7d08-471e-47c4-9695-ad5ef44b4355"
+        },
+        "email": {
+          "type": "string",
+          "example": "julie.armstrong@example.com"
+        },
+        "givenName": {
+          "type": "string",
+          "example": "Julie"
+        },
+        "familyName": {
+          "type": "string",
+          "example": "Armstrong"
+        },
+        "origin": {
+          "type": "string",
+          "example": "sap.default"
+        }
+      },
+      "title": "UserReference"
+    },
+    "GroupReference": {
+      "type": "object",
+      "description": "The array groupReferences is deprecated and only provided to maintain backward compatibility. Please use the array samlAttrAssignment instead.",
+      "properties": {
+        "DEPRECTAED": {
+          "type": "string",
+          "example": "The array groupReferences is deprecated and only provided to maintain backward compatibility. Please use the array samlAttrAssignment instead."
+        }
+      },
+      "title": "GroupReference"
+    },
+    "samlAttrAssignment": {
+      "type": "object",
+      "properties": {
+        "roleCollectionIdentityZone": {
+          "type": "string",
+          "example": "5c70993f-a010-8509-8bb5-ec11dbb992c4"
+        },
+        "roleCollectionName": {
+          "type": "string",
+          "example": "ADMINS"
+        },
+        "samlAttrName": {
+          "type": "string",
+          "example": "This parameter is deprecated.",
+          "description": "This parameter is deprecated."
+        },
+        "attributeName": {
+          "type": "string",
+          "example": "Country",
+          "description": "The name of the attribute parameter."
+        },
+        "samlAttributeValue": {
+          "type": "string",
+          "example": "This parameter is deprecated.",
+          "description": "This parameter is deprecated."
+        },
+        "attributeValue": {
+          "type": "string",
+          "example": "DE",
+          "description": "The value of the attribute."
+        },
+        "comparisonOperator": {
+          "type": "string",
+          "description": "The operator value that matches the attribute name to its value.",
+          "example": "equals"
+        },
+        "samlEntityId": {
+          "type": "string",
+          "example": "https://accounts.sap.com"
+        }
+      },
+      "title": "samlAttrAssignment"
+    },
+    "IdentityProviderMapping": {
+      "type": "object",
+      "properties": {
+        "attributeName": {
+          "type": "string",
+          "description": "The name of the attribute that you want to add.",
+          "example": "Country"
+        },
+        "attributeValue": {
+          "type": "string",
+          "description": "The value of the attribute that you want to add.",
+          "example": "US"
+        },
+        "operator": {
+          "type": "string",
+          "description": "The operator value that matches the attribute name to its value.",
+          "example": "equals"
+        },
+        "roleCollectionName": {
+          "type": "string",
+          "description": "The name of the role collection.",
+          "example": "ADMINS"
+        }
+      },
+      "title": "IdentityProviderMapping"
+    }
+  }
+}

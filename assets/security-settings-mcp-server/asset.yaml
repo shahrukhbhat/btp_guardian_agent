@@ -1,0 +1,10 @@
+apiVersion: asset.sap/v1
+kind: Asset
+type: mcp-server
+
+metadata:
+  name: security-settings-mcp-server
+  ordId: sap.btp:apiResource:security-settings-mcp:v1
+  version: 1.0.0
+  description: MCP server wrapping the SAP BTP Security Settings API for reading/updating security settings, trusted domains, and triggering key rotation
+  translation: mcp-translation/translation.json

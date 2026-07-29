@@ -1,0 +1,10 @@
+apiVersion: asset.sap/v1
+kind: Asset
+type: mcp-server
+
+metadata:
+  name: scim-user-management-mcp-server
+  ordId: sap.btp:apiResource:scim-user-management-mcp:v1
+  version: 1.0.0
+  description: MCP server wrapping the SAP BTP User Management SCIM API (XSUAA) for shadow users and SCIM groups (role collections + members)
+  translation: mcp-translation/translation.json

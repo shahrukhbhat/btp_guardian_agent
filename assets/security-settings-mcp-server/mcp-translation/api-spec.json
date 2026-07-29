@@ -1,0 +1,537 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Provides functions to administrate the security settings of a tenant. Visit the SAP Help Portal to learn how to [rotate signing keys for access tokens](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/b279adf3ec134b2a8611a42bff1ee9d9.html) or [SAML tokens](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/052e9b4b54ce4c268422b1f2c736e47e.html). To access the API, use the SAP BTP command-line interface (btp CLI) to create API credentials. For more information, see [Get Access to the APIs](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/ebc9113a520e495ea5fb759b9a7929f2.html).",
+    "version": "1.0.0",
+    "title": "Security Settings"
+  },
+  "externalDocs": {
+    "description": "Accessing Administration Using APIs of the SAP Authorization and Trust Management Service",
+    "url": "https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/dcb3bfd09c4b465e9d6f599485c5b6de.html?locale=en-US&state=PRODUCTION&version=Cloud"
+  },
+  "x-sap-api-type": "REST",
+  "x-sap-shortText": "Enables you to manage the security settings of a tenant.",
+  "host": "sandbox.api.sap.com",
+  "schemes": [
+    "https"
+  ],
+  "x-servers": [
+    {
+      "url": "https://api.authentication.{Landscape}.hana.ondemand.com",
+      "description": "REST API endpoint for the security settings API of the Authorization and Trust Management service.",
+      "templates": {
+        "Landscape": {
+          "description": "Region host. For more information, see [Regions and API Endpoints Available for the Cloud Foundry Environment](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/350356d1dc314d3199dca15bd2ab9b0e.html#f344a57233d34199b2123b9620d0bb41.html)."
+        }
+      }
+    }
+  ],
+  "basePath": "/SCPAuthtrustmgmt/platform",
+  "tags": [
+    {
+      "name": "Security settings"
+    }
+  ],
+  "paths": {
+    "/sap/rest/authorization/v2/securitySettings": {
+      "get": {
+        "tags": [
+          "Security settings"
+        ],
+        "summary": "Returns the security settings of the current tenant.",
+        "description": "Returns the security settings of the current tenant. The settings include information about topics including signing keys, allowed URLs for cross-origin resource sharing and iframing, and lists information about any bindings.",
+        "operationId": "readSettings",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returns the security settings of the tenant.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TenantSettingsResp"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          }
+        },
+        "deprecated": false
+      },
+      "patch": {
+        "tags": [
+          "Security settings"
+        ],
+        "summary": "Updates the security settings of the current tenant.",
+        "description": "Updates the security settings of the current tenant, for example the signing key for SAML token or the signing key for access tokens.",
+        "operationId": "updateSettings",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Configuration of the security settings in JSON format.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TenantSettingsReq"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API updated the security settings of the tenant.",
+            "schema": {
+              "$ref": "#/definitions/TenantSettingsResp"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/securitySettings/public": {
+      "get": {
+        "tags": [
+          "Security settings"
+        ],
+        "summary": "Returns the trusted domains of the current tenant.",
+        "description": "Returns the trusted domains of the current tenant. This endpoint is public and requires no authentication. Include either the subdomain or the tenant ID of the subaccount as a query parameter, but not both. Applications can use this call to make a preflight check of the Content Security Policy.",
+        "operationId": "readTrustedDomains",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "subdomain",
+            "in": "query",
+            "description": "Specifies the subdomain of the subaccount. Find the subdomain in the SAP BTP cockpit.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "description": "Specifies the tenant ID of the subaccount. Find the tenant ID in the SAP BTP cockpit.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returns the trusted domains of the tenant.",
+            "schema": {
+              "$ref": "#/definitions/ListDomains"
+            }
+          },
+          "400": {
+            "description": "Bad Request - Either the tenant ID or subdomain of the subaccount must be specified, but not both."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/authorization/v2/securitySettings/keyRotation": {
+      "post": {
+        "tags": [
+          "Security settings"
+        ],
+        "summary": "Triggers the rotation of the token signing keys.",
+        "description": "If the rotateSigningKeyAutomatically property is set to true, you can use this method to trigger the service to rotate the token signing key. The rotation occurs in the next 24 to 48 hours. If a rotation is already scheduled in the next 48 hours or the last rotation was less than 24 hours ago, this method returns an error.",
+        "operationId": "triggerRotation",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API schedules a key rotation in the next 24 to 48 hours."
+          },
+          "400": {
+            "description": "Bad Request - The service can't schedule a key rotation because one of the conditions hasn't been met."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You don't have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - The tenant ID in the bearer token is unknown."
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "securityDefinitions": {
+    "apiaccess": {
+      "type": "oauth2",
+      "description": "To use this API, get the OAuth client credentials (client ID and secret) with either the cockpit or command-line interface. Pass these credentials to the token endpoint to get the access token.",
+      "tokenUrl": "https://{Subdomain}.authentication.{Landscape}.hana.ondemand.com/oauth/token?grant_type=client_credentials&response_type=token",
+      "flow": "application",
+      "scopes": {
+        "uaa.resource": "Enables access to UAA resources.",
+        "xs_authorization.read": "Read authorization entities.",
+        "xs_authorization.write": "Write authorization entities.",
+        "xs_idp.read": "Read identity provider entities.",
+        "xs_idp.write": "Write identity provider entities.",
+        "xs_user.read": "Read user entities.",
+        "xs_user.write": "Write user entities."
+      }
+    }
+  },
+  "security": [
+    {
+      "apiaccess": [
+        "uaa.resource",
+        "xs_authorization.read",
+        "xs_authorization.write",
+        "xs_idp.read",
+        "xs_idp.write",
+        "xs_user.read",
+        "xs_user.write"
+      ]
+    }
+  ],
+  "definitions": {
+    "TenantSettingsReq": {
+      "type": "object",
+      "properties": {
+        "iframeDomains": {
+          "type": "string",
+          "description": "By default, applications of the subaccount, including login pages of the service can't be framed by other applications in different domains for security reasons. To allow the embedding of applications of the subaccount, enter the list of trusted domains, separated by spaces. You can enter a wildcard (\\*) for the subdomain. For example, https://\\*.example.com. The entire list can't exceed 2048 characters. For more information, see [Implications of Using IFrames](https://help.sap.com/docs/btp/sap-business-technology-platform/security-considerations-for-sap-authorization-and-trust-management-service#implications-of-using-iframes).",
+          "example": "https://store.example.com"
+        },
+        "tokenPolicySettings": {
+          "$ref": "#/definitions/TokenPolicySettingsReq"
+        },
+        "samlConfigSettings": {
+          "$ref": "#/definitions/SamlConfigSettingsReq"
+        },
+        "links": {
+          "$ref": "#/definitions/LinksSettings"
+        },
+        "defaultIdp": {
+          "type": "string",
+          "example": "sap.default",
+          "description": "Sets the default identity provider to use for the password grant flow. Enter the origin key of the identity provider."
+        },
+        "treatUsersWithSameEmailAsSameUser": {
+          "type": "boolean",
+          "description": "Set to false to disable the fallback at logon that if the logon ID provided in the token by the identity provider is unknown, the service attempts to log on the user with the e-mail address from the token. When false, the service attempts to create a missing user if user creation at logon is allowed. Note that before you can switch this property from false to true again, ensure that e-mail addresses are unique among your shadow users."
+        },
+        "corsDefaultOrigins": {
+          "type": "string",
+          "example": "https://www.example.com",
+          "description": "For cross-origin resource sharing, this property enables you to set a comma-separated list of URLs returned in the Access-Control-Allow-Origin header. The service uses the value in the corsDefaultOrigin property for any requests that don't include the header string X-Requested-With. If you use wildcards, we recommend that you make your URLs as specific as possible. By using wildcards, you enable the application to access resources from multiple websites. Wildcards increase the risk of redirecting to malicious websites. The default value is .*, which allows any URL. For more information, see [Cross-Origin Resource Sharing](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) in the MDN Web Docs."
+        },
+        "corsXhrOrigins": {
+          "type": "string",
+          "example": "https://www.example.com",
+          "description": "For cross-origin resource sharing, this property enables you to set a comma-separated list of URLs returned in the Access-Control-Allow-Origin header. The service uses the value in the corsXhrOrigin property for any requests that include the header string X-Requested-With. If you use wildcards, we recommend that you make your URLs as specific as possible. By using wildcards, you enable the application to access resources from multiple websites. Wildcards increase the risk of redirecting to malicious websites. The default value is .*, which allows any URL. For more information, see [Cross-Origin Resource Sharing](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) in the MDN Web Docs."
+        },
+        "customEmailDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "This property enables you to set a comma-separated list of e-mail domains, which the tenant must support. By default, the service doesn't support reserved top-level domains such as .invalid or IANA-managed reserved domains. Without this configuration, the service rejects the addition of users with e-mail addresses from these domains.",
+          "example": "internal.test, mail.invalid"
+        },
+        "useIdpUserNameInTokens": {
+          "type": "boolean",
+          "description": "Set to true, preserves the original case (uppercase and lowercase) of the username as provided by the identity provider in ID tokens or SAML assertions. When set to false, the username may be normalized or transformed by the service."
+        },
+        "partitionedCookies": {
+          "type": "boolean",
+          "description": "Set to true to enable partitioned cookies for Chromium-based browsers. With this setting, the service behaves as it would after the end of third-party cookie support in Chromium-based browsers. If your business scenarios fail, set partionedCookies to false to help troubleshoot the source of the problem. When Google begins large-scale deprecation of third-party cookies, we plan to set this property to true and read-only in all subaccounts. For more information, see [Third-Party Cookies and SAP Authorization and Trust Management Service](https://help.sap.com/docs/btp/sap-business-technology-platform/third-party-cookies-and-sap-authorization-and-trust-management-service?version=Cloud)."
+        },
+        "preserveUserNameCase": {
+          "type": "boolean",
+          "description": "Determines if the SCIM APIs of the SAP Authorization and Trust Management service preserve the case of the userName. The default is true and ensures that no matter how a user is created, during logon, with the SAP BTP cockpit, btp CLI, or SCIM APIs, all these interfaces handle the user name in the same way. When false, the APIs normalize the value of userName to lower case. The runtime is independent of the setting and handles the username in a case-insensitive manner. Donna.Moore@example.com is treated the same as donna.moore@example.com."
+        },
+        "rotateSigningKeyAutomatically": {
+          "type": "boolean",
+          "description": "Set to true to enable automatic signing key rotation. When enabled, the service rotates token signing key automatically. You can trigger the next rotation when needed. When you first enable automatic signing key rotation, the service triggers a rotation within 48 hours."
+        }
+      },
+      "title": "TenantSettingsReq"
+    },
+    "TenantSettingsResp": {
+      "type": "object",
+      "properties": {
+        "iframeDomains": {
+          "$ref": "#/definitions/ListDomains"
+        },
+        "tokenPolicySettings": {
+          "$ref": "#/definitions/TokenPolicySettingsResp"
+        },
+        "samlConfigSettings": {
+          "$ref": "#/definitions/SamlConfigSettingsResp"
+        },
+        "links": {
+          "$ref": "#/definitions/LinksSettings"
+        },
+        "defaultIdp": {
+          "type": "string",
+          "example": "sap.default",
+          "description": "The property displays the origin key of the default identity provider (IdP) for the password grant flow."
+        },
+        "treatUsersWithSameEmailAsSameUser": {
+          "type": "boolean",
+          "description": "Indicates whether the fallback at logon is enabled or not that if the logon ID provided in the token of the identity provider is unknown, the service attempts to log on the user with the e-mail address from the token. When false, the service attempts to create a missing user if user creation at logon is allowed. Note that before you can switch this property from false to true again, ensure that e-mail addresses are unique among your shadow users."
+        },
+        "corsDefaultOrigins": {
+          "type": "string",
+          "example": "https://www.example.com",
+          "description": "For cross-origin resource sharing, this property shows a comma-separated list of URLs returned in the Access-Control-Allow-Origin header. The service uses the value in the corsDefaultOrigin property for any requests that don't include the header string X-Requested-With. If you use wildcards, we recommend that you make your URLs as specific as possible. By using wildcards, you enable the application to access resources from multiple websites. Wildcards increase the risk of redirecting to malicious websites. The default value is .*, which allows any URL. For more information, see [Cross-Origin Resource Sharing](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) in the MDN Web Docs."
+        },
+        "corsXhrOrigins": {
+          "type": "string",
+          "example": "https://www.example.com",
+          "description": "For cross-origin resource sharing, this property shows a comma-separated list of URLs returned in the Access-Control-Allow-Origin header. The service uses the value in the corsXhrOrigin property for any requests that include the header string X-Requested-With. If you use wildcards, we recommend that you make your URLs as specific as possible. By using wildcards, you enable the application to access resources from multiple websites. Wildcards increase the risk of redirecting to malicious websites. The default value is .*, which allows any URL. For more information, see [Cross-Origin Resource Sharing](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) in the MDN Web Docs."
+        },
+        "CredentialTypeInfos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Binding"
+          }
+        },
+        "customEmailDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Lists the custom e-mail domains supported by this tenant.",
+          "example": "internal.test, mail.invalid"
+        },
+        "useIdpUserNameInTokens": {
+          "type": "boolean",
+          "description": "When set to true, preserves the original case (uppercase and lowercase) of the username as provided by the identity provider in ID tokens or SAML assertions. When set to false, the username may be normalized or transformed by the service."
+        },
+        "partitionedCookies": {
+          "type": "boolean",
+          "description": "This property indicates whether partitioned cookies for Chromium-based browsers are enabled or not. When true, the tenant behaves as it would after the end of third-party cookie support in Chromium-based browsers.  If your business scenarios fail, set partionedCookies to false to help troubleshoot the source of the problem. When Google begins large-scale deprecation of third-party cookies, we plan to set this property to true and read-only in all subaccounts. For more information, see [Third-Party Cookies and SAP Authorization and Trust Management Service](https://help.sap.com/docs/btp/sap-business-technology-platform/third-party-cookies-and-sap-authorization-and-trust-management-service?version=Cloud)."
+        },
+        "preserveUserNameCase": {
+          "type": "boolean",
+          "description": "Determines if the SCIM APIs of the SAP Authorization and Trust Management service preserve the case of the userName. The default is true and ensures that no matter how a user is created, during logon, with the SAP BTP cockpit, btp CLI, or SCIM APIs, all these interfaces handle the user name in the same way. When false, the APIs normalize the value of userName to lower case. The runtime is independent of the setting and handles the username in a case-insensitive manner. Donna.Moore@example.com is treated the same as donna.moore@example.com."
+        },
+        "rotateSigningKeyAutomatically": {
+          "type": "boolean",
+          "description": "This property indicates whether automatic signing key rotation is enabled or not. When enabled, the service rotates token signing key automatically. You can trigger the next rotation when needed."
+        }
+      },
+      "title": "TenantSettingsResp"
+    },
+    "Binding": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "example": "4a3a6a53-ae93-4450-ba12-4becb1c345ab"
+        },
+        "serviceId": {
+          "type": "string",
+          "example": "a53672a7-7f94-48e8-bd24-0099b822abd7"
+        },
+        "appId": {
+          "type": "string",
+          "example": "product-list!t1000"
+        },
+        "credentialType": {
+          "type": "string",
+          "enum": [
+            "instance-secret",
+            "binding-secret",
+            "X.509"
+          ]
+        },
+        "bindingId": {
+          "type": "string",
+          "example": "3a3a9aa2-bf44-4cd3-904a-b22d13a17fa4"
+        }
+      },
+      "title": "Binding"
+    },
+    "TokenPolicySettingsReq": {
+      "type": "object",
+      "properties": {
+        "changeMode": {
+          "type": "string",
+          "enum": [
+            "ADD",
+            "UPDATE",
+            "DELETE",
+            "FORCE_UPDATE",
+            "FORCE_DELETE"
+          ],
+          "description": "Use ADD to create a new key with the identifier keyId. Use UPDATE to make the key with the identifier keyId the active key. Use DELETE to remove the key with the identifier keyId from the list of available keys. After activating a new key, wait for access tokens signed by the old key to expire before deleting the old key. The default lifetime of access tokens is 12 hours. The service enforces a minimum 12-hour delay between rotation and the activation (UPDATE) or deletion (DELETE) of signing keys. In emergency cases or in automated test setups, you can bypass the delay in activation and deletion by using the FORCE_UPDATE and FORCE_DELETE change modes. Forcing changes can cause service interruption for access tokens that haven't expired yet."
+        },
+        "keyId": {
+          "type": "string",
+          "example": "my-new-key",
+          "description": "A key that is specified for a PATCH operation. The operation is either ADD, UPDATE, or DELETE."
+        },
+        "accessTokenValidity": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Time in seconds between when a access token is issued and when it expires. The value ranges from 1800 seconds to 86,400 seconds, in other words, from 30 minutes to 24 hours. Keep token validity as short as possible, but not less than 30 minutes. The default value is 43,000 seconds or 12 hours. The value `-1` means that the token uses the default setting. Changes to token policy settings apply to all service instances in the subaccount that haven't set a specific value in the application security descriptor (xs-security.json). For more information, see [Setting Token Policy](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/f117cab6b92d438cb2a0b5204713994b.html#setting-token-policy)."
+        },
+        "refreshTokenValidity": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Time in seconds between when a refresh token is issued and when it expires. The value ranges from 1800 seconds to 31,536,000 seconds, in other words, from 30 minutes to one year. The validity of refresh tokens must be longer than the validity for access tokens. The system never issues refresh tokens if the validity is shorter. The default value is 604,800 seconds or 7 days. The value `-1` means that the token uses the default setting. Changes to token policy settings apply to all service instances in the subaccount that haven't set a specific value in the application security descriptor (xs-security.json). For more information, see [Setting Token Policy](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/f117cab6b92d438cb2a0b5204713994b.html#setting-token-policy)."
+        },
+        "refreshTokenUnique": {
+          "type": "boolean",
+          "description": "If true, the service only issues one refresh token per client_id and user_id combination."
+        }
+      },
+      "title": "TokenPolicySettingsReq"
+    },
+    "TokenPolicySettingsResp": {
+      "type": "object",
+      "properties": {
+        "accessTokenValidity": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Time in seconds between when a access token is issued and when it expires. The value ranges from 1800 seconds to 86,400 seconds, in other words, from 30 minutes to 24 hours. Keep token validity as short as possible, but not less than 30 minutes. The default value is 43,000 seconds or 12 hours. The value `-1` means that the token uses the default setting. Token policy settings apply to all service instances in the subaccount that haven't set a specific value in the application security descriptor (xs-security.json). For more information, see [Setting Token Policy](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/f117cab6b92d438cb2a0b5204713994b.html#setting-token-policy)."
+        },
+        "refreshTokenUnique": {
+          "type": "boolean",
+          "description": "If true, the service only issues one refresh token per client_id and user_id combination."
+        },
+        "refreshTokenValidity": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Time in seconds between when a refresh token is issued and when it expires. The value ranges from 1800 seconds to 31,536,000 seconds, in other words, from 30 minutes to one year. The validity of refresh tokens must be longer than the validity for access tokens. The system never issues refresh tokens if the validity is shorter. The default value is 604,800 seconds or 7 days. The value `-1` means that the token uses the default setting. Token policy settings apply to all service instances in the subaccount that haven't set a specific value in the application security descriptor (xs-security.json). For more information, see [Setting Token Policy](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/f117cab6b92d438cb2a0b5204713994b.html#setting-token-policy)."
+        },
+        "activeKeyId": {
+          "type": "string",
+          "example": "default-jwt-key--9988843812",
+          "description": "The ID of the key to use for signing metadata and assertions."
+        },
+        "keyIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "default-jwt-key--9988843812"
+          }
+        }
+      },
+      "title": "TokenPolicySettingsResp"
+    },
+    "SamlConfigSettingsReq": {
+      "type": "object",
+      "properties": {
+        "changeMode": {
+          "type": "string",
+          "enum": [
+            "ADD",
+            "UPDATE",
+            "DELETE"
+          ],
+          "description": "Use ADD to create a new key with the identifier keyId. Use UPDATE to make the key with the identifier keyId the active key. Use DELETE to remove the key with the identifier keyId from the list of available keys."
+        },
+        "keyId": {
+          "type": "string",
+          "example": "my-new-key",
+          "description": "A key that is specified for a PATCH operation. The operation is either ADD, UPDATE, or DELETE."
+        },
+        "disableInResponseToCheck": {
+          "type": "boolean",
+          "description": "If true, this zone doesn't validate the `InResponseToField` part of an incoming identity provider assertion."
+        },
+        "key": {
+          "$ref": "#/definitions/SamlKey"
+        }
+      },
+      "title": "SamlConfigSettingsReq"
+    },
+    "SamlConfigSettingsResp": {
+      "type": "object",
+      "properties": {
+        "disableInResponseToCheck": {
+          "type": "boolean",
+          "description": "If true, this zone doesn't validate the `InResponseToField` part of an incoming identity provider assertion."
+        },
+        "entityID": {
+          "type": "string",
+          "example": "https://example-tenant.authentication.eu10.hana.ondemand.com",
+          "description": "The property contains a globally unique name for an identity provider or a service provider."
+        },
+        "activeKeyId": {
+          "type": "string",
+          "example": "default-saml-key-99999",
+          "description": "The ID of the key to be used for signing metadata and assertions."
+        },
+        "keys": {
+          "$ref": "#/definitions/SamlKey"
+        }
+      },
+      "title": "SamlConfigSettingsResp"
+    },
+    "SamlKey": {
+      "type": "object",
+      "properties": {
+        "default-saml-key-99999": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "example": "confidential",
+              "description": "The private key of the SAML providers."
+            },
+            "passphrase": {
+              "type": "string",
+              "example": "",
+              "description": "The private key password of the SAML provider. Reserved for future use."
+            },
+            "certificate": {
+              "type": "string",
+              "example": "-----BEGIN CERTIFICATE-----kfsjdfnjkdsfjds...ndf8j38o-----END CERTIFICATE-----",
+              "description": "The certificate used to verify the authenticity of all communications."
+            }
+          }
+        }
+      },
+      "title": "SamlKey"
+    },
+    "LinksSettings": {
+      "type": "object",
+      "properties": {
+        "homeRedirect": {
+          "type": "string",
+          "description": "Overrides the home page of the service and issues a redirect to this URL when the browser requests `/` or `/home`."
+        }
+      },
+      "title": "LinksSettings"
+    },
+    "ListDomains": {
+      "type": "object",
+      "properties": {
+        "iframeDomains": {
+          "type": "string",
+          "description": "By default, applications of the subaccount, including login pages of the service can't be framed by other applications in different domains for security reasons. The service trusts the domains listed here to embed the applications of the subaccount, which support this feature. The entire list can't exceed 2048 characters. For more information, see [Implications of Using IFrames](https://help.sap.com/docs/btp/sap-business-technology-platform/security-considerations-for-sap-authorization-and-trust-management-service#implications-of-using-iframes).",
+          "example": "https://store.example.com"
+        }
+      },
+      "title": "ListDomains"
+    }
+  }
+}

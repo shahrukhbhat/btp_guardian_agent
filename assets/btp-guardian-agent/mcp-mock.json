@@ -106,6 +106,715 @@
               }
             ]
           }
+        },
+        "getSubaccount": {
+          "description": "Get a single subaccount by GUID",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "guid": "sa-0001-dev",
+            "displayName": "Development",
+            "subdomain": "btp-guardian-dev",
+            "region": "eu10",
+            "state": "OK",
+            "parentGUID": "ga-0001-mock",
+            "parentType": "ROOT",
+            "betaEnabled": false,
+            "usedForProduction": "NOT_USED_FOR_PRODUCTION",
+            "description": "Development subaccount for BTP Guardian"
+          }
+        },
+        "updateGlobalAccount": {
+          "description": "Update the global account",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "displayName": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": []
+          },
+          "mock_response": {
+            "guid": "ga-0001-mock",
+            "displayName": "BTP Guardian Demo Global Account",
+            "entityState": "OK"
+          }
+        },
+        "createSubaccount": {
+          "description": "Create a new subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "displayName": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "subdomain": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "displayName",
+              "region",
+              "subdomain"
+            ]
+          },
+          "mock_response": {
+            "guid": "sa-NEW-mock",
+            "displayName": "BTP Guardian",
+            "subdomain": "btp-guardian-new",
+            "region": "eu10",
+            "state": "CREATING",
+            "jobInstanceId": "job-0001-mock"
+          }
+        },
+        "updateSubaccount": {
+          "description": "Update a subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "guid": "sa-0001-dev",
+            "displayName": "Development (Updated)",
+            "entityState": "OK"
+          }
+        },
+        "deleteSubaccount": {
+          "description": "Delete a subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "jobInstanceId": "job-0002-mock",
+            "state": "PROCESSING"
+          }
+        },
+        "moveSubaccount": {
+          "description": "Move a subaccount to a different directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              },
+              "targetAccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID",
+              "targetAccountGUID"
+            ]
+          },
+          "mock_response": {
+            "guid": "sa-0001-dev",
+            "parentGUID": "dir-0001-mock",
+            "entityState": "OK"
+          }
+        },
+        "moveSubaccounts": {
+          "description": "Batch move subaccounts",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUIDs": {
+                "type": "array"
+              },
+              "targetAccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUIDs",
+              "targetAccountGUID"
+            ]
+          },
+          "mock_response": {
+            "jobInstanceId": "job-0003-mock",
+            "state": "PROCESSING"
+          }
+        },
+        "getSubaccountLabels": {
+          "description": "Get labels for a subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "labels": {
+              "env": [
+                "dev"
+              ],
+              "team": [
+                "platform"
+              ],
+              "cost-center": [
+                "CC-1234"
+              ]
+            }
+          }
+        },
+        "createSubaccountLabels": {
+          "description": "Assign labels to a subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "subaccountGUID",
+              "labels"
+            ]
+          },
+          "mock_response": {
+            "labels": {
+              "env": [
+                "dev"
+              ],
+              "team": [
+                "platform"
+              ]
+            }
+          }
+        },
+        "deleteSubaccountLabels": {
+          "description": "Remove all labels from a subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getSubaccountSettings": {
+          "description": "Get subaccount settings",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "customProperties": [
+              {
+                "key": "costCenter",
+                "value": "CC-1234"
+              }
+            ]
+          }
+        },
+        "createOrUpdateSubaccountSettings": {
+          "description": "Create or update subaccount settings",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              },
+              "settings": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "subaccountGUID",
+              "settings"
+            ]
+          },
+          "mock_response": {
+            "status_code": 200,
+            "success": true
+          }
+        },
+        "deleteSubaccountSettings": {
+          "description": "Delete subaccount settings",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getServiceManagementBinding": {
+          "description": "Get Service Manager binding for a subaccount (v1)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "bindingGuid": "sm-binding-0001",
+            "subaccountGuid": "sa-0001-dev",
+            "clientId": "sb-sm-0001",
+            "url": "https://service-manager.cfapps.eu10.hana.ondemand.com"
+          }
+        },
+        "createServiceManagementBinding": {
+          "description": "Create Service Manager binding for a subaccount (v1)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "bindingGuid": "sm-binding-NEW",
+            "subaccountGuid": "sa-0001-dev",
+            "entityState": "OK"
+          }
+        },
+        "deleteServiceManagementBinding": {
+          "description": "Delete Service Manager binding for a subaccount (v1)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getAllServiceManagerBindingsV2": {
+          "description": "Get all Service Manager bindings for a subaccount (v2)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "bindings": [
+              {
+                "name": "default-binding",
+                "subaccountGUID": "sa-0001-dev",
+                "clientId": "sb-sm-v2-0001"
+              }
+            ]
+          }
+        },
+        "createServiceManagerBindingV2": {
+          "description": "Create a named Service Manager binding (v2)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              },
+              "bindingName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID",
+              "bindingName"
+            ]
+          },
+          "mock_response": {
+            "name": "default-binding",
+            "subaccountGUID": "sa-0001-dev",
+            "entityState": "OK"
+          }
+        },
+        "getServiceManagerBindingV2": {
+          "description": "Get a specific Service Manager binding (v2)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              },
+              "bindingName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID",
+              "bindingName"
+            ]
+          },
+          "mock_response": {
+            "name": "default-binding",
+            "subaccountGUID": "sa-0001-dev",
+            "clientId": "sb-sm-v2-0001"
+          }
+        },
+        "deleteServiceManagerBindingV2": {
+          "description": "Delete a named Service Manager binding (v2)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              },
+              "bindingName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID",
+              "bindingName"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getDirectory": {
+          "description": "Get a specific directory by GUID",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              },
+              "expand": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "directoryGUID"
+            ]
+          },
+          "mock_response": {
+            "guid": "dir-0001-mock",
+            "displayName": "Production Workloads",
+            "entityState": "OK",
+            "subdomain": "prod-workloads",
+            "parentGUID": "ga-0001-mock"
+          }
+        },
+        "createDirectory": {
+          "description": "Create a new directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "displayName": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "displayName"
+            ]
+          },
+          "mock_response": {
+            "guid": "dir-NEW-mock",
+            "displayName": "New Directory",
+            "entityState": "OK"
+          }
+        },
+        "updateDirectory": {
+          "description": "Update a directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "directoryGUID"
+            ]
+          },
+          "mock_response": {
+            "guid": "dir-0001-mock",
+            "displayName": "Production Workloads (Updated)",
+            "entityState": "OK"
+          }
+        },
+        "deleteDirectory": {
+          "description": "Delete a directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "directoryGUID"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "updateDirectoryFeatures": {
+          "description": "Add or remove features for a directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              },
+              "features": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "directoryGUID",
+              "features"
+            ]
+          },
+          "mock_response": {
+            "guid": "dir-0001-mock",
+            "features": [
+              "DEFAULT",
+              "ENTITLEMENTS"
+            ],
+            "entityState": "OK"
+          }
+        },
+        "getDirectoryLabels": {
+          "description": "Get labels for a directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "directoryGUID"
+            ]
+          },
+          "mock_response": {
+            "labels": {
+              "environment": [
+                "production"
+              ],
+              "owner": [
+                "platform-team"
+              ]
+            }
+          }
+        },
+        "createDirectoryLabels": {
+          "description": "Assign labels to a directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "directoryGUID",
+              "labels"
+            ]
+          },
+          "mock_response": {
+            "labels": {
+              "environment": [
+                "production"
+              ]
+            }
+          }
+        },
+        "deleteDirectoryLabels": {
+          "description": "Remove all labels from a directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "directoryGUID"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getDirectorySettings": {
+          "description": "Get settings for a directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "directoryGUID"
+            ]
+          },
+          "mock_response": {
+            "customProperties": [
+              {
+                "key": "billingGroup",
+                "value": "EMEA"
+              }
+            ]
+          }
+        },
+        "createOrUpdateDirectorySettings": {
+          "description": "Create or update directory settings",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              },
+              "settings": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "directoryGUID",
+              "settings"
+            ]
+          },
+          "mock_response": {
+            "status_code": 200,
+            "success": true
+          }
+        },
+        "deleteDirectorySettings": {
+          "description": "Delete directory settings",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "directoryGUID"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getJobStatus": {
+          "description": "Get status of an async BTP job",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "jobInstanceIdOrUniqueId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "jobInstanceIdOrUniqueId"
+            ]
+          },
+          "mock_response": {
+            "id": "job-0001-mock",
+            "status": "COMPLETED",
+            "result": {
+              "resourceType": "Subaccount",
+              "resourceGuid": "sa-NEW-mock"
+            },
+            "startedAt": "2026-07-29T10:00:00Z",
+            "finishedAt": "2026-07-29T10:01:23Z"
+          }
         }
       }
     },
@@ -197,6 +906,101 @@
                 ]
               }
             ]
+          }
+        },
+        "getAllowedDataCenters": {
+          "description": "List available data centers for provisioning",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
+          "mock_response": {
+            "datacenters": [
+              {
+                "name": "eu10",
+                "displayName": "Europe (Frankfurt)",
+                "region": "eu10",
+                "environment": "cloudfoundry",
+                "iaasProvider": "AWS"
+              },
+              {
+                "name": "us10",
+                "displayName": "US East (VA)",
+                "region": "us10",
+                "environment": "cloudfoundry",
+                "iaasProvider": "AWS"
+              },
+              {
+                "name": "ap10",
+                "displayName": "Australia (Sydney)",
+                "region": "ap10",
+                "environment": "cloudfoundry",
+                "iaasProvider": "AWS"
+              }
+            ]
+          }
+        },
+        "updateDirectoryEntitlements": {
+          "description": "Update entitlement assignments for a directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              },
+              "entitlements": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "directoryGUID",
+              "entitlements"
+            ]
+          },
+          "mock_response": {
+            "jobInstanceId": "job-ent-001",
+            "state": "PROCESSING"
+          }
+        },
+        "createOrUpdateDirectoryEntitlements": {
+          "description": "Assign or replace entitlements for a directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "directoryGUID": {
+                "type": "string"
+              },
+              "entitlements": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "directoryGUID",
+              "entitlements"
+            ]
+          },
+          "mock_response": {
+            "jobInstanceId": "job-ent-002",
+            "state": "PROCESSING"
+          }
+        },
+        "setSubaccountServicePlans": {
+          "description": "Assign service plan quotas to subaccounts",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "entitlements": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "entitlements"
+            ]
+          },
+          "mock_response": {
+            "jobInstanceId": "job-ent-003",
+            "state": "PROCESSING"
           }
         }
       }
@@ -323,6 +1127,84 @@
             "currency": "EUR",
             "reportTime": "/Date(1747612800000)/"
           }
+        },
+        "monthlyDirectoryUsage": {
+          "description": "Get monthly usage for a directory",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "fromDate": {
+                "type": "string"
+              },
+              "toDate": {
+                "type": "string"
+              },
+              "directoryGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "fromDate",
+              "toDate",
+              "directoryGUID"
+            ]
+          },
+          "mock_response": {
+            "content": [
+              {
+                "directoryGUID": "dir-0001-mock",
+                "directoryName": "Production Workloads",
+                "reportYearMonth": 202607,
+                "services": [
+                  {
+                    "serviceName": "APPLICATION_RUNTIME",
+                    "metricName": "MEMORY",
+                    "usage": 2048.0,
+                    "measureName": "MB"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "dailySubaccountUsage": {
+          "description": "Get daily usage data for a specific subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              },
+              "fromDate": {
+                "type": "string"
+              },
+              "toDate": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID",
+              "fromDate",
+              "toDate"
+            ]
+          },
+          "mock_response": {
+            "content": [
+              {
+                "subaccountGUID": "sa-0001-dev",
+                "subaccountName": "Development",
+                "reportDate": 20260701,
+                "services": [
+                  {
+                    "serviceName": "APPLICATION_RUNTIME",
+                    "metricName": "MEMORY",
+                    "usage": 512.0,
+                    "measureName": "MB"
+                  }
+                ]
+              }
+            ]
+          }
         }
       }
     },
@@ -393,6 +1275,256 @@
             "state": "STARTED",
             "instances": 2,
             "runningInstances": 2
+          }
+        },
+        "GET_accounts-subaccountName-apps-appName-processes-processId-metrics": {
+          "description": "Get metrics for a specific process of a CF application",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {
+                "type": "string"
+              },
+              "appName": {
+                "type": "string"
+              },
+              "processId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountName",
+              "appName",
+              "processId"
+            ]
+          },
+          "mock_response": {
+            "subaccountName": "btp-guardian-dev",
+            "appName": "my-app",
+            "processId": "proc-0",
+            "cpu": 12.3,
+            "memory": 256
+          }
+        },
+        "GET_accounts-subaccountName-apps-appName-processes-processId-state": {
+          "description": "Get state of a specific process of a CF application",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {
+                "type": "string"
+              },
+              "appName": {
+                "type": "string"
+              },
+              "processId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountName",
+              "appName",
+              "processId"
+            ]
+          },
+          "mock_response": {
+            "subaccountName": "btp-guardian-dev",
+            "appName": "my-app",
+            "processId": "proc-0",
+            "state": "RUNNING"
+          }
+        },
+        "GET_accounts-subaccountName-dbsystem-databaseSystem-metrics": {
+          "description": "Get metrics for a database system",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {
+                "type": "string"
+              },
+              "databaseSystem": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountName",
+              "databaseSystem"
+            ]
+          },
+          "mock_response": {
+            "databaseSystem": "HANA",
+            "cpu": 8.5,
+            "memory": 4096,
+            "diskUsed": 20480
+          }
+        },
+        "GET_accounts-subaccountName-dbsystem-databaseSystem-state": {
+          "description": "Get state of a database system",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {
+                "type": "string"
+              },
+              "databaseSystem": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountName",
+              "databaseSystem"
+            ]
+          },
+          "mock_response": {
+            "databaseSystem": "HANA",
+            "state": "RUNNING",
+            "status": "OK"
+          }
+        },
+        "GET_accounts-subaccountName-html5-apps-appName-metrics": {
+          "description": "Get metrics for an HTML5 application",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {
+                "type": "string"
+              },
+              "appName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountName",
+              "appName"
+            ]
+          },
+          "mock_response": {
+            "appName": "my-html5-app",
+            "requests": 1250,
+            "errors": 3,
+            "avgResponseMs": 145
+          }
+        },
+        "GET_accounts-subaccountName-html5-apps-appName-state": {
+          "description": "Get state of an HTML5 application",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {
+                "type": "string"
+              },
+              "appName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountName",
+              "appName"
+            ]
+          },
+          "mock_response": {
+            "appName": "my-html5-app",
+            "state": "STARTED"
+          }
+        },
+        "GET_accounts-subaccountName-instances-instanceName-metrics": {
+          "description": "Get metrics for an XS instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {
+                "type": "string"
+              },
+              "instanceName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountName",
+              "instanceName"
+            ]
+          },
+          "mock_response": {
+            "instanceName": "my-xs-instance",
+            "cpu": 5.2,
+            "memory": 1024
+          }
+        },
+        "GET_accounts-subaccountName-instances-instanceName-state": {
+          "description": "Get state of an XS instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {
+                "type": "string"
+              },
+              "instanceName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountName",
+              "instanceName"
+            ]
+          },
+          "mock_response": {
+            "instanceName": "my-xs-instance",
+            "state": "RUNNING"
+          }
+        },
+        "GET_accounts-subaccountName-instances-instanceName-apps-appName-metrics": {
+          "description": "Get metrics for an XS application within an XS instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {
+                "type": "string"
+              },
+              "instanceName": {
+                "type": "string"
+              },
+              "appName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountName",
+              "instanceName",
+              "appName"
+            ]
+          },
+          "mock_response": {
+            "appName": "my-xs-app",
+            "instanceName": "my-xs-instance",
+            "cpu": 3.1,
+            "memory": 512
+          }
+        },
+        "GET_accounts-subaccountName-instances-instanceName-apps-appName-state": {
+          "description": "Get state of an XS application within an XS instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountName": {
+                "type": "string"
+              },
+              "instanceName": {
+                "type": "string"
+              },
+              "appName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountName",
+              "instanceName",
+              "appName"
+            ]
+          },
+          "mock_response": {
+            "appName": "my-xs-app",
+            "instanceName": "my-xs-instance",
+            "state": "STARTED"
           }
         }
       }
@@ -531,35 +1663,303 @@
             ]
           }
         },
-        "getServicePlanAssignments": {
-          "description": "Get service plan assignments across all environments",
+        "getEnvironmentInstance": {
+          "description": "Get a specific environment instance by ID",
           "input_schema": {
             "type": "object",
-            "properties": {},
+            "properties": {
+              "environmentInstanceId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "environmentInstanceId"
+            ]
+          },
+          "mock_response": {
+            "id": "env-0001-mock",
+            "name": "cf-eu10",
+            "type": "cloudfoundry",
+            "planName": "standard",
+            "subaccountGUID": "sa-0001-dev",
+            "state": "OK"
+          }
+        },
+        "createEnvironmentInstance": {
+          "description": "Create a new environment instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "environmentType": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "planName": {
+                "type": "string"
+              },
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "environmentType",
+              "name",
+              "planName",
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "id": "env-NEW-mock",
+            "name": "cf-dev-new",
+            "state": "CREATING",
+            "jobInstanceId": "job-prov-001"
+          }
+        },
+        "updateEnvironmentInstance": {
+          "description": "Update an environment instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "environmentInstanceId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "environmentInstanceId"
+            ]
+          },
+          "mock_response": {
+            "id": "env-0001-mock",
+            "state": "UPDATING",
+            "jobInstanceId": "job-prov-002"
+          }
+        },
+        "deleteEnvironmentInstance": {
+          "description": "Delete a specific environment instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "environmentInstanceId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "environmentInstanceId"
+            ]
+          },
+          "mock_response": {
+            "jobInstanceId": "job-prov-003",
+            "state": "PROCESSING"
+          }
+        },
+        "deleteAllEnvironmentInstances": {
+          "description": "Delete all environment instances in a subaccount",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subaccountGUID"
+            ]
+          },
+          "mock_response": {
+            "jobInstanceId": "job-prov-004",
+            "state": "PROCESSING"
+          }
+        },
+        "getEnvironmentInstanceBindings": {
+          "description": "Get all bindings for an environment instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "environmentInstanceId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "environmentInstanceId"
+            ]
+          },
+          "mock_response": {
+            "bindings": [
+              {
+                "id": "bind-0001",
+                "name": "cf-binding",
+                "credentialsType": "BINDING_SECRET"
+              }
+            ]
+          }
+        },
+        "createEnvironmentInstanceBinding": {
+          "description": "Create a binding for an environment instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "environmentInstanceId": {
+                "type": "string"
+              },
+              "bindingName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "environmentInstanceId",
+              "bindingName"
+            ]
+          },
+          "mock_response": {
+            "id": "bind-NEW",
+            "name": "my-binding",
+            "state": "OK"
+          }
+        },
+        "getEnvironmentInstanceBinding": {
+          "description": "Get a specific binding",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "environmentInstanceId": {
+                "type": "string"
+              },
+              "bindingId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "environmentInstanceId",
+              "bindingId"
+            ]
+          },
+          "mock_response": {
+            "id": "bind-0001",
+            "name": "cf-binding",
+            "credentialsType": "BINDING_SECRET"
+          }
+        },
+        "deleteEnvironmentInstanceBinding": {
+          "description": "Delete a specific binding",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "environmentInstanceId": {
+                "type": "string"
+              },
+              "bindingId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "environmentInstanceId",
+              "bindingId"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getEnvironmentInstanceLabels": {
+          "description": "Get labels for an environment instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "environmentInstanceId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "environmentInstanceId"
+            ]
+          },
+          "mock_response": {
+            "labels": {
+              "region": [
+                "eu10"
+              ],
+              "team": [
+                "platform"
+              ]
+            }
+          }
+        },
+        "createEnvironmentInstanceLabels": {
+          "description": "Assign labels to an environment instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "environmentInstanceId": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "environmentInstanceId",
+              "labels"
+            ]
+          },
+          "mock_response": {
+            "labels": {
+              "region": [
+                "eu10"
+              ],
+              "team": [
+                "platform"
+              ]
+            }
+          }
+        },
+        "deleteEnvironmentInstanceLabels": {
+          "description": "Remove all labels from an environment instance",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "environmentInstanceId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "environmentInstanceId"
+            ]
+          },
+          "mock_response": {
+            "status_code": 204,
+            "success": true
+          }
+        },
+        "getSubaccountQuota": {
+          "description": "Get service plan quota assignments for subaccounts",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "subaccountGUID": {
+                "type": "string"
+              },
+              "planName": {
+                "type": "string"
+              }
+            },
             "required": []
           },
           "mock_response": {
-            "assignments": [
+            "servicePlanAssignments": [
               {
-                "serviceName": "hana-cloud",
-                "planName": "hana",
-                "subaccountGUID": "sa-0002-prod",
-                "amount": 5,
-                "usedAmount": 4.5
-              },
-              {
-                "serviceName": "sapappstudio",
-                "planName": "standard-edition",
                 "subaccountGUID": "sa-0001-dev",
-                "amount": 20,
-                "usedAmount": 5
+                "planName": "standard",
+                "quota": 1,
+                "environmentType": "cloudfoundry"
               },
               {
-                "serviceName": "hana-cloud",
-                "planName": "hana",
-                "subaccountGUID": "sa-0005-sandbox",
-                "amount": 2,
-                "usedAmount": 0
+                "subaccountGUID": "sa-0002-prod",
+                "planName": "standard",
+                "quota": 1,
+                "environmentType": "cloudfoundry"
               }
             ]
           }

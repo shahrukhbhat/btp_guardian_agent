@@ -1,0 +1,10 @@
+apiVersion: asset.sap/v1
+kind: Asset
+type: mcp-server
+
+metadata:
+  name: authorization-service-mcp-server
+  ordId: sap.btp:apiResource:authorization-service-mcp:v1
+  version: 1.0.0
+  description: MCP server wrapping the SAP BTP Authorization & Trust Management API (XSUAA) for apps, roles, role templates, role collections, and attribute mappings
+  translation: mcp-translation/translation.json

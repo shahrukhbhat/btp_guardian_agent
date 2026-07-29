@@ -1,0 +1,764 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Provides functions to administrate identity providers in the SAP BTP. To access the API, use the SAP BTP command-line interface (btp CLI) to create API credentials. For more information, see [Get Access to the APIs](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/ebc9113a520e495ea5fb759b9a7929f2.html).\n",
+    "version": "1.0.0",
+    "title": "Identity Provider Management"
+  },
+  "externalDocs": {
+    "description": "Accessing Administration Using APIs of the SAP Authorization and Trust Management Service",
+    "url": "https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/dcb3bfd09c4b465e9d6f599485c5b6de.html?locale=en-US&state=PRODUCTION&version=Cloud"
+  },
+  "x-sap-api-type": "REST",
+  "x-sap-shortText": "Manage identity providers in the SAP BTP.",
+  "host": "sandbox.api.sap.com",
+  "schemes": [
+    "https"
+  ],
+  "x-servers": [
+    {
+      "url": "https://api.authentication.{Landscape}.hana.ondemand.com",
+      "description": "REST API endpoint for the trust configuration API of the Authorization and Trust Management service.",
+      "templates": {
+        "Landscape": {
+          "description": "Region host. For more information, see [Regions and API Endpoints Available for the Cloud Foundry Environment](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/350356d1dc314d3199dca15bd2ab9b0e.html#f344a57233d34199b2123b9620d0bb41.html)."
+        }
+      }
+    }
+  ],
+  "basePath": "/SCPAuthtrustmgmt/platform",
+  "tags": [
+    {
+      "name": "Identity providers"
+    }
+  ],
+  "paths": {
+    "/sap/rest/identity-providers": {
+      "get": {
+        "tags": [
+          "Identity providers"
+        ],
+        "summary": "Returns a list of identity providers.",
+        "description": "Returns a list of identity providers of the current subaccount. The response also includes information about the configuration of the identity providers.",
+        "operationId": "retrieveIdentityProvidersUsingGET",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "activeOnly",
+            "in": "query",
+            "description": "If the parameter is set to true, only the active identity providers are displayed.",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "rawConfig",
+            "in": "query",
+            "description": "If this parameter is set to true, the return value is of the type object. If the parameter is set to false, the return value is of the type string.",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returns the list of identity providers.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/IdentityProvider"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You do not have the authorizations required to access the resource."
+          }
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [
+          "Identity providers"
+        ],
+        "summary": "Creates an identity provider.",
+        "description": "Creates an identity provider based on a configuration in the JSON format. When you create an identity provider, certain limitations apply depending on what protocol you use.\n\n- **OpenID Connect**\nA subaccount can only have one custom OIDC identity provider. Additionally, a subaccount may also have exactly one default OIDC identity provider. When creating a custom OIDC identity provider, a limited list of Identity Authentication tenants can be chosen. The Identity Authentication tenant must be assigned to the same customer ID and your global account. At a minimum, include iasTenant of the Identity Authentication tenant and type oidc1.0. To see which tenants are available for your account, use the GET method to call the /sap/rest/identity-providers/ias endpoint.\n- **SAML**\nNo limitations apply, though we recommend you configure an OIDC configuration for your Identity Authentication tenant. To add a SAML configuration, you can include type, name, origin key, SAML metadata configuration, alias for your identity provider, SAML link, attribute mappings, addition of shadow users on login, and whether the identity provider is active.\n",
+        "operationId": "createIdentityProviderUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Configuration of the identity provider in JSON format.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/IdentityProviderRequest"
+            }
+          },
+          {
+            "name": "rawConfig",
+            "in": "query",
+            "description": "If this parameter is set to true, the return value is of the type object. If the parameter is set to false, the return value is of the type string.",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created - The identity provider has been created.",
+            "schema": {
+              "$ref": "#/definitions/IdentityProvider"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was poorly formed. For example, the API doesn't support setting originKey to sap.custom.",
+            "schema": {
+              "$ref": "#/definitions/generic.error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You do not have the authorizations required to access the resource."
+          },
+          "409": {
+            "description": "Conflict - The identity provider conflicts with an existing configuration of an identity provider.",
+            "schema": {
+              "$ref": "#/definitions/generic.error"
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/identity-providers/{id}": {
+      "get": {
+        "tags": [
+          "Identity providers"
+        ],
+        "summary": "Returns an identity provider.",
+        "description": "Returns an identity provider specified by the ID of the identity provider. The response also includes information about the configuration of the identity provider.",
+        "operationId": "retrieveIdentityProviderUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the identity provider.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "rawConfig",
+            "in": "query",
+            "description": "If this parameter is set to true, the return value is of the type object. If the parameter is set to false, the return value is of the type string.",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The API returned the identity provider.",
+            "schema": {
+              "$ref": "#/definitions/IdentityProvider"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You do not have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - A possible reason is that there is no identity provider that matches the id of your request."
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "Identity providers"
+        ],
+        "summary": "Update the configuration of an identity provider.",
+        "description": "Update the configuration of an identity provider specified by the ID of the identity provider. The updates need to be provided in the JSON format. When you update an identity provider, certain limitations apply depending on what protocol you use.\n\n- **OpenID Connect**\n  - With OIDC as the default identity provider, the following properties can be changed:\n    - `active` (only in feature set A)\n    - `linkText`\n    - `showLinkText`\n    - `addShadowUserOnLogin`            \n  - With OIDC as a custom identity provider, the following properties can be changed:\n    - `active`\n    - `linkText`\n    - `showLinkText`\n    - `addShadowUserOnLogin`            \n    - `providerDescription`            \n    - `iasTenant`, for example: `\"iasTenant\": { \"host\":\"mytenant.accounts.ondemand.com\", \"deleteUsers\":false, \"refreshTrust\":false}`. The property `iasTenant` is optional and will switch your existing trust configuration to another Identity Authentication tenant. Additionally, the optional `deleteUsers` property controls whether to delete all existing shadow users of the trust configuration. Use false (default value) when the new Identity Authentication tenant provides the same set of users, with the same user names. This ensures that users keep their authorizations, and application data associated with the users remains in place. Use true if the new Identity Authentication tenant provides a different set of users or different user names. Finally, the optional `refreshTrush` property enables you to get the current tenant information from Identity Authentication, for example, if the issuer changed. Use true to update the data SAP Authentication and Trust Management service stores locally about the Identity Authentication tenant. The default value of `refreshTrust` is false.\n- **LDAP**\nOnly the property `active`can be changed.\n- **SAML**\nNo limitations apply.        \n",
+        "operationId": "updateIdentityProviderUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the identity provider.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "idpIn",
+            "description": "The idpIn parameter contains the JSON body of the updated identity provider configuration.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/IdentityProviderRequest"
+            }
+          },
+          {
+            "name": "rawConfig",
+            "in": "query",
+            "description": "If this parameter is set to true, the return value is of the type object. If the parameter is set to false, the return value is of the type string.",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The identity provider has been updated successfully.",
+            "schema": {
+              "$ref": "#/definitions/IdentityProvider"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You do not have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - A possible reason is that there is no identity provider that matches the ID of your request."
+          }
+        },
+        "deprecated": false
+      },
+      "delete": {
+        "tags": [
+          "Identity providers"
+        ],
+        "summary": "Delete an identity provider from your subaccount.",
+        "description": "Delete an identity provider specified from your subaccount. The identity provider is specified by the ID of the identity provider. When you delete an identity provider, certain limitations apply depending on what protocol you use.\n\n- **OpenID Connect**\nIf you have a subaccount based on the feature set B, you can't delete the default OIDC identity provider. A custom OIDC identity provider that exists next to the default can be deleted.\n- **SAML**\nNo limitations apply.        \n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the identity provider.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "rawConfig",
+            "in": "query",
+            "description": "If this parameter is set to true, the return value is of the type object. If the parameter is set to false, the return value is of the type string.",
+            "required": false,
+            "type": "boolean",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The identity provider has been successfully deleted.",
+            "schema": {
+              "$ref": "#/definitions/IdentityProvider"
+            }
+          },
+          "204": {
+            "description": "No Content - There was no identity provider found that matches the ID of your request."
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You do not have the authorizations required to access the resource."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/identity-providers/migrate/{originKey}": {
+      "put": {
+        "tags": [
+          "Identity providers"
+        ],
+        "summary": "Migrate from SAML trust configuration to OpenID Connect Trust with Identity Authentication.",
+        "description": "If your subaccount uses the SAML protocol to connect to your custom identity provider, you can't consume applications or application features that require direct authentication with Identity Authentication, such as SAP Build Work Zone and SAP Build Apps. To consume such applications or features, switch to using OpenID Connect (OIDC) with Identity Authentication. For an detailed view of the migration process, including preparation and testing, see [Migration from SAML Trust to OpenID Connect Trust with Identity Authentication](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/d097ce26cb2d4b8fa9a597a5381cb3cb.html) on the SAP Help Portal. \n",
+        "operationId": "migrateIdentityAuthenticationToOIDC",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "originKey",
+            "in": "path",
+            "description": "Origin key of the identity provider.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "oidcConfig",
+            "description": "The oidcConfig parameter contains the OpenID Connect configuration of the identity provider.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OidcConfig"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The identity provider has been updated successfully.",
+            "schema": {
+              "$ref": "#/definitions/IdentityProvider"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You do not have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - A possible reason is that there is no identity provider that matches the ID of your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/identity-providers/migrate/{originKey}/rollback": {
+      "put": {
+        "tags": [
+          "Identity providers"
+        ],
+        "summary": "Restore SAML trust configuration.",
+        "description": "You replaced a SAML trust configuration to your custom identity provider with an OpenID Connect (OIDC) trust configuration to Identity Authentication, and the authentication of application users in the subaccount isn't working as you expected. Restore your SAML configuration to get your applications working again. For a detailed view of the migration process, including preparation and testing, see [Migration from SAML Trust to OpenID Connect Trust with Identity Authentication](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/d097ce26cb2d4b8fa9a597a5381cb3cb.html) on the SAP Help Portal.",
+        "operationId": "restoreIdentityAuthenticationToSAML",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "originKey",
+            "in": "path",
+            "description": "Origin key of the identity provider.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - The identity provider has been restored successfully.",
+            "schema": {
+              "$ref": "#/definitions/IdentityProvider"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You do not have the authorizations required to access the resource."
+          },
+          "404": {
+            "description": "Not Found - A possible reason is that there is no identity provider that matches the ID of your request."
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sap/rest/identity-providers/ias": {
+      "get": {
+        "tags": [
+          "Identity providers"
+        ],
+        "summary": "Returns a list of available Identity Authentication tenants.",
+        "description": "Returns an array of the tenants of SAP Cloud Identity Services - Identity Authentication available for trust configuration with your current SAP BTP account. Available tenants are associated with the same customer ID as your SAP BTP global account. Some Identity Authentication tenants have multiple customer IDs associated with them. The method returns all tenants by default. To return only those tenants which have the same customer ID as their primary ID, use the query parameter all=false.",
+        "operationId": "getIdentityAuthenticationTenants",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "all",
+            "in": "query",
+            "description": "Return all tenants with the same customer ID, irregardless of whether the ID is primary or secondary.",
+            "required": false,
+            "type": "boolean",
+            "default": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - Returns an array of Identity Authentication tenants.",
+            "schema": {
+              "$ref": "#/definitions/IdentityAuthenticationTenant"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Your authentication credentials have been refused."
+          },
+          "403": {
+            "description": "Forbidden - You do not have the authorizations required to access the resource."
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "apiaccess": {
+      "type": "oauth2",
+      "description": "To use this API, get the OAuth client credentials (client ID and secret) with either the cockpit or command-line interface. Pass these credentials to the token endpoint to get the access token.",
+      "tokenUrl": "https://{Subdomain}.authentication.{Landscape}.hana.ondemand.com/oauth/token?grant_type=client_credentials&response_type=token",
+      "flow": "application",
+      "scopes": {
+        "uaa.resource": "Enables access to UAA resources.",
+        "xs_authorization.read": "Read authorization entities.",
+        "xs_authorization.write": "Write authorization entities.",
+        "xs_idp.read": "Read identity provider entities.",
+        "xs_idp.write": "Write identity provider entities.",
+        "xs_user.read": "Read user entities.",
+        "xs_user.write": "Write user entities."
+      }
+    }
+  },
+  "security": [
+    {
+      "apiaccess": [
+        "uaa.resource",
+        "xs_authorization.read",
+        "xs_authorization.write",
+        "xs_idp.read",
+        "xs_idp.write",
+        "xs_user.read",
+        "xs_user.write"
+      ]
+    }
+  ],
+  "definitions": {
+    "OidcConfig": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "oidc1.0",
+          "description": "Enter oidc1.0 to ensure the new configuration uses OpenID Connect."
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "iasTenant": {
+              "type": "object",
+              "properties": {
+                "host": {
+                  "type": "string",
+                  "description": "Tenant host address of the Identity Authentication tenant. To see which tenants are available for your account, use the GET method to call the /sap/rest/identity-providers/ias endpoint.",
+                  "example": "caev6ngwk.accounts.ondemand.com"
+                }
+              }
+            },
+            "linkText": {
+              "type": "string",
+              "description": "Link text for user logon. Provide a hint so your users know which identity provider to authenticate with.",
+              "example": "Logon for corporate users."
+            },
+            "providerDescription": {
+              "type": "string",
+              "description": "A text field that allows for a description of the tenant.",
+              "example": "Tenant for test accounts."
+            }
+          }
+        }
+      },
+      "title": "OidcConfig"
+    },
+    "IdentityAuthenticationTenant": {
+      "type": "object",
+      "properties": {
+        "tenantType": {
+          "type": "string",
+          "description": "Identifies the tenant type as for Productive, Test, or Trial usage."
+        },
+        "costCenterId": {
+          "type": "string",
+          "description": "Reserved for internal usage."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The name of the Identity Authentication tenant.",
+          "example": "My tenant name."
+        },
+        "commonHost": {
+          "type": "string",
+          "description": "Tenant host address under our common domain cloud.sap.",
+          "example": "caev6ngwk.accounts.cloud.sap"
+        },
+        "dataCenterId": {
+          "type": "string",
+          "description": "Identifies the data center that hosts the tenant.",
+          "example": "EU1_PROD"
+        },
+        "host": {
+          "type": "string",
+          "description": "Tenant host address under our default ondemand.com domain or sapcloud.cn in China.",
+          "example": "caev6ngwk.accounts.ondemand.com"
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Identifies the primary customer of the tenant.",
+          "example": 1234567
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "Identifies the Identity Authentication tenant.",
+          "example": "caev6ngwk"
+        },
+        "description": {
+          "type": "string",
+          "description": "A text field that allows for a description of the tenant."
+        },
+        "customerHost": {
+          "type": "string",
+          "description": "Tenant host address under the custom domain of the customer.",
+          "example": "caev6ngwk.accounts.example.com"
+        },
+        "customerName": {
+          "type": "string",
+          "description": "The name of the organization to which this tenant belongs.",
+          "example": "My Example Company Worldwide"
+        },
+        "status": {
+          "type": "string",
+          "example": "ACTIVE"
+        }
+      },
+      "title": "IdentityAuthenticationTenant"
+    },
+    "IdentityProvider": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "type": "object",
+          "properties": {
+            "additionalConfiguration": {
+              "type": "object",
+              "properties": {
+                "domain": {
+                  "type": "string",
+                  "description": "Specifies a custom domain, which is used during browser based login and logout flows. For all technical flows the default domain is still used. For example,  my-tenant.accounts.ondemand.com."
+                }
+              }
+            },
+            "emailDomain": {
+              "type": "array",
+              "description": "Reserved.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "externalGroupsWhitelist": {
+              "type": "array",
+              "description": "Reserved.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "attributeMappings": {
+              "type": "string",
+              "description": "Read-only. Default mappings of shadow user attributes to claims from the identity provider."
+            },
+            "linkText": {
+              "type": "string",
+              "description": "Link text for user logon. Provide a hint so your users know which identity provider to authenticate with.",
+              "example": "Logon for corporate users."
+            },
+            "providerDescription": {
+              "type": "string",
+              "example": "This is a sample description of an identity provider."
+            },
+            "storeCustomAttributes": {
+              "type": "boolean",
+              "description": "Read-only. Enables the service to store custom attributes from the identity provider. Read the attributes from the /userinfo endpoint."
+            },
+            "addShadowUserOnLogin": {
+              "type": "boolean",
+              "description": "Learn more aobut shadow users on the [SAP Help Portal](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/a3bc7e863ac54c23ab856863b681c9f8.html)."
+            },
+            "tokenKey": {
+              "type": "string",
+              "description": "Reserved."
+            },
+            "iasTenant": {
+              "type": "object",
+              "properties": {
+                "host": {
+                  "type": "string",
+                  "description": "Tenant host address of the Identity Authentication tenant.",
+                  "example": "caev6ngwk.accounts.ondemand.com"
+                }
+              }
+            }
+          }
+        },
+        "id": {
+          "type": "string",
+          "example": "a1111111-b2b2-c333-4d44-eeeee55555ee",
+          "description": "The ID of an identity provider."
+        },
+        "originKey": {
+          "type": "string",
+          "example": "sap.default",
+          "description": "The originKey is used to identify the identity provider. We reserve the names sap.custom, sap.default, and ldap."
+        },
+        "name": {
+          "type": "string",
+          "example": "My identity provider",
+          "description": "The name of the identity provider."
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "example": 1566808122857
+        },
+        "last_modified": {
+          "type": "string",
+          "format": "date-time",
+          "example": 1566808501932
+        },
+        "type": {
+          "type": "string",
+          "example": "oidc1.0",
+          "description": "The protocol used to establish trust with the identity provider: saml or oidc1.0."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Shows whether the identity provider is currently active or not."
+        },
+        "identityZoneId": {
+          "type": "string",
+          "example": "aaa11a1a-b2b2-ccc3-4ddd-ee555e5e555e",
+          "description": "The ID of your identity zone."
+        }
+      },
+      "title": "IdentityProvider"
+    },
+    "IdentityProviderRequest": {
+      "type": "object",
+      "properties": {
+        "originKey": {
+          "type": "string",
+          "example": "caev6ngwk",
+          "description": "We recommend using the tenant ID as the origin key. Only use a maxiumum of 36 characters. The following characters are allowed: aA\u2013zZ, 0\u20139, hyphen (-), and underscore (_). For global accounts, the origin key must end in -platform. Don't use sap.custom, sap.default, or LDAP."
+        },
+        "name": {
+          "type": "string",
+          "example": "My identity provider",
+          "description": "The name of the identity provider."
+        },
+        "type": {
+          "type": "string",
+          "example": "oidc1.0",
+          "description": "The protocol used to establish trust with the identity provider. Only use saml or oidc1.0."
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "metaDataLocation": {
+              "type": "string",
+              "description": "For SAML identity providers, provide the metadata.xml."
+            },
+            "additionalConfiguration": {
+              "type": "object",
+              "properties": {
+                "domain": {
+                  "type": "string",
+                  "description": "Specifies a custom domain, which is used during browser based login and logout flows. For all technical flows the default domain is still used. For example,  my-tenant.accounts.ondemand.com."
+                }
+              }
+            },
+            "linkText": {
+              "type": "string",
+              "description": "Link text for user logon. Provide a hint so your users know which identity provider to authenticate with.",
+              "example": "Logon for corporate users."
+            },
+            "providerDescription": {
+              "type": "string",
+              "description": "A text field that allows for a description of the tenant.",
+              "example": "This is a sample description of an identity provider."
+            },
+            "addShadowUserOnLogin": {
+              "type": "boolean",
+              "description": "Learn more aobut shadow users on the [SAP Help Portal](https://help.sap.com/docs/BTP/65de2977205c403bbc107264b8eccf4b/a3bc7e863ac54c23ab856863b681c9f8.html)"
+            },
+            "iasTenant": {
+              "type": "object",
+              "properties": {
+                "host": {
+                  "type": "string",
+                  "description": "Tenant host address of the Identity Authentication tenant. To see which tenants are available for your account, use the GET method to call the /sap/rest/identity-providers/ias endpoint. You can also use this property to update the URL configuration, for example from the default domain my-tenant.accounts.ondemand.com to the common super domain my-tenant.accounts.cloud.sap, without losing any users.",
+                  "example": "caev6ngwk.accounts.ondemand.com"
+                }
+              }
+            },
+            "subjectNameIdentifier": {
+              "type": "string",
+              "description": "Sets the subject name identifier for authenticating with the subaccount. Accepted values are userUuid, uid, mail, displayName, loginName, and personnelNumber. The API does not return this value. You can check the result in the administration console of SAP Cloud Identity Services. For more information, see [Configure the Subject Name Identifier Sent to the Application](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/configure-subject-name-identifier-sent-to-application?version=Cloud). For PUT requests you can only set this value if you change to a different tenant.",
+              "default": "mail"
+            }
+          }
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Sets whether the identity provider is currently active or not."
+        }
+      },
+      "title": "IdentityProviderRequest"
+    },
+    "IdentityProviderMapping": {
+      "type": "object",
+      "properties": {
+        "attributeName": {
+          "type": "string"
+        },
+        "attributeValue": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "roleCollectionName": {
+          "type": "string"
+        }
+      },
+      "title": "IdentityProviderMapping"
+    },
+    "generic.error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

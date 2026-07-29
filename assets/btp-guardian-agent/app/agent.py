@@ -533,6 +533,372 @@ def _build_domain_tools(
         )
         return _shape_result(result)
 
+    class GetSubaccountInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount to retrieve")
+        derivedAuthorizations: str | None = Field(
+            default=None,
+            description="Optional: 'any' to include subaccounts accessible via role hierarchy",
+        )
+
+    async def get_subaccount(subaccountGUID: str, derivedAuthorizations: str | None = None) -> str:
+        params: dict = {}
+        if derivedAuthorizations:
+            params["derivedAuthorizations"] = derivedAuthorizations
+        return _shape_result(await accounts_client.get(f"/accounts/v1/subaccounts/{subaccountGUID}", params=params))
+
+    class UpdateGlobalAccountInput(BaseModel):
+        displayName: str | None = Field(default=None, description="New display name for the global account")
+        description: str | None = Field(default=None, description="New description")
+        customProperties: list | None = Field(default=None, description="List of custom property key/value objects")
+
+    async def update_global_account(
+        displayName: str | None = None,
+        description: str | None = None,
+        customProperties: list | None = None,
+    ) -> str:
+        body: dict = {}
+        if displayName is not None:
+            body["displayName"] = displayName
+        if description is not None:
+            body["description"] = description
+        if customProperties is not None:
+            body["customProperties"] = customProperties
+        return _shape_result(await accounts_client.patch("/accounts/v1/globalAccount", body=body))
+
+    class CreateSubaccountInput(BaseModel):
+        displayName: str = Field(description="Human-readable name for the new subaccount")
+        region: str = Field(description="Region key, e.g. 'eu10', 'us10'. Call getAvailableEnvironments or check BTP cockpit for valid values.")
+        subdomain: str = Field(description="Unique subdomain identifier (lowercase alphanumeric + hyphens). Must be unique globally.")
+        betaEnabled: bool = Field(default=False, description="Enable beta features in this subaccount")
+        description: str | None = Field(default=None, description="Optional description")
+        usedForProduction: str | None = Field(default=None, description="'USED_FOR_PRODUCTION' or 'NOT_USED_FOR_PRODUCTION'")
+        parentGUID: str | None = Field(default=None, description="GUID of parent directory; omit to place under global account root")
+
+    async def create_subaccount(
+        displayName: str,
+        region: str,
+        subdomain: str,
+        betaEnabled: bool = False,
+        description: str | None = None,
+        usedForProduction: str | None = None,
+        parentGUID: str | None = None,
+    ) -> str:
+        body: dict = {
+            "displayName": displayName,
+            "region": region,
+            "subdomain": subdomain,
+            "betaEnabled": betaEnabled,
+        }
+        if description is not None:
+            body["description"] = description
+        if usedForProduction is not None:
+            body["usedForProduction"] = usedForProduction
+        if parentGUID is not None:
+            body["parentGUID"] = parentGUID
+        return _shape_result(await accounts_client.post("/accounts/v1/subaccounts", body=body))
+
+    class UpdateSubaccountInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount to update. Resolve via getSubaccounts first.")
+        displayName: str | None = Field(default=None, description="New display name")
+        description: str | None = Field(default=None, description="New description")
+        betaEnabled: bool | None = Field(default=None, description="Enable/disable beta features")
+        usedForProduction: str | None = Field(default=None, description="'USED_FOR_PRODUCTION' or 'NOT_USED_FOR_PRODUCTION'")
+        customProperties: list | None = Field(default=None, description="Custom property key/value objects")
+
+    async def update_subaccount(
+        subaccountGUID: str,
+        displayName: str | None = None,
+        description: str | None = None,
+        betaEnabled: bool | None = None,
+        usedForProduction: str | None = None,
+        customProperties: list | None = None,
+    ) -> str:
+        body: dict = {}
+        if displayName is not None:
+            body["displayName"] = displayName
+        if description is not None:
+            body["description"] = description
+        if betaEnabled is not None:
+            body["betaEnabled"] = betaEnabled
+        if usedForProduction is not None:
+            body["usedForProduction"] = usedForProduction
+        if customProperties is not None:
+            body["customProperties"] = customProperties
+        return _shape_result(await accounts_client.patch(f"/accounts/v1/subaccounts/{subaccountGUID}", body=body))
+
+    class DeleteSubaccountInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount to delete. This action is irreversible.")
+
+    async def delete_subaccount(subaccountGUID: str) -> str:
+        return _shape_result(await accounts_client.delete(f"/accounts/v1/subaccounts/{subaccountGUID}"))
+
+    class MoveSubaccountInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount to move")
+        targetAccountGUID: str = Field(description="GUID of the target directory or global account to move the subaccount into")
+
+    async def move_subaccount(subaccountGUID: str, targetAccountGUID: str) -> str:
+        return _shape_result(await accounts_client.post(
+            f"/accounts/v1/subaccounts/{subaccountGUID}/move",
+            body={"targetAccountGUID": targetAccountGUID},
+        ))
+
+    class MoveSubaccountsInput(BaseModel):
+        subaccountGUIDs: list = Field(description="List of subaccount GUIDs to move")
+        targetAccountGUID: str = Field(description="GUID of the target directory or global account")
+
+    async def move_subaccounts(subaccountGUIDs: list, targetAccountGUID: str) -> str:
+        return _shape_result(await accounts_client.post(
+            "/accounts/v1/subaccounts/move",
+            body={"subaccountGUIDs": subaccountGUIDs, "targetAccountGUID": targetAccountGUID},
+        ))
+
+    # Subaccount labels
+    class GetSubaccountLabelsInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+
+    async def get_subaccount_labels(subaccountGUID: str) -> str:
+        return _shape_result(await accounts_client.get(f"/accounts/v1/subaccounts/{subaccountGUID}/labels"))
+
+    class CreateSubaccountLabelsInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+        labels: dict = Field(description="Label key-value pairs to assign, e.g. {'env': ['prod'], 'team': ['platform']}")
+
+    async def create_subaccount_labels(subaccountGUID: str, labels: dict) -> str:
+        return _shape_result(await accounts_client.put(
+            f"/accounts/v1/subaccounts/{subaccountGUID}/labels",
+            body={"labels": labels},
+        ))
+
+    class DeleteSubaccountLabelsInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+
+    async def delete_subaccount_labels(subaccountGUID: str) -> str:
+        return _shape_result(await accounts_client.delete(f"/accounts/v1/subaccounts/{subaccountGUID}/labels"))
+
+    # Subaccount settings
+    class GetSubaccountSettingsInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+
+    async def get_subaccount_settings(subaccountGUID: str) -> str:
+        return _shape_result(await accounts_client.get(f"/accounts/v1/subaccounts/{subaccountGUID}/settings"))
+
+    class CreateOrUpdateSubaccountSettingsInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+        settings: dict = Field(description="Settings object to create or replace")
+
+    async def create_or_update_subaccount_settings(subaccountGUID: str, settings: dict) -> str:
+        return _shape_result(await accounts_client.put(
+            f"/accounts/v1/subaccounts/{subaccountGUID}/settings",
+            body=settings,
+        ))
+
+    class DeleteSubaccountSettingsInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+
+    async def delete_subaccount_settings(subaccountGUID: str) -> str:
+        return _shape_result(await accounts_client.delete(f"/accounts/v1/subaccounts/{subaccountGUID}/settings"))
+
+    # Service Manager bindings v1 (per subaccount)
+    class GetServiceManagementBindingInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+
+    async def get_service_management_binding(subaccountGUID: str) -> str:
+        return _shape_result(await accounts_client.get(
+            f"/accounts/v1/subaccounts/{subaccountGUID}/serviceManagementBinding"
+        ))
+
+    class CreateServiceManagementBindingInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount to create a Service Manager binding for")
+
+    async def create_service_management_binding(subaccountGUID: str) -> str:
+        return _shape_result(await accounts_client.post(
+            f"/accounts/v1/subaccounts/{subaccountGUID}/serviceManagementBinding", body={}
+        ))
+
+    class DeleteServiceManagementBindingInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount whose Service Manager binding to delete")
+
+    async def delete_service_management_binding(subaccountGUID: str) -> str:
+        return _shape_result(await accounts_client.delete(
+            f"/accounts/v1/subaccounts/{subaccountGUID}/serviceManagementBinding"
+        ))
+
+    # Service Manager bindings v2 (per subaccount)
+    class GetAllServiceManagerBindingsV2Input(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+
+    async def get_all_service_manager_bindings_v2(subaccountGUID: str) -> str:
+        return _shape_result(await accounts_client.get(
+            f"/accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings"
+        ))
+
+    class CreateServiceManagerBindingV2Input(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+        bindingName: str = Field(description="Unique name for the new Service Manager binding")
+        parameters: dict | None = Field(default=None, description="Optional binding parameters")
+
+    async def create_service_manager_binding_v2(
+        subaccountGUID: str,
+        bindingName: str,
+        parameters: dict | None = None,
+    ) -> str:
+        body: dict = {"name": bindingName}
+        if parameters:
+            body["parameters"] = parameters
+        return _shape_result(await accounts_client.post(
+            f"/accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings", body=body
+        ))
+
+    class GetServiceManagerBindingV2Input(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+        bindingName: str = Field(description="Name of the Service Manager binding")
+
+    async def get_service_manager_binding_v2(subaccountGUID: str, bindingName: str) -> str:
+        return _shape_result(await accounts_client.get(
+            f"/accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings/{bindingName}"
+        ))
+
+    class DeleteServiceManagerBindingV2Input(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+        bindingName: str = Field(description="Name of the Service Manager binding to delete")
+
+    async def delete_service_manager_binding_v2(subaccountGUID: str, bindingName: str) -> str:
+        return _shape_result(await accounts_client.delete(
+            f"/accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings/{bindingName}"
+        ))
+
+    # Directory CRUD
+    class GetDirectoryInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory to retrieve")
+        expand: bool = Field(default=False, description="If True, include child accounts")
+
+    async def get_directory(directoryGUID: str, expand: bool = False) -> str:
+        return _shape_result(await accounts_client.get(
+            f"/accounts/v1/directories/{directoryGUID}",
+            params={"expand": str(expand).lower()},
+        ))
+
+    class CreateDirectoryInput(BaseModel):
+        displayName: str = Field(description="Display name for the new directory")
+        description: str | None = Field(default=None, description="Optional description")
+        parentGUID: str | None = Field(default=None, description="Parent directory or global account GUID; omit for root level")
+        subdomain: str | None = Field(default=None, description="Subdomain for the directory (required when adding entitlement management feature)")
+
+    async def create_directory(
+        displayName: str,
+        description: str | None = None,
+        parentGUID: str | None = None,
+        subdomain: str | None = None,
+    ) -> str:
+        body: dict = {"displayName": displayName}
+        if description is not None:
+            body["description"] = description
+        if parentGUID is not None:
+            body["parentGUID"] = parentGUID
+        if subdomain is not None:
+            body["subdomain"] = subdomain
+        return _shape_result(await accounts_client.post("/accounts/v1/directories", body=body))
+
+    class UpdateDirectoryInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory to update")
+        displayName: str | None = Field(default=None, description="New display name")
+        description: str | None = Field(default=None, description="New description")
+        customProperties: list | None = Field(default=None, description="Custom property key/value objects")
+
+    async def update_directory(
+        directoryGUID: str,
+        displayName: str | None = None,
+        description: str | None = None,
+        customProperties: list | None = None,
+    ) -> str:
+        body: dict = {}
+        if displayName is not None:
+            body["displayName"] = displayName
+        if description is not None:
+            body["description"] = description
+        if customProperties is not None:
+            body["customProperties"] = customProperties
+        return _shape_result(await accounts_client.patch(f"/accounts/v1/directories/{directoryGUID}", body=body))
+
+    class DeleteDirectoryInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory to delete. The directory must be empty first.")
+        forceDelete: bool = Field(default=False, description="If True, delete even if the directory still has children (use with caution)")
+
+    async def delete_directory(directoryGUID: str, forceDelete: bool = False) -> str:
+        params: dict = {}
+        if forceDelete:
+            params["forceDelete"] = "true"
+        return _shape_result(await accounts_client.delete(
+            f"/accounts/v1/directories/{directoryGUID}", params=params
+        ))
+
+    class UpdateDirectoryFeaturesInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory")
+        features: list = Field(description="List of features to enable/disable, e.g. ['DEFAULT', 'ENTITLEMENTS', 'AUTHORIZATIONS']")
+
+    async def update_directory_features(directoryGUID: str, features: list) -> str:
+        return _shape_result(await accounts_client.patch(
+            f"/accounts/v1/directories/{directoryGUID}/changeDirectoryFeatures",
+            body={"features": features},
+        ))
+
+    # Directory labels
+    class GetDirectoryLabelsInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory")
+
+    async def get_directory_labels(directoryGUID: str) -> str:
+        return _shape_result(await accounts_client.get(f"/accounts/v1/directories/{directoryGUID}/labels"))
+
+    class CreateDirectoryLabelsInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory")
+        labels: dict = Field(description="Label key-value pairs, e.g. {'env': ['prod'], 'owner': ['team-a']}")
+
+    async def create_directory_labels(directoryGUID: str, labels: dict) -> str:
+        return _shape_result(await accounts_client.put(
+            f"/accounts/v1/directories/{directoryGUID}/labels",
+            body={"labels": labels},
+        ))
+
+    class DeleteDirectoryLabelsInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory")
+
+    async def delete_directory_labels(directoryGUID: str) -> str:
+        return _shape_result(await accounts_client.delete(f"/accounts/v1/directories/{directoryGUID}/labels"))
+
+    # Directory settings
+    class GetDirectorySettingsInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory")
+
+    async def get_directory_settings(directoryGUID: str) -> str:
+        return _shape_result(await accounts_client.get(f"/accounts/v1/directories/{directoryGUID}/settings"))
+
+    class CreateOrUpdateDirectorySettingsInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory")
+        settings: dict = Field(description="Settings object to create or replace")
+
+    async def create_or_update_directory_settings(directoryGUID: str, settings: dict) -> str:
+        return _shape_result(await accounts_client.put(
+            f"/accounts/v1/directories/{directoryGUID}/settings",
+            body=settings,
+        ))
+
+    class DeleteDirectorySettingsInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory")
+
+    async def delete_directory_settings(directoryGUID: str) -> str:
+        return _shape_result(await accounts_client.delete(f"/accounts/v1/directories/{directoryGUID}/settings"))
+
+    # Job Management (shared across Accounts and Provisioning)
+    class GetJobStatusInput(BaseModel):
+        jobInstanceIdOrUniqueId: str = Field(
+            description="Job instance ID or unique ID returned by async operations (createSubaccount, deleteSubaccount, etc.)"
+        )
+
+    async def get_job_status(jobInstanceIdOrUniqueId: str) -> str:
+        return _shape_result(await accounts_client.get(
+            f"/jobs-management/v1/jobs/{jobInstanceIdOrUniqueId}/status"
+        ))
+
     # -----------------------------------------------------------------------
     # Entitlements Service tools
     # -----------------------------------------------------------------------
@@ -596,6 +962,50 @@ def _build_domain_tools(
             detail=(detailLevel == "detail"),
             scoped=bool(subaccountGUID),
         )
+
+    class GetAllowedDataCentersInput(BaseModel):
+        pass
+
+    async def get_allowed_data_centers() -> str:
+        return _shape_result(await entitlements_client.get("/entitlements/v1/globalAccountAllowedDataCenters"))
+
+    class UpdateDirectoryEntitlementsInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory")
+        entitlements: list = Field(
+            description="List of entitlement assignment objects. Each entry: {'serviceName': str, 'servicePlanName': str, 'quota': int, 'enable': bool}"
+        )
+
+    async def update_directory_entitlements(directoryGUID: str, entitlements: list) -> str:
+        return _shape_result(await entitlements_client.patch(
+            f"/entitlements/v1/directories/{directoryGUID}/assignments",
+            body={"entitlements": entitlements},
+        ))
+
+    class CreateOrUpdateDirectoryEntitlementsInput(BaseModel):
+        directoryGUID: str = Field(description="GUID of the directory to assign entitlements to")
+        entitlements: list = Field(
+            description="List of entitlement objects to assign or update. Each entry: {'serviceName': str, 'servicePlanName': str, 'quota': int}"
+        )
+
+    async def create_or_update_directory_entitlements(directoryGUID: str, entitlements: list) -> str:
+        return _shape_result(await entitlements_client.put(
+            f"/entitlements/v1/directories/{directoryGUID}/assignments",
+            body={"entitlements": entitlements},
+        ))
+
+    class SetSubaccountServicePlansInput(BaseModel):
+        entitlements: list = Field(
+            description=(
+                "List of service plan assignment objects to set for subaccounts. "
+                "Each entry: {'serviceName': str, 'servicePlanName': str, 'subaccountServicePlans': [{'subaccountGUID': str, 'quota': int}]}"
+            )
+        )
+
+    async def set_subaccount_service_plans(entitlements: list) -> str:
+        return _shape_result(await entitlements_client.put(
+            "/entitlements/v1/subaccountServicePlans",
+            body={"entitlements": entitlements},
+        ))
 
     # -----------------------------------------------------------------------
     # Resource Consumption tools
@@ -681,6 +1091,40 @@ def _build_domain_tools(
         )
         return _shape_result(result)
 
+    class MonthlyDirectoryUsageInput(BaseModel):
+        fromDate: str = Field(
+            description="Start month, required. Format YYYYMM (e.g. 202607)."
+        )
+        toDate: str = Field(
+            description="End month, required. Format YYYYMM (e.g. 202607)."
+        )
+        directoryGUID: str = Field(description="GUID of the directory to report on")
+
+    async def monthly_directory_usage(fromDate: str, toDate: str, directoryGUID: str) -> str:
+        def _yyyymm(v: str) -> int:
+            return int(str(v).replace("-", "").strip())
+        params: dict = {
+            "fromDate": _yyyymm(fromDate),
+            "toDate": _yyyymm(toDate),
+            "directoryGUID": directoryGUID,
+        }
+        return _shape_result(await consumption_client.get("/reports/v1/monthlyDirectoryUsage", params=params))
+
+    class DailySubaccountUsageInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount")
+        fromDate: str = Field(description="Start date, format YYYYMMDD (e.g. 20260701)")
+        toDate: str = Field(description="End date, format YYYYMMDD (e.g. 20260731)")
+
+    async def daily_subaccount_usage(subaccountGUID: str, fromDate: str, toDate: str) -> str:
+        def _yyyymmdd(v: str) -> int:
+            return int(str(v).replace("-", "").strip())
+        params: dict = {
+            "subaccountGUID": subaccountGUID,
+            "fromDate": _yyyymmdd(fromDate),
+            "toDate": _yyyymmdd(toDate),
+        }
+        return _shape_result(await consumption_client.get("/reports/v1/subaccountUsage", params=params))
+
     # -----------------------------------------------------------------------
     # Metrics API tools
     # -----------------------------------------------------------------------
@@ -714,6 +1158,100 @@ def _build_domain_tools(
             f"/accounts/{subaccountName}/apps/{appName}/state"
         )
         return _shape_result(result)
+
+    class GetAppProcessMetricsInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount subdomain (technical name). Resolve via getSubaccounts.")
+        appName: str = Field(description="Application name")
+        processId: str = Field(description="Process ID within the application")
+
+    async def get_app_process_metrics(subaccountName: str, appName: str, processId: str) -> str:
+        return _shape_result(await metrics_client.get(
+            f"/accounts/{subaccountName}/apps/{appName}/processes/{processId}/metrics"
+        ))
+
+    class GetAppProcessStateInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount subdomain (technical name). Resolve via getSubaccounts.")
+        appName: str = Field(description="Application name")
+        processId: str = Field(description="Process ID within the application")
+
+    async def get_app_process_state(subaccountName: str, appName: str, processId: str) -> str:
+        return _shape_result(await metrics_client.get(
+            f"/accounts/{subaccountName}/apps/{appName}/processes/{processId}/state"
+        ))
+
+    class GetDbSystemMetricsInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount subdomain (technical name). Resolve via getSubaccounts.")
+        databaseSystem: str = Field(description="Database system name")
+
+    async def get_db_system_metrics(subaccountName: str, databaseSystem: str) -> str:
+        return _shape_result(await metrics_client.get(
+            f"/accounts/{subaccountName}/dbsystem/{databaseSystem}/metrics"
+        ))
+
+    class GetDbSystemStateInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount subdomain (technical name). Resolve via getSubaccounts.")
+        databaseSystem: str = Field(description="Database system name")
+
+    async def get_db_system_state(subaccountName: str, databaseSystem: str) -> str:
+        return _shape_result(await metrics_client.get(
+            f"/accounts/{subaccountName}/dbsystem/{databaseSystem}/state"
+        ))
+
+    class GetHtml5AppMetricsInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount subdomain (technical name). Resolve via getSubaccounts.")
+        appName: str = Field(description="HTML5 application name")
+
+    async def get_html5_app_metrics(subaccountName: str, appName: str) -> str:
+        return _shape_result(await metrics_client.get(
+            f"/accounts/{subaccountName}/html5/apps/{appName}/metrics"
+        ))
+
+    class GetHtml5AppStateInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount subdomain (technical name). Resolve via getSubaccounts.")
+        appName: str = Field(description="HTML5 application name")
+
+    async def get_html5_app_state(subaccountName: str, appName: str) -> str:
+        return _shape_result(await metrics_client.get(
+            f"/accounts/{subaccountName}/html5/apps/{appName}/state"
+        ))
+
+    class GetXsInstanceMetricsInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount subdomain (technical name). Resolve via getSubaccounts.")
+        instanceName: str = Field(description="XS instance name")
+
+    async def get_xs_instance_metrics(subaccountName: str, instanceName: str) -> str:
+        return _shape_result(await metrics_client.get(
+            f"/accounts/{subaccountName}/instances/{instanceName}/metrics"
+        ))
+
+    class GetXsInstanceStateInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount subdomain (technical name). Resolve via getSubaccounts.")
+        instanceName: str = Field(description="XS instance name")
+
+    async def get_xs_instance_state(subaccountName: str, instanceName: str) -> str:
+        return _shape_result(await metrics_client.get(
+            f"/accounts/{subaccountName}/instances/{instanceName}/state"
+        ))
+
+    class GetXsInstanceAppMetricsInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount subdomain (technical name). Resolve via getSubaccounts.")
+        instanceName: str = Field(description="XS instance name")
+        appName: str = Field(description="XS application name within the instance")
+
+    async def get_xs_instance_app_metrics(subaccountName: str, instanceName: str, appName: str) -> str:
+        return _shape_result(await metrics_client.get(
+            f"/accounts/{subaccountName}/instances/{instanceName}/apps/{appName}/metrics"
+        ))
+
+    class GetXsInstanceAppStateInput(BaseModel):
+        subaccountName: str = Field(description="Subaccount subdomain (technical name). Resolve via getSubaccounts.")
+        instanceName: str = Field(description="XS instance name")
+        appName: str = Field(description="XS application name within the instance")
+
+    async def get_xs_instance_app_state(subaccountName: str, instanceName: str, appName: str) -> str:
+        return _shape_result(await metrics_client.get(
+            f"/accounts/{subaccountName}/instances/{instanceName}/apps/{appName}/state"
+        ))
 
     # -----------------------------------------------------------------------
     # Usage Records tools
@@ -778,6 +1316,166 @@ def _build_domain_tools(
     async def get_available_environments() -> str:
         result = await provisioning_client.get("/provisioning/v1/availableEnvironments")
         return _shape_result(result)
+
+    class GetEnvironmentInstanceInput(BaseModel):
+        environmentInstanceId: str = Field(description="ID of the environment instance")
+
+    async def get_environment_instance(environmentInstanceId: str) -> str:
+        return _shape_result(await provisioning_client.get(
+            f"/provisioning/v1/environments/{environmentInstanceId}"
+        ))
+
+    class CreateEnvironmentInstanceInput(BaseModel):
+        environmentType: str = Field(description="Environment type, e.g. 'cloudfoundry' or 'kyma'")
+        name: str = Field(description="Display name for the new environment instance")
+        planName: str = Field(description="Service plan name, e.g. 'standard', 'free'")
+        subaccountGUID: str = Field(description="GUID of the subaccount to provision the environment in")
+        parameters: dict | None = Field(default=None, description="Optional environment-specific provisioning parameters")
+        serviceId: str | None = Field(default=None, description="Optional service ID (broker ID); required for some environment types")
+
+    async def create_environment_instance(
+        environmentType: str,
+        name: str,
+        planName: str,
+        subaccountGUID: str,
+        parameters: dict | None = None,
+        serviceId: str | None = None,
+    ) -> str:
+        body: dict = {
+            "environmentType": environmentType,
+            "name": name,
+            "planName": planName,
+            "subaccountGUID": subaccountGUID,
+        }
+        if parameters is not None:
+            body["parameters"] = parameters
+        if serviceId is not None:
+            body["serviceId"] = serviceId
+        return _shape_result(await provisioning_client.post("/provisioning/v1/environments", body=body))
+
+    class UpdateEnvironmentInstanceInput(BaseModel):
+        environmentInstanceId: str = Field(description="ID of the environment instance to update")
+        parameters: dict | None = Field(default=None, description="Updated parameters for the environment")
+        planName: str | None = Field(default=None, description="New plan name if changing plan")
+
+    async def update_environment_instance(
+        environmentInstanceId: str,
+        parameters: dict | None = None,
+        planName: str | None = None,
+    ) -> str:
+        body: dict = {}
+        if parameters is not None:
+            body["parameters"] = parameters
+        if planName is not None:
+            body["planName"] = planName
+        return _shape_result(await provisioning_client.patch(
+            f"/provisioning/v1/environments/{environmentInstanceId}", body=body
+        ))
+
+    class DeleteEnvironmentInstanceInput(BaseModel):
+        environmentInstanceId: str = Field(description="ID of the environment instance to delete")
+
+    async def delete_environment_instance(environmentInstanceId: str) -> str:
+        return _shape_result(await provisioning_client.delete(
+            f"/provisioning/v1/environments/{environmentInstanceId}"
+        ))
+
+    class DeleteAllEnvironmentInstancesInput(BaseModel):
+        subaccountGUID: str = Field(description="GUID of the subaccount whose all environment instances should be deleted")
+
+    async def delete_all_environment_instances(subaccountGUID: str) -> str:
+        return _shape_result(await provisioning_client.delete(
+            "/provisioning/v1/environments",
+            params={"subaccountGUID": subaccountGUID},
+        ))
+
+    # Environment instance bindings
+    class GetEnvironmentInstanceBindingsInput(BaseModel):
+        environmentInstanceId: str = Field(description="ID of the environment instance")
+
+    async def get_environment_instance_bindings(environmentInstanceId: str) -> str:
+        return _shape_result(await provisioning_client.get(
+            f"/provisioning/v1/environments/{environmentInstanceId}/bindings"
+        ))
+
+    class CreateEnvironmentInstanceBindingInput(BaseModel):
+        environmentInstanceId: str = Field(description="ID of the environment instance")
+        bindingName: str = Field(description="Name for the new binding")
+        parameters: dict | None = Field(default=None, description="Optional binding parameters")
+
+    async def create_environment_instance_binding(
+        environmentInstanceId: str,
+        bindingName: str,
+        parameters: dict | None = None,
+    ) -> str:
+        body: dict = {"name": bindingName}
+        if parameters:
+            body["parameters"] = parameters
+        return _shape_result(await provisioning_client.put(
+            f"/provisioning/v1/environments/{environmentInstanceId}/bindings", body=body
+        ))
+
+    class GetEnvironmentInstanceBindingInput(BaseModel):
+        environmentInstanceId: str = Field(description="ID of the environment instance")
+        bindingId: str = Field(description="ID of the binding")
+
+    async def get_environment_instance_binding(environmentInstanceId: str, bindingId: str) -> str:
+        return _shape_result(await provisioning_client.get(
+            f"/provisioning/v1/environments/{environmentInstanceId}/bindings/{bindingId}"
+        ))
+
+    class DeleteEnvironmentInstanceBindingInput(BaseModel):
+        environmentInstanceId: str = Field(description="ID of the environment instance")
+        bindingId: str = Field(description="ID of the binding to delete")
+
+    async def delete_environment_instance_binding(environmentInstanceId: str, bindingId: str) -> str:
+        return _shape_result(await provisioning_client.delete(
+            f"/provisioning/v1/environments/{environmentInstanceId}/bindings/{bindingId}"
+        ))
+
+    # Environment instance labels
+    class GetEnvironmentInstanceLabelsInput(BaseModel):
+        environmentInstanceId: str = Field(description="ID of the environment instance")
+
+    async def get_environment_instance_labels(environmentInstanceId: str) -> str:
+        return _shape_result(await provisioning_client.get(
+            f"/provisioning/v1/environments/{environmentInstanceId}/labels"
+        ))
+
+    class CreateEnvironmentInstanceLabelsInput(BaseModel):
+        environmentInstanceId: str = Field(description="ID of the environment instance")
+        labels: dict = Field(description="Label key-value pairs to assign, e.g. {'team': ['platform']}")
+
+    async def create_environment_instance_labels(environmentInstanceId: str, labels: dict) -> str:
+        return _shape_result(await provisioning_client.put(
+            f"/provisioning/v1/environments/{environmentInstanceId}/labels",
+            body={"labels": labels},
+        ))
+
+    class DeleteEnvironmentInstanceLabelsInput(BaseModel):
+        environmentInstanceId: str = Field(description="ID of the environment instance")
+
+    async def delete_environment_instance_labels(environmentInstanceId: str) -> str:
+        return _shape_result(await provisioning_client.delete(
+            f"/provisioning/v1/environments/{environmentInstanceId}/labels"
+        ))
+
+    class GetSubaccountQuotaInput(BaseModel):
+        subaccountGUID: str | None = Field(default=None, description="Filter by subaccount GUID")
+        planName: str | None = Field(default=None, description="Filter by service plan name")
+
+    async def get_subaccount_quota(
+        subaccountGUID: str | None = None,
+        planName: str | None = None,
+    ) -> str:
+        params: dict = {}
+        if subaccountGUID:
+            params["subaccountGUID"] = subaccountGUID
+        if planName:
+            params["planName"] = planName
+        return _shape_result(await provisioning_client.get(
+            "/provisioning/v1/servicePlanAssignments", params=params
+        ))
 
     # -----------------------------------------------------------------------
     # Audit Log tools
@@ -1679,7 +2377,120 @@ def _build_domain_tools(
     # -----------------------------------------------------------------------
     # Assemble tool list
     # -----------------------------------------------------------------------
+
+    # Accounts Service — write tools (gated by ALLOW_WRITES)
+    accounts_write_tools = [
+        StructuredTool.from_function(coroutine=update_global_account, name="updateGlobalAccount",
+            description="Update the global account display name, description, or custom properties",
+            args_schema=UpdateGlobalAccountInput),
+        StructuredTool.from_function(coroutine=create_subaccount, name="createSubaccount",
+            description="Create a new subaccount in the global account or a directory",
+            args_schema=CreateSubaccountInput),
+        StructuredTool.from_function(coroutine=update_subaccount, name="updateSubaccount",
+            description="Update a subaccount's display name, description, beta flag, or custom properties",
+            args_schema=UpdateSubaccountInput),
+        StructuredTool.from_function(coroutine=delete_subaccount, name="deleteSubaccount",
+            description="Delete a subaccount. The subaccount must have no active services or environment instances.",
+            args_schema=DeleteSubaccountInput),
+        StructuredTool.from_function(coroutine=move_subaccount, name="moveSubaccount",
+            description="Move a single subaccount into a different directory or to the global account root",
+            args_schema=MoveSubaccountInput),
+        StructuredTool.from_function(coroutine=move_subaccounts, name="moveSubaccounts",
+            description="Batch move multiple subaccounts into a target directory or global account root",
+            args_schema=MoveSubaccountsInput),
+        StructuredTool.from_function(coroutine=create_subaccount_labels, name="createSubaccountLabels",
+            description="Assign labels (key-value tags) to a subaccount",
+            args_schema=CreateSubaccountLabelsInput),
+        StructuredTool.from_function(coroutine=delete_subaccount_labels, name="deleteSubaccountLabels",
+            description="Remove all labels from a subaccount",
+            args_schema=DeleteSubaccountLabelsInput),
+        StructuredTool.from_function(coroutine=create_or_update_subaccount_settings, name="createOrUpdateSubaccountSettings",
+            description="Create or replace subaccount settings",
+            args_schema=CreateOrUpdateSubaccountSettingsInput),
+        StructuredTool.from_function(coroutine=delete_subaccount_settings, name="deleteSubaccountSettings",
+            description="Delete all settings for a subaccount",
+            args_schema=DeleteSubaccountSettingsInput),
+        StructuredTool.from_function(coroutine=create_service_management_binding, name="createServiceManagementBinding",
+            description="Create a Service Manager binding for a subaccount (v1)",
+            args_schema=CreateServiceManagementBindingInput),
+        StructuredTool.from_function(coroutine=delete_service_management_binding, name="deleteServiceManagementBinding",
+            description="Delete the Service Manager binding for a subaccount (v1)",
+            args_schema=DeleteServiceManagementBindingInput),
+        StructuredTool.from_function(coroutine=create_service_manager_binding_v2, name="createServiceManagerBindingV2",
+            description="Create a named Service Manager binding for a subaccount (v2)",
+            args_schema=CreateServiceManagerBindingV2Input),
+        StructuredTool.from_function(coroutine=delete_service_manager_binding_v2, name="deleteServiceManagerBindingV2",
+            description="Delete a named Service Manager binding for a subaccount (v2)",
+            args_schema=DeleteServiceManagerBindingV2Input),
+        StructuredTool.from_function(coroutine=create_directory, name="createDirectory",
+            description="Create a new directory in the account hierarchy",
+            args_schema=CreateDirectoryInput),
+        StructuredTool.from_function(coroutine=update_directory, name="updateDirectory",
+            description="Update a directory's display name, description, or custom properties",
+            args_schema=UpdateDirectoryInput),
+        StructuredTool.from_function(coroutine=delete_directory, name="deleteDirectory",
+            description="Delete a directory. Must be empty unless forceDelete=True.",
+            args_schema=DeleteDirectoryInput),
+        StructuredTool.from_function(coroutine=update_directory_features, name="updateDirectoryFeatures",
+            description="Add or remove features (entitlement management, authorizations) for a directory",
+            args_schema=UpdateDirectoryFeaturesInput),
+        StructuredTool.from_function(coroutine=create_directory_labels, name="createDirectoryLabels",
+            description="Assign labels to a directory",
+            args_schema=CreateDirectoryLabelsInput),
+        StructuredTool.from_function(coroutine=delete_directory_labels, name="deleteDirectoryLabels",
+            description="Remove all labels from a directory",
+            args_schema=DeleteDirectoryLabelsInput),
+        StructuredTool.from_function(coroutine=create_or_update_directory_settings, name="createOrUpdateDirectorySettings",
+            description="Create or replace directory settings",
+            args_schema=CreateOrUpdateDirectorySettingsInput),
+        StructuredTool.from_function(coroutine=delete_directory_settings, name="deleteDirectorySettings",
+            description="Delete all settings for a directory",
+            args_schema=DeleteDirectorySettingsInput),
+    ] if ALLOW_WRITES else []
+
+    # Entitlements Service — write tools (gated by ALLOW_WRITES)
+    entitlements_write_tools = [
+        StructuredTool.from_function(coroutine=update_directory_entitlements, name="updateDirectoryEntitlements",
+            description="Update (PATCH) entitlement assignments for a directory",
+            args_schema=UpdateDirectoryEntitlementsInput),
+        StructuredTool.from_function(coroutine=create_or_update_directory_entitlements, name="createOrUpdateDirectoryEntitlements",
+            description="Assign or replace (PUT) entitlements for a directory",
+            args_schema=CreateOrUpdateDirectoryEntitlementsInput),
+        StructuredTool.from_function(coroutine=set_subaccount_service_plans, name="setSubaccountServicePlans",
+            description="Assign or update entitlements (service plan quotas) for subaccounts",
+            args_schema=SetSubaccountServicePlansInput),
+    ] if ALLOW_WRITES else []
+
+    # Provisioning Service — write tools (gated by ALLOW_WRITES)
+    provisioning_write_tools = [
+        StructuredTool.from_function(coroutine=create_environment_instance, name="createEnvironmentInstance",
+            description="Provision a new environment instance (Cloud Foundry, Kyma) in a subaccount",
+            args_schema=CreateEnvironmentInstanceInput),
+        StructuredTool.from_function(coroutine=update_environment_instance, name="updateEnvironmentInstance",
+            description="Update an environment instance's parameters or plan",
+            args_schema=UpdateEnvironmentInstanceInput),
+        StructuredTool.from_function(coroutine=delete_environment_instance, name="deleteEnvironmentInstance",
+            description="Delete a specific environment instance",
+            args_schema=DeleteEnvironmentInstanceInput),
+        StructuredTool.from_function(coroutine=delete_all_environment_instances, name="deleteAllEnvironmentInstances",
+            description="Delete all environment instances in a subaccount",
+            args_schema=DeleteAllEnvironmentInstancesInput),
+        StructuredTool.from_function(coroutine=create_environment_instance_binding, name="createEnvironmentInstanceBinding",
+            description="Create a binding for an environment instance",
+            args_schema=CreateEnvironmentInstanceBindingInput),
+        StructuredTool.from_function(coroutine=delete_environment_instance_binding, name="deleteEnvironmentInstanceBinding",
+            description="Delete a specific binding from an environment instance",
+            args_schema=DeleteEnvironmentInstanceBindingInput),
+        StructuredTool.from_function(coroutine=create_environment_instance_labels, name="createEnvironmentInstanceLabels",
+            description="Assign labels to an environment instance",
+            args_schema=CreateEnvironmentInstanceLabelsInput),
+        StructuredTool.from_function(coroutine=delete_environment_instance_labels, name="deleteEnvironmentInstanceLabels",
+            description="Remove all labels from an environment instance",
+            args_schema=DeleteEnvironmentInstanceLabelsInput),
+    ] if ALLOW_WRITES else []
+
     return [
+        # Accounts Service — read
         StructuredTool.from_function(
             coroutine=get_global_account,
             name="getGlobalAccount",
@@ -1693,11 +2504,72 @@ def _build_domain_tools(
             args_schema=GetSubaccountsInput,
         ),
         StructuredTool.from_function(
+            coroutine=get_subaccount,
+            name="getSubaccount",
+            description="Get details of a single subaccount by GUID",
+            args_schema=GetSubaccountInput,
+        ),
+        StructuredTool.from_function(
             coroutine=get_directories,
             name="getDirectories",
             description="Get directories and account topology from the global account",
             args_schema=GetDirectoriesInput,
         ),
+        StructuredTool.from_function(
+            coroutine=get_directory,
+            name="getDirectory",
+            description="Get details of a specific directory by GUID",
+            args_schema=GetDirectoryInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_subaccount_labels,
+            name="getSubaccountLabels",
+            description="Get all labels assigned to a subaccount",
+            args_schema=GetSubaccountLabelsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_subaccount_settings,
+            name="getSubaccountSettings",
+            description="Get settings for a subaccount",
+            args_schema=GetSubaccountSettingsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_service_management_binding,
+            name="getServiceManagementBinding",
+            description="Get the Service Manager binding for a subaccount (v1)",
+            args_schema=GetServiceManagementBindingInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_all_service_manager_bindings_v2,
+            name="getAllServiceManagerBindingsV2",
+            description="Get all Service Manager bindings for a subaccount (v2)",
+            args_schema=GetAllServiceManagerBindingsV2Input,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_service_manager_binding_v2,
+            name="getServiceManagerBindingV2",
+            description="Get a specific named Service Manager binding for a subaccount (v2)",
+            args_schema=GetServiceManagerBindingV2Input,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_directory_labels,
+            name="getDirectoryLabels",
+            description="Get all labels assigned to a directory",
+            args_schema=GetDirectoryLabelsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_directory_settings,
+            name="getDirectorySettings",
+            description="Get settings for a directory",
+            args_schema=GetDirectorySettingsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_job_status,
+            name="getJobStatus",
+            description="Poll the status of an async BTP job (e.g. subaccount create/delete). Returns state: COMPLETED, RUNNING, FAILED, etc.",
+            args_schema=GetJobStatusInput,
+        ),
+        # Entitlements Service — read
         StructuredTool.from_function(
             coroutine=get_global_account_assignments,
             name="getGlobalAccountAssignments",
@@ -1710,6 +2582,13 @@ def _build_domain_tools(
             description="Get entitlement assignments for a specific subaccount",
             args_schema=GetSubaccountAssignmentsInput,
         ),
+        StructuredTool.from_function(
+            coroutine=get_allowed_data_centers,
+            name="getAllowedDataCenters",
+            description="List available data center regions for provisioning subaccounts",
+            args_schema=GetAllowedDataCentersInput,
+        ),
+        # Resource Consumption — read
         StructuredTool.from_function(
             coroutine=monthly_subaccount_cm_costs,
             name="monthlySubaccountCmCosts",
@@ -1731,23 +2610,98 @@ def _build_domain_tools(
             args_schema=CloudCreditsDetailsInput,
         ),
         StructuredTool.from_function(
+            coroutine=monthly_directory_usage,
+            name="monthlyDirectoryUsage",
+            description="Get monthly usage data for a specific directory",
+            args_schema=MonthlyDirectoryUsageInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=daily_subaccount_usage,
+            name="dailySubaccountUsage",
+            description="Get daily usage data for a specific subaccount",
+            args_schema=DailySubaccountUsageInput,
+        ),
+        # Metrics API — read
+        StructuredTool.from_function(
             coroutine=get_app_metrics,
             name="GET_accounts-subaccountName-apps-appName-metrics",
-            description="Get runtime metrics for a specific application in a subaccount",
+            description="Get runtime metrics for a CF application in a subaccount",
             args_schema=GetAppMetricsInput,
         ),
         StructuredTool.from_function(
             coroutine=get_app_state,
             name="GET_accounts-subaccountName-apps-appName-state",
-            description="Get the running state of a specific application in a subaccount",
+            description="Get the running state of a CF application in a subaccount",
             args_schema=GetAppStateInput,
         ),
+        StructuredTool.from_function(
+            coroutine=get_app_process_metrics,
+            name="GET_accounts-subaccountName-apps-appName-processes-processId-metrics",
+            description="Get metrics for a specific process of a CF application",
+            args_schema=GetAppProcessMetricsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_app_process_state,
+            name="GET_accounts-subaccountName-apps-appName-processes-processId-state",
+            description="Get the state of a specific process of a CF application",
+            args_schema=GetAppProcessStateInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_db_system_metrics,
+            name="GET_accounts-subaccountName-dbsystem-databaseSystem-metrics",
+            description="Get metrics for a database system in a subaccount",
+            args_schema=GetDbSystemMetricsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_db_system_state,
+            name="GET_accounts-subaccountName-dbsystem-databaseSystem-state",
+            description="Get the state of a database system in a subaccount",
+            args_schema=GetDbSystemStateInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_html5_app_metrics,
+            name="GET_accounts-subaccountName-html5-apps-appName-metrics",
+            description="Get metrics for an HTML5 application in a subaccount",
+            args_schema=GetHtml5AppMetricsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_html5_app_state,
+            name="GET_accounts-subaccountName-html5-apps-appName-state",
+            description="Get the state of an HTML5 application in a subaccount",
+            args_schema=GetHtml5AppStateInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_xs_instance_metrics,
+            name="GET_accounts-subaccountName-instances-instanceName-metrics",
+            description="Get metrics for an XS instance in a subaccount",
+            args_schema=GetXsInstanceMetricsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_xs_instance_state,
+            name="GET_accounts-subaccountName-instances-instanceName-state",
+            description="Get the state of an XS instance in a subaccount",
+            args_schema=GetXsInstanceStateInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_xs_instance_app_metrics,
+            name="GET_accounts-subaccountName-instances-instanceName-apps-appName-metrics",
+            description="Get metrics for an XS application within an XS instance",
+            args_schema=GetXsInstanceAppMetricsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_xs_instance_app_state,
+            name="GET_accounts-subaccountName-instances-instanceName-apps-appName-state",
+            description="Get the state of an XS application within an XS instance",
+            args_schema=GetXsInstanceAppStateInput,
+        ),
+        # Usage Records — read
         StructuredTool.from_function(
             coroutine=get_usage_records,
             name="get_usage-records",
             description="Get subscription billing usage records",
             args_schema=GetUsageRecordsInput,
         ),
+        # Provisioning Service — read
         StructuredTool.from_function(
             coroutine=get_environment_instances,
             name="getEnvironmentInstances",
@@ -1755,11 +2709,42 @@ def _build_domain_tools(
             args_schema=GetEnvironmentInstancesInput,
         ),
         StructuredTool.from_function(
+            coroutine=get_environment_instance,
+            name="getEnvironmentInstance",
+            description="Get details of a specific environment instance by ID",
+            args_schema=GetEnvironmentInstanceInput,
+        ),
+        StructuredTool.from_function(
             coroutine=get_available_environments,
             name="getAvailableEnvironments",
             description="Get available environment types that can be provisioned",
             args_schema=GetAvailableEnvironmentsInput,
         ),
+        StructuredTool.from_function(
+            coroutine=get_environment_instance_bindings,
+            name="getEnvironmentInstanceBindings",
+            description="Get all bindings for an environment instance",
+            args_schema=GetEnvironmentInstanceBindingsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_environment_instance_binding,
+            name="getEnvironmentInstanceBinding",
+            description="Get a specific binding for an environment instance",
+            args_schema=GetEnvironmentInstanceBindingInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_environment_instance_labels,
+            name="getEnvironmentInstanceLabels",
+            description="Get labels assigned to an environment instance",
+            args_schema=GetEnvironmentInstanceLabelsInput,
+        ),
+        StructuredTool.from_function(
+            coroutine=get_subaccount_quota,
+            name="getSubaccountQuota",
+            description="Get service plan quota assignments for subaccounts from the Provisioning Service",
+            args_schema=GetSubaccountQuotaInput,
+        ),
+        # Audit Log
         StructuredTool.from_function(
             coroutine=get_audit_log_records,
             name="getAuditLogRecords",
@@ -1772,7 +2757,7 @@ def _build_domain_tools(
             ),
             args_schema=GetAuditLogRecordsInput,
         ),
-    ] + write_tools
+    ] + accounts_write_tools + entitlements_write_tools + provisioning_write_tools + write_tools
 
 
 class BTPGuardianAgent:

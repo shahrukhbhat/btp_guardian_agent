@@ -1,0 +1,10 @@
+apiVersion: asset.sap/v1
+kind: Asset
+type: mcp-server
+
+metadata:
+  name: audit-log-mcp-server
+  ordId: sap.btp:apiResource:audit-log-mcp:v1
+  version: 1.0.0
+  description: MCP server wrapping the SAP BTP Audit Log Retrieval API v2 (Cloud Foundry environment) for retrieving audit log records
+  translation: mcp-translation/translation.json

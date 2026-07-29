@@ -1,0 +1,258 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Audit Log Retrieval API (Cloud Foundry environment)",
+    "description": "The audit log retrieval API V2 provides functionality for retrieving audit logs. The extraction of the audit logs is strictly limited to the records possessed by a tenant that is extracted from the XSUAA. The API supports server-side pagination with 5000 events per page. If the size of events is bigger than the server page size, the results are returned by the server on pages, providing the response header 'Paging' with the next page. The audit log retrieval API supports filtering the results based on time. If no time based filtering is specified, the results for the last 30 days are returned.",
+    "version": "2.0.0"
+  },
+  "x-sap-shortText": "Provides functionality to retrieve audit logs.",
+  "externalDocs": {
+    "description": "Audit Log Retrieval API V2 (Cloud Foundry environment)",
+    "url": "https://help.sap.com/viewer/65de2977205c403bbc107264b8eccf4b/Cloud/en-US/30ece35bac024ca69de8b16bff79c413.html"
+  },
+  "securityDefinitions": {
+    "OAuth2": {
+      "type": "oauth2",
+      "description": "To use this REST API, you need to get OAuth client credentials (for mTLS certificates and private key and for non-mTLS clientID and secret). To obtain an access_token, look at the documentation(https://help.sap.com/viewer/65de2977205c403bbc107264b8eccf4b/Cloud/en-US/30ece35bac024ca69de8b16bff79c413.html)",
+      "flow": "application",
+      "tokenUrl": "https://{tokenUrl}/oauth/token",
+      "scopes": {
+        "hcp.readAuditLogs": "read audit logs"
+      }
+    }
+  },
+  "security": [
+    {
+      "OAuth2": [
+        "hcp.readAuditLogs"
+      ]
+    }
+  ],
+  "x-servers": [
+    {
+      "url": "https://auditlog-management.cfapps.{host}/auditlog",
+      "description": "Audit Log Retrieval API endpoint",
+      "templates": {
+        "host": {
+          "description": "SAP Business Technology Platform Data Center host",
+          "enum": [
+            "us10.hana.ondemand.com",
+            "ap12.hana.ondemand.com",
+            "eu11.hana.ondemand.com",
+            "ap10.hana.ondemand.com",
+            "ap11.hana.ondemand.com",
+            "br10.hana.ondemand.com",
+            "ca10.hana.ondemand.com",
+            "jp10.hana.ondemand.com",
+            "eu10.hana.ondemand.com",
+            "eu20.hana.ondemand.com",
+            "us20.hana.ondenand.com",
+            "jp20.hana.ondemand.com",
+            "us21.hana.ondemand.com",
+            "ap21.hana.ondemand.com",
+            "us30.hana.ondemand.com",
+            "in30.hana.ondemand.com"
+          ],
+          "default": "hana.ondemand.com"
+        }
+      }
+    }
+  ],
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/auditlogrecords": {
+      "get": {
+        "tags": [
+          "AuditlogRetrievalAPI"
+        ],
+        "summary": "Finds all audit log records for your tenant.",
+        "description": "Multiple filter values can be provided.",
+        "operationId": "getAllAuditlogs",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "time_from",
+            "description": "Start date of the search. By default: 30 days ago.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "time_to",
+            "description": "End date of the search. By default: now.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "handle",
+            "description": "The value from the response header 'Paging' of the previous log retrieval.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "message_uuid": {
+                    "type": "string",
+                    "description": "Audit log message GUID unique identifier."
+                  },
+                  "time": {
+                    "type": "string",
+                    "description": "Audit log creation time."
+                  },
+                  "tenant": {
+                    "type": "string",
+                    "description": "Auditlog tenant value."
+                  },
+                  "org_id": {
+                    "type": "string",
+                    "description": "Audit log org id."
+                  },
+                  "space_id": {
+                    "type": "string",
+                    "description": "Audit log space id."
+                  },
+                  "app_or_service_id": {
+                    "type": "string",
+                    "description": "Audit log application or service id."
+                  },
+                  "als_service_id": {
+                    "type": "string",
+                    "description": "Audit log als service id."
+                  },
+                  "user": {
+                    "type": "string",
+                    "description": "Audit log user."
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Audit log category."
+                  },
+                  "format_version": {
+                    "type": "string",
+                    "description": "Audit log format version."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Audit log message."
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No data available.",
+            "schema": {
+              "$ref": "#/definitions/NoContent"
+            }
+          },
+          "400": {
+            "description": "Wrong request parameters.",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication token.",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions.",
+            "schema": {
+              "$ref": "#/definitions/Forbidden"
+            }
+          },
+          "429": {
+            "description": "Rate Limit exceeded",
+            "schema": {
+              "$ref": "#/definitions/RateLimited"
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "schema": {
+              "$ref": "#/definitions/InternalServerError"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "NoContent": {
+      "type": "object",
+      "example": " "
+    },
+    "BadRequest": {
+      "type": "object",
+      "example": "400 Bad Request"
+    },
+    "Unauthorized": {
+      "type": "object",
+      "example": {
+        "error": "unauthorized",
+        "error_description": "An Authentication object was not found in the SecurityContext."
+      },
+      "required": [
+        "error",
+        "error_description"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "error_description": {
+          "type": "string"
+        }
+      }
+    },
+    "Forbidden": {
+      "type": "object",
+      "example": {
+        "error": "access_denied",
+        "error_description": "Access is denied"
+      },
+      "required": [
+        "error",
+        "error_description"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "error_description": {
+          "type": "string"
+        }
+      }
+    },
+    "RateLimited": {
+      "type": "object",
+      "example": "429 Too Many Requests"
+    },
+    "InternalServerError": {
+      "type": "object",
+      "example": " "
+    }
+  }
+}
