@@ -1,6 +1,6 @@
 # BTP Guardian Agent — Project Specification & Current Status
 
-_Last updated: 2026-07-29_
+_Last updated: 2026-07-29 (session 2)_
 
 ## 1. Overview
 
@@ -51,8 +51,8 @@ BTPGuardianAgent.stream()        agent.py
         ▼
 _run_agent() → LangGraph loop (model ⇄ tools)
         ▼
-_build_domain_tools() → 14–58 StructuredTools
-  (14 read-only always; +44 write tools when BTP_ALLOW_WRITES=1)
+_build_domain_tools() → 64–119 StructuredTools
+  (64 read-only always [42 core + 22 auth/SCIM read]; +55 write tools when BTP_ALLOW_WRITES=1)
         ▼
 api_client.Client.get()/.post()/.put()/.patch()/.delete()
         ▼
@@ -61,7 +61,8 @@ Destination Service (VCAP_SERVICES binding)
    - resolve destination config + injected authTokens[] bearer
         ▼
 BTP platform REST APIs (*.cfapps.eu10.hana.ondemand.com,
-                        api.authentication.eu10.hana.ondemand.com)
+                        api.authentication.eu10.hana.ondemand.com,
+                        coena.authentication.eu10.hana.ondemand.com)
 ```
 
 ### 3.2 Key modules (`assets/btp-guardian-agent/app/`)
@@ -159,16 +160,19 @@ turn** of a thread (detected via `graph.aget_state`).
 
 `ALLOW_WRITES = os.environ.get("BTP_ALLOW_WRITES", "").lower() in ("1", "true", "yes")`
 
-- **`BTP_ALLOW_WRITES=0`** (default, manifest default): 14 read-only tools registered.
+- **`BTP_ALLOW_WRITES=0`** (default, manifest default): **64 read-only tools** registered
+  (42 core read tools + 22 Authorization/SCIM read tools).
   System prompt explicitly states the agent is read-only; write requests are declined with
   an explanation of what the operation would do.
-- **`BTP_ALLOW_WRITES=1`**: 58 tools registered (14 read-only + 44 write). System prompt
+- **`BTP_ALLOW_WRITES=1`**: **119 tools** registered (64 read + 55 write). System prompt
   switches to write-enabled policy. Destructive operations (delete, unassign) require the
   user to confirm with an explicit "yes" before execution.
-- `BTPGuardianAgent.__init__` instantiates `_authorization_client` and `_scim_client` only
-  when `ALLOW_WRITES=True`; otherwise both are `None` and `write_tools = []`.
+- `authorization_client` and `scim_client` are **always instantiated** (fixed 2026-07-29
+  session 2 — previously they were mistakenly gated behind `ALLOW_WRITES`, which caused all
+  Authorization/SCIM read tools to be silently absent in read-only mode).
+- Write tools (create/update/delete operations) remain gated by `ALLOW_WRITES`.
 
-### 4.1 Read-only tools (14 — always registered)
+### 4.1 Read-only tools (42 core — always registered)
 
 All backed by direct REST calls in CF mode; each service has its own destination.
 
@@ -176,28 +180,47 @@ All backed by direct REST calls in CF mode; each service has its own destination
 |------|----------|-------------|
 | `getGlobalAccount` | `GET /accounts/v1/globalAccount` | `BTP_ACCOUNTS` |
 | `getSubaccounts` | `GET /accounts/v1/subaccounts` (`derivedAuthorizations=any`) | `BTP_ACCOUNTS` |
+| `getSubaccount` | `GET /accounts/v1/subaccounts/{subaccountGUID}` | `BTP_ACCOUNTS` |
 | `getDirectories` | `GET /accounts/v1/globalAccount?expand` | `BTP_ACCOUNTS` |
+| `getDirectory` | `GET /accounts/v1/directories/{directoryGUID}` | `BTP_ACCOUNTS` |
+| `getSubaccountLabels` | `GET /accounts/v1/subaccounts/{subaccountGUID}/labels` | `BTP_ACCOUNTS` |
+| `getSubaccountSettings` | `GET /accounts/v1/subaccounts/{subaccountGUID}/settings` | `BTP_ACCOUNTS` |
+| `getServiceManagementBinding` | `GET /accounts/v1/subaccounts/{subaccountGUID}/serviceManagementBinding` | `BTP_ACCOUNTS` |
+| `getAllServiceManagerBindingsV2` | `GET /accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings` | `BTP_ACCOUNTS` |
+| `getServiceManagerBindingV2` | `GET /accounts/v2/subaccounts/{subaccountGUID}/serviceManagerBindings/{bindingName}` | `BTP_ACCOUNTS` |
+| `getDirectoryLabels` | `GET /accounts/v1/directories/{directoryGUID}/labels` | `BTP_ACCOUNTS` |
+| `getDirectorySettings` | `GET /accounts/v1/directories/{directoryGUID}/settings` | `BTP_ACCOUNTS` |
+| `getJobStatus` | `GET /accounts/v1/jobs/{jobID}` | `BTP_ACCOUNTS` |
 | `getGlobalAccountAssignments` | `GET /entitlements/v1/globalAccountAssignments` | `BTP_ENTITLEMENTS` |
 | `getSubaccountAssignments` | `GET /entitlements/v1/assignments` | `BTP_ENTITLEMENTS` |
+| `getAllowedDataCenters` | `GET /entitlements/v1/datacenters` | `BTP_ENTITLEMENTS` |
 | `monthlySubaccountCmCosts` | `GET /reports/v1/monthlySubaccountsCost` | `BTP_RESOURCE_CONSUMPTION` |
 | `monthlyUsage` | `GET /reports/v1/monthlyUsage` | `BTP_RESOURCE_CONSUMPTION` |
 | `cloudCreditsDetails` | `GET /reports/v1/cloudCreditsDetails` | `BTP_RESOURCE_CONSUMPTION` |
+| `monthlyDirectoryUsage` | `GET /reports/v1/monthlyDirectoryUsage` | `BTP_RESOURCE_CONSUMPTION` |
+| `dailySubaccountUsage` | `GET /reports/v1/dailySubaccountUsage` | `BTP_RESOURCE_CONSUMPTION` |
 | `GET_accounts-…-metrics` | `GET /accounts/{sa}/apps/{app}/metrics` | `BTP_METRICS` |
 | `GET_accounts-…-state` | `GET /accounts/{sa}/apps/{app}/state` | `BTP_METRICS` |
+| _(+9 more metrics paths)_ | app/process/dbsystem/html5/instance metrics & state | `BTP_METRICS` |
 | `get_usage-records` | `GET /usage-records` | `BTP_USAGE_RECORDS` |
 | `getEnvironmentInstances` | `GET /provisioning/v1/environments` | `BTP_PROVISIONING` |
+| `getEnvironmentInstance` | `GET /provisioning/v1/environments/{environmentInstanceID}` | `BTP_PROVISIONING` |
 | `getAvailableEnvironments` | `GET /provisioning/v1/availableEnvironments` | `BTP_PROVISIONING` |
+| `getEnvironmentInstanceBindings` | `GET /provisioning/v1/environments/{id}/bindings` | `BTP_PROVISIONING` |
+| `getEnvironmentInstanceBinding` | `GET /provisioning/v1/environments/{id}/bindings/{bindingID}` | `BTP_PROVISIONING` |
+| `getEnvironmentInstanceLabels` | `GET /provisioning/v1/environments/{id}/labels` | `BTP_PROVISIONING` |
+| `getSubaccountQuota` | `GET /provisioning/v1/subaccounts/{subaccountGUID}/quota` | `BTP_PROVISIONING` |
 | `getAuditLogRecords` | `GET /auditlog/v2/auditlogrecords` | `BTP_AUDIT_LOGS` |
 
 Pagination is capped at 100 (`MAX_PAGE_SIZE`) on tools that accept `$top`/`limit`.
 
-### 4.2 Write tools (44 — registered only when `BTP_ALLOW_WRITES=1`)
+### 4.2 Authorization & SCIM read tools (22 — always registered)
 
-All backed by the `BTP_AUTHORIZATION` destination (XSUAA `apiaccess` service key,
-`api.authentication.{landscape}.hana.ondemand.com`) for Authorization, IdP, and Security
-Settings APIs; and `BTP_SCIM` destination (same host + `/scim` path) for SCIM.
+These use the `BTP_AUTHORIZATION` and `BTP_SCIM` destinations but are **read-only** and
+always registered regardless of `BTP_ALLOW_WRITES`. They were incorrectly gated behind
+`ALLOW_WRITES` previously (fixed 2026-07-29 session 2).
 
-#### Authorization API — Applications (5 tools)
+**`BTP_AUTHORIZATION` destination** (URL: `https://api.authentication.eu10.hana.ondemand.com`):
 
 | Tool | Method + Path |
 |------|--------------|
@@ -206,89 +229,66 @@ Settings APIs; and `BTP_SCIM` destination (same host + `/scim` path) for SCIM.
 | `getXsuaaAppScopes` | `GET /sap/rest/authorization/v2/apps/{appId}/scopes[/{scopeName}]` |
 | `getXsuaaAppAuthorities` | `GET /sap/rest/authorization/v2/apps/{appId}/authorities/{grantedAppId}` |
 | `getOwnXsuaaApp` | `GET /sap/rest/authorization/v2/apps/own[?includeUsage=true]` |
+| `getRoleCollections` | `GET /sap/rest/authorization/v2/rolecollections` |
+| `getRoleCollection` | `GET /sap/rest/authorization/v2/rolecollections/{name}` |
+| `getRoleCollectionRoles` | `GET /sap/rest/authorization/v2/rolecollections/{name}/roles` |
+| `getRoleCollectionsByRole` | `GET /sap/rest/authorization/v2/rolecollections?roleName=…&appId=…` |
+| `getXsuaaRoles` | `GET /sap/rest/authorization/v2/roles[?appId=…]` |
+| `getXsuaaRole` | `GET /sap/rest/authorization/v2/apps/{appId}/roles/{templateName}/{roleName}` |
+| `getRoleTemplates` | `GET /sap/rest/authorization/v2/apps/{appId}/roletemplates[/{templateName}]` |
+| `getAttributeMappings` | `GET /sap/rest/authorization/v2/rolecollections/{name}/attributeMappings/{idpOrigin}` |
+| `getIdentityProviders` | `GET /sap/rest/identity-providers` |
+| `getIdentityProvider` | `GET /sap/rest/identity-providers/{idpOrigin}` |
+| `getIasTenants` | `GET /sap/rest/identity-providers/ias` |
+| `getSecuritySettings` | `GET /sap/rest/authorization/v2/securitySettings` |
+| `getTrustedDomains` | `GET /sap/rest/trusted-domains` |
 
-#### Authorization API — Role Collections (9 tools)
+**`BTP_SCIM` destination** (URL: `https://coena.authentication.eu10.hana.ondemand.com`):
 
 | Tool | Method + Path |
 |------|--------------|
-| `getRoleCollections` | `GET /sap/rest/authorization/v2/rolecollections` |
-| `getRoleCollection` | `GET /sap/rest/authorization/v2/rolecollections/{name}` |
+| `getSCIMGroups` | `GET /scim/Groups[?filter=…&count=…&startIndex=…]` |
+| `getSCIMGroup` | `GET /scim/Groups/{groupId}` |
+| `getSCIMUsers` | `GET /scim/Users[?filter=…&count=…&startIndex=…]` |
+| `getSCIMUser` | `GET /scim/Users/{userId}` |
+
+### 4.3 Write tools (55 — registered only when `BTP_ALLOW_WRITES=1`)
+
+**`BTP_AUTHORIZATION` destination** — Role Collections, Roles, Attribute Mapping, IdP, Security Settings:
+
+| Tool | Method + Path |
+|------|--------------|
 | `createRoleCollection` | `POST /sap/rest/authorization/v2/rolecollections` |
 | `updateRoleCollection` | `PUT /sap/rest/authorization/v2/rolecollections/{name}` |
 | `deleteRoleCollection` | `DELETE /sap/rest/authorization/v2/rolecollections/{name}` |
-| `getRoleCollectionRoles` | `GET /sap/rest/authorization/v2/rolecollections/{name}/roles` |
 | `assignRoleToRoleCollection` | `PUT /sap/rest/authorization/v2/rolecollections/{name}/roles/{appId}/{roleName}/{templateName}` |
-| `unassignRoleFromRoleCollection` | `DELETE /sap/rest/authorization/v2/rolecollections/{name}/roles/{appId}/{roleName}/{templateName}` |
-| `getRoleCollectionsByRole` | `GET /sap/rest/authorization/v2/rolecollections?roleName=…&appId=…` |
-
-#### Authorization API — Roles (5 tools)
-
-| Tool | Method + Path |
-|------|--------------|
-| `getXsuaaRoles` | `GET /sap/rest/authorization/v2/roles[?appId=…]` |
+| `unassignRoleFromRoleCollection` | `DELETE /sap/rest/authorization/v2/rolecollections/{name}/roles/…` |
 | `createXsuaaRole` | `POST /sap/rest/authorization/v2/apps/roles` |
-| `getXsuaaRole` | `GET /sap/rest/authorization/v2/apps/{appId}/roles/{templateName}/{roleName}` |
 | `updateXsuaaRole` | `PUT /sap/rest/authorization/v2/apps/{appId}/roles/{templateName}/{roleName}` |
 | `deleteXsuaaRole` | `DELETE /sap/rest/authorization/v2/apps/{appId}/roles/{templateName}/{roleName}` |
-
-#### Authorization API — Role Templates (1 tool)
-
-| Tool | Method + Path |
-|------|--------------|
-| `getRoleTemplates` | `GET /sap/rest/authorization/v2/apps/{appId}/roletemplates[/{templateName}]` |
-
-#### Authorization API — Attribute Mapping (3 tools)
-
-| Tool | Method + Path |
-|------|--------------|
-| `getAttributeMappings` | `GET /sap/rest/authorization/v2/rolecollections/{name}/attributeMappings/{idpOrigin}` |
 | `createAttributeMapping` | `POST /sap/rest/authorization/v2/rolecollections/{name}/attributeMappings` |
-| `deleteAttributeMapping` | `DELETE /sap/rest/authorization/v2/rolecollections/{name}/attributeMappings/{idpOrigin}/{attributeName}/{attributeValue}` |
-
-#### SCIM API — Groups / Role Collections (5 tools)
-
-SCIM Groups correspond to XSUAA role collections; this interface includes member (user) information.
-
-| Tool | Method + Path |
-|------|--------------|
-| `getSCIMGroups` | `GET /Groups[?filter=…&count=…&startIndex=…]` |
-| `getSCIMGroup` | `GET /Groups/{groupId}` |
-| `createSCIMGroup` | `POST /Groups` |
-| `updateSCIMGroup` | `PUT /Groups/{groupId}` |
-| `patchSCIMGroup` | `PATCH /Groups/{groupId}` |
-
-#### SCIM API — Users / Shadow Users (6 tools)
-
-| Tool | Method + Path |
-|------|--------------|
-| `getSCIMUsers` | `GET /Users[?filter=…&count=…&startIndex=…]` |
-| `getSCIMUser` | `GET /Users/{userId}` |
-| `createShadowUser` | `POST /Users` |
-| `updateShadowUser` | `PUT /Users/{userId}` |
-| `patchShadowUser` | `PATCH /Users/{userId}` |
-| `deleteShadowUser` | `DELETE /Users/{userId}` |
-
-#### Identity Provider Management (6 tools)
-
-| Tool | Method + Path |
-|------|--------------|
-| `getIdentityProviders` | `GET /sap/rest/identity-providers` |
-| `getIdentityProvider` | `GET /sap/rest/identity-providers/{idpOrigin}` |
+| `deleteAttributeMapping` | `DELETE /sap/rest/authorization/v2/rolecollections/{name}/attributeMappings/…` |
 | `createIdentityProvider` | `POST /sap/rest/identity-providers` |
 | `updateIdentityProvider` | `PUT /sap/rest/identity-providers/{idpOrigin}` |
 | `deleteIdentityProvider` | `DELETE /sap/rest/identity-providers/{idpOrigin}` |
-| `getIasTenants` | `GET /sap/rest/identity-providers/ias` |
-
-#### Security Settings (4 tools)
-
-| Tool | Method + Path |
-|------|--------------|
-| `getSecuritySettings` | `GET /sap/rest/authorization/v2/securitySettings` |
-| `getTrustedDomains` | `GET /sap/rest/trusted-domains` (public, no auth) |
 | `updateSecuritySettings` | `PATCH /sap/rest/authorization/v2/securitySettings` |
 | `triggerKeyRotation` | `POST /sap/rest/authorization/v2/securitySettings/rotate` |
 
-### 4.3 Response shaping (summary/detail) — context-overflow guard
+**`BTP_SCIM` destination** — SCIM write + Accounts write:
+
+| Tool | Method + Path |
+|------|--------------|
+| `createSCIMGroup` | `POST /scim/Groups` |
+| `updateSCIMGroup` | `PUT /scim/Groups/{groupId}` |
+| `patchSCIMGroup` | `PATCH /scim/Groups/{groupId}` |
+| `createShadowUser` | `POST /scim/Users` |
+| `updateShadowUser` | `PUT /scim/Users/{userId}` |
+| `patchShadowUser` | `PATCH /scim/Users/{userId}` |
+| `deleteShadowUser` | `DELETE /scim/Users/{userId}` |
+
+Plus ~33 Accounts/Entitlements/Provisioning write tools (createSubaccount, deleteSubaccount, moveSubaccount, createDirectory, etc.) all gated by `ALLOW_WRITES`.
+
+### 4.4 Response shaping (summary/detail) — context-overflow guard
 
 Every tool routes its result through `_shape_result()` (in `agent.py`) before returning
 it to the LLM, instead of a blind `json.dumps(result)`. This prevents a single tool
@@ -322,7 +322,7 @@ payload from overflowing gpt-4o's 128K context (a real entitlements payload meas
 - The system prompt (§7) documents this contract so the model summarizes, offers to drill
   down, and surfaces capped-data notes to the user.
 
-### 4.4 API-spec conformance audit (2026-07-24)
+### 4.5 API-spec conformance audit (2026-07-24)
 
 Before the last `cf push`, all 14 read-only tools were audited against the authoritative OpenAPI
 specs in `specification/btp-guardian-agent/api-specs/` (verified directly against the JSON).
@@ -351,7 +351,7 @@ Six discrepancies were found and fixed in `agent.py`:
 Non-issues verified OK: entitlements `subaccountGUID` param; metrics `/metrics|/state`
 paths.
 
-### 4.5 Post-deploy runtime fixes (2026-07-24, verified against real CF data)
+### 4.6 Post-deploy runtime fixes (2026-07-24, verified against real CF data)
 
 After the audit push, live testing via `.local-chat-ui --target <CF url>` surfaced four
 more issues (three real bugs, one UX). All fixed in `agent.py`; **not yet `cf push`-ed**.
@@ -393,13 +393,26 @@ A fifth fix followed on 2026-07-25 in `api_client.py`:
    self-heals without a restart. Bounded to one retry and only on 401 (403/5xx are not
    retried), so a genuinely bad credential still surfaces as an error.
 
-### 4.6 Conversation memory
+### 4.7 Conversation memory
 
 See §3.5 — the LangGraph now uses an in-process `MemorySaver` checkpointer keyed by the
 A2A `context_id`, so multi-turn follow-ups ("what about last month", "who are these assigned
 to") retain context instead of being answered in isolation.
 
-### 4.7 PRD gap analysis (2026-07-29)
+### 4.8 Message windowing (2026-07-29 session 2)
+
+`call_model` now trims the LangGraph message history before each LLM call via
+`_trim_messages()` — capped at `MAX_HISTORY_MESSAGES` (default **40**, env
+`BTP_MAX_HISTORY_MESSAGES`) non-system messages. Trimming only happens at `HumanMessage`
+boundaries so tool call/result pairs are never orphaned.
+
+**Root cause fixed:** a query like "who has admin roles in coena?" caused the agent to loop
+calling `getSubaccountAssignments` ~5 times (no authorization tools were available in the
+deployed app at the time), accumulating entitlements payloads until the total reached
+**148,644 tokens** — exceeding GPT-4o's 128K limit and throwing `context_length_exceeded`.
+The windowing ensures this cannot recur regardless of how many tool calls a turn makes.
+
+### 4.9 PRD gap analysis (2026-07-29)
 
 Audit of the current implementation against `product-requirements-document.md`
 (dated 2026-05-19). All 58 tools (14 read-only + 44 write) in `agent.py`, the milestone
@@ -414,7 +427,7 @@ helpers, and the proactive-monitor / extensibility claims were checked.
 | **R3** Entitlement utilization | Entitlements + **Entitlement Consumptions API** | ⚠️ Partial | Assigned-quota tools exist (`getGlobalAccountAssignments` / `getSubaccountAssignments`), but there is **no Entitlement Consumptions tool**, so the used/assigned ratio the AC requires cannot be computed. Plan objects have no `usedAmount` field (per §4.4), so "over-provisioned" cannot be answered as specified. |
 | **R4** Governance posture | **Checks API + Monitor Log API** | ⚠️ Partial | `getAuditLogRecords` (§4.8) provides audit log retrieval with notable-event classification. Still missing: Checks API / Monitor Log API tools. |
 | **R5** Proactive alerting | Metrics + **Alerting Channels API** | ❌ Missing | Reactive per-app `get_app_metrics` / `get_app_state` only. No Alerting Channels tool, no background monitor, no threshold emission. |
-| **R6** Access/identity governance | **Platform Authorization Management API** | ✅ Met (when `BTP_ALLOW_WRITES=1`) | 44 write tools added (2026-07-29): Authorization Management (roles, role collections, applications, attribute mappings), Identity Provider Management, Security Settings, SCIM Users/Groups. Requires `xsuaa apiaccess` service instance and `BTP_AUTHORIZATION` / `BTP_SCIM` destinations. Read-only demo mode (`BTP_ALLOW_WRITES=0`) exposes none of these tools but the LLM will describe what it would do. |
+| **R6** Access/identity governance | **Platform Authorization Management API** | ✅ Met (read tools always on; write tools when `BTP_ALLOW_WRITES=1`) | 22 read tools (getRoleCollections, getSCIMGroups, getIdentityProviders, etc.) always registered. 33 additional write tools gated. SCIM `/scim/Groups` currently returns **403** — see §6 known issues. |
 
 **Milestone logging (M1–M5):** Helper methods `milestone_account_topology` …
 `milestone_proactive_alert` exist and emit the exact `[MID].[achieved|missed]` pattern
@@ -441,7 +454,7 @@ prompt by default; `BTP_ALLOW_WRITES=1` switches to write-enabled policy.
 wired, see §4.8); **R5 unbuilt**; **R6 fully implemented** (write tools, gated by
 `BTP_ALLOW_WRITES`); milestone logging and the proactive monitor are scaffolded but inert.
 
-### 4.8 Audit Log Retrieval tool (2026-07-25)
+### 4.10 Audit Log Retrieval tool (2026-07-25)
 
 Adds `getAuditLogRecords` (tool #14) to close part of the **PRD R4 governance gap**.
 
@@ -489,140 +502,100 @@ Not yet `cf push`-ed.
   cis-central `client_credentials` binding; **`BTP_RESOURCE_CONSUMPTION` uses the Usage
   Data Management Service key** — cis-central creds return 403 on the cost endpoint):
 
-  | Destination | URL | Credential source |
-  |-------------|-----|-------------------|
-  | `BTP_ACCOUNTS` | `https://accounts-service.cfapps.eu10.hana.ondemand.com` | cis-central `client_credentials` key |
-  | `BTP_ENTITLEMENTS` | `https://entitlements-service.cfapps.eu10.hana.ondemand.com` | cis-central `client_credentials` key |
-  | `BTP_RESOURCE_CONSUMPTION` | `https://uas-reporting.cfapps.eu10.hana.ondemand.com` | Usage Data Management Service key (cis-central returns 403) |
-  | `BTP_METRICS` | `https://account-budgets-service.cfapps.eu10.hana.ondemand.com` | cis-central key |
-  | `BTP_USAGE_RECORDS` | `https://account-budgets-service.cfapps.eu10.hana.ondemand.com` | cis-central key |
-  | `BTP_PROVISIONING` | `https://provisioning-service.cfapps.eu10.hana.ondemand.com` | cis-central key (creds broken — see §6) |
-  | `BTP_AUDIT_LOGS` | `https://auditlog-management.cfapps.eu10.hana.ondemand.com` | `auditlog-management` service key (**not yet created**) |
-  | `BTP_AUTHORIZATION` | `https://api.authentication.eu10.hana.ondemand.com` | `xsuaa apiaccess` service key — `uaa.clientid/clientsecret`, token URL = `uaa.url/oauth/token` (**not yet created**; required for write tools) |
-  | `BTP_SCIM` | `https://api.authentication.eu10.hana.ondemand.com/scim` | Same `xsuaa apiaccess` key as `BTP_AUTHORIZATION` (**not yet created**; required for write tools) |
-  | `aicore` | AI Core service URL | clientId/clientSecret/tokenServiceURL/AI-Resource-Group |
+  | Destination | URL | Credential source | Status |
+  |-------------|-----|-------------------|--------|
+  | `BTP_ACCOUNTS` | `https://accounts-service.cfapps.eu10.hana.ondemand.com` | cis-central `client_credentials` key | ✅ Working |
+  | `BTP_ENTITLEMENTS` | `https://entitlements-service.cfapps.eu10.hana.ondemand.com` | cis-central `client_credentials` key | ✅ Working |
+  | `BTP_RESOURCE_CONSUMPTION` | `https://uas-reporting.cfapps.eu10.hana.ondemand.com` | Usage Data Management Service key (cis-central returns 403) | ✅ Working |
+  | `BTP_METRICS` | `https://account-budgets-service.cfapps.eu10.hana.ondemand.com` | cis-central key | ✅ Working |
+  | `BTP_USAGE_RECORDS` | `https://account-budgets-service.cfapps.eu10.hana.ondemand.com` | cis-central key | ✅ Working |
+  | `BTP_PROVISIONING` | `https://provisioning-service.cfapps.eu10.hana.ondemand.com` | cis-central key | ❌ Bad credentials (see §6) |
+  | `BTP_AUDIT_LOGS` | `https://auditlog-management.cfapps.eu10.hana.ondemand.com` | `auditlog-management` service key | ⚠️ Not yet verified deployed |
+  | `BTP_AUTHORIZATION` | `https://api.authentication.eu10.hana.ondemand.com` | `xsuaa apiaccess` service key (`XSUAA_API_PLAN`), token URL = `coena.authentication.eu10.hana.ondemand.com/oauth/token` | ⚠️ Not yet verified (Authorization API calls not tested) |
+  | `BTP_SCIM` | `https://coena.authentication.eu10.hana.ondemand.com` | Same `xsuaa apiaccess` key as `BTP_AUTHORIZATION` | ❌ 403 on `/scim/Groups` — scope issue (see §6) |
+  | `aicore` | AI Core service URL | clientId/clientSecret/tokenServiceURL/AI-Resource-Group | ✅ Working |
 
 - **Packaging:** `.cfignore` excludes `.venv`, `vendor/`, tests, coverage,
   Joule-only requirements, and metadata so the droplet stays small (~30 MB upload).
   `.bp-config/options.json` sets `DISABLE_PYTHON_VENDORING`.
 
-## 6. Current Status
+## 6. Known Issues & Open Items
 
-### Working
-- ✅ Local run via `run_local.py 8080` — real AI Core LLM + mock MCP data.
-- ✅ Local chat UI (`.local-chat-ui/`) — verified end-to-end in a browser against the
-  local agent, including multi-turn `contextId` reuse (now backed by the MemorySaver
-  checkpointer, §3.5).
-- ✅ CF deployment packaging (clean `.cfignore`, small droplet).
-- ✅ **BTP platform API calls succeed on CF** after two fixes:
-  1. Destinations reconfigured to `OAuth2ClientCredentials` using the cis-central
-     `client_credentials` binding credentials (the original cis service **key** used
-     `grant_type: user_token`, which cannot mint admin-scoped tokens headlessly).
-  2. `api_client.py` now forwards the Destination Service's injected
-     `authTokens[0].value` as `Authorization: Bearer` (previously it only sent Basic
-     auth and ignored `authTokens`, causing 401/403 → surfaced as 404s).
-- ✅ Account topology, entitlements, consumption, and provisioning queries return
-  real data.
-- ✅ **Context-overflow fixed** via summary/detail response shaping (§4.5). Entitlement
-  queries previously 400'd AI Core with `context_length_exceeded` (~1.5M-token payload);
-  all 14 read-only tools now route through `_shape_result` (summary-by-default + drill-down +
-  universal char-cap backstop). Verified locally end-to-end against the real LLM:
-  summary answer, scoped `detailLevel="detail"` drill-down, and topology regression all
-  pass; unit-tested the backstop truncation + `_truncated` note.
-- ✅ **API-spec conformance audit (§4.2)** — all 14 read-only tools verified against the OpenAPI
-  specs; 6 discrepancies fixed (most critically the entitlements
-  `assignments`→`assignedServices` record-key bug that would have re-triggered the
-  overflow). Re-verified locally end-to-end: entitlements summary (clean "not found" for a
-  non-existent subaccount via client-side name match), drill-down, and topology regression
-  all pass with no errors.
-- ✅ **Multi-turn conversation memory (§3.5, §4.6)** — the graph now compiles with an
-  in-process `MemorySaver` checkpointer keyed by `thread_id` (= A2A `context_id`), and
-  `_run_agent` injects the system prompt only on the first turn. The LLM no longer loses
-  context or re-asks resolved follow-up questions. Verified locally: memory carries across
-  turns and stays isolated between different `context_id`s.
-- ✅ **Cost tool fixed (§4.5)** — `monthlySubaccountCmCosts` switched from the OData
-  `MonthlySubaccountCmCosts` `$filter=billingPeriod` endpoint (which 403'd on cis creds and
-  400'd on UDM creds — the cost entity has no `billingPeriod` field) to
-  `GET /reports/v1/monthlySubaccountsCost` with required `fromDate`/`toDate` (YYYYMM).
-  Empty results now explained as a subscription/commitment account with usage offered.
-- ✅ **Current-date injection (§4.5)** — `_run_agent` appends today's date + current YYYYMM
-  to the first-turn system prompt, and a prompt rule tells the model to resolve relative
-  dates from it. Fixes the stale-year hallucination (e.g. "202310" for "this month").
-- ✅ **Char-cap raised (§4.5)** — `MAX_TOOL_RESULT_CHARS` 24000 → 80000 with a proportional
-  backstop trim, so normal summaries (a 60-service GA ≈ 29K chars) are no longer
-  needlessly capped.
-- ✅ **401 retry-once with token refresh (§4.5, `api_client.py`)** — `Client.get`/`post`
-  now re-resolve a fresh Destination-Service token and retry once on a 401, so a stale
-  cached token self-heals instead of needing a `cf restart`. Confirmed on 2026-07-25:
-  `getGlobalAccount` 401'd from a cached-expired token; a restart fixed it (proving stale
-  token, not bad credential), and this retry now handles it automatically.
-- ✅ **Audit Log Retrieval tool — `getAuditLogRecords` (§4.8)** — tool #14; queries
-  `GET /auditlog/v2/auditlogrecords` via a new `BTP_AUDIT_LOGS` destination. Returns
-  filtered results as a markdown table, or a notable-events summary (🔴/🟡/ℹ️) when
-  `surfaceNotable=True`. Mock data (8 records, all 4 categories) added to `mcp-mock.json`.
-  Partially closes PRD R4 governance gap.
-- ✅ **Authorization, IdP, Security Settings, SCIM write tools (2026-07-29)** — 44 write tools
-  added covering all 4 XSUAA Authorization & Trust Management APIs: Authorization Management
-  (apps/roles/role collections/attribute mapping), Identity Provider Management, Security
-  Settings, and SCIM (Groups = role collections, Users = shadow users). Gated behind
-  `BTP_ALLOW_WRITES=1`; default off for demo safety. System prompt switches dynamically
-  between read-only and write-enabled policy. Destructive ops require explicit "yes"
-  confirmation. `api_client.py` extended with `put`, `patch`, `delete` methods (all with
-  401-refresh-retry). Requires `BTP_AUTHORIZATION` and `BTP_SCIM` destinations backed by an
-  `xsuaa apiaccess` service key (not yet created in BTP — see §5 for setup steps). Fully
-  closes PRD R6.
+### ❌ SCIM `/scim/Groups` and `/scim/Users` — 403 Forbidden
 
-  **All agent.py / api_client.py changes above are uncommitted / not yet `cf push`-ed** —
-  pending user go-ahead to push and test against real data.
+**Symptom:** `getSCIMGroups`, `getSCIMGroup`, `getSCIMUsers`, `getSCIMUser` all return 403.
 
-### By design (not bugs)
-- 🔒 Agent is **read-only by default** (`BTP_ALLOW_WRITES=0`) — the system prompt forbids
-  write/modify operations; requests like "create a subaccount" are declined with an
-  explanation. Set `BTP_ALLOW_WRITES=1` and create the `BTP_AUTHORIZATION`/`BTP_SCIM`
-  destinations to enable full write capability.
+**Root cause:** The `xsuaa apiaccess` OAuth token does not include the scope required by
+XSUAA to access the SCIM endpoint. The `apiaccess` plan grants Authorization API access
+(`/sap/rest/authorization/v2/...`) but not SCIM by default.
 
-### Open / follow-ups
-- ⏳ **`cf push` + deployed verification of this session's fixes:** push the uncommitted
-  agent.py changes (memory, date injection, cost endpoint, empty-cost UX, char-cap,
-  audit log, and write tools), then re-run via `.local-chat-ui --target <CF url>` and
-  confirm in `cf logs`:
-  - entitlements query → AI Core `chat/completions` returns **200** (not 400
-    `context_length_exceeded`), plus a scoped drill-down follow-up;
-  - cost query → `GET /reports/v1/monthlySubaccountsCost` returns 200 (or an explained
-    empty result), no 400/403;
-  - a multi-turn conversation no longer re-asks resolved questions.
-- ❌ **`BTP_PROVISIONING` destination — "Bad credentials".** CF logs show the Destination
-  Service returns an `authTokens` error (`Bad credentials`) for this destination, so
-  provisioning tools will fail until the credential is fixed on the BTP side.
-  **Deferred** by the user until the current fixes are pushed and tested.
-- ⏳ **`BTP_AUTHORIZATION` / `BTP_SCIM` destinations** — not yet created. Requires:
-  1. `cf create-service xsuaa apiaccess btp-guardian-xsuaa-apiaccess` + service key in the target subaccount.
-  2. Create `BTP_AUTHORIZATION` destination (URL = `apiurl` from key, `OAuth2ClientCredentials`).
-  3. Create `BTP_SCIM` destination (URL = `apiurl/scim`, same OAuth creds).
-  4. Set `BTP_ALLOW_WRITES=1` on the app and restage.
-- ⏳ Confirm all BTP_* destinations updated to `OAuth2ClientCredentials`
-  (`BTP_RESOURCE_CONSUMPTION` now uses the Usage Data Management Service key →
-  `uas-reporting.cfapps.eu10...`; accounts/entitlements verified working).
+**What was tried:**
+1. Wrong destination URL (`api.authentication.eu10.hana.ondemand.com/scim`) → 404. Fixed to
+   `coena.authentication.eu10.hana.ondemand.com`.
+2. Wrong paths in code (`/Groups`, `/Users`) → 401/404. Fixed to `/scim/Groups`, `/scim/Users`.
+3. Added `scope=uaa.user` as additional property on destination → `Invalid scope: uaa.user`
+   (the `apiaccess` plan rejects this scope override). Removed.
 
-### PRD gaps (see §4.7 for detail)
-- ⚠️ **R4 Governance posture** — **partially addressed**: `getAuditLogRecords` (§4.8)
-  provides audit log retrieval with notable-event classification. Still missing: Checks
-  API / Monitor Log API tools. **Hallucination risk observed (2026-07-25):** when asked
-  "are there any governance policy violations?", the LLM fell back to `getGlobalAccount`
-  and fabricated a compliance verdict from topology state fields. With `getAuditLogRecords`
-  now available, the system prompt directs audit queries there; but a prompt rule to decline
-  governance questions that have no backing tool is still under consideration. **Deferred.**
-- ❌ **R5 Proactive alerting** — no Alerting Channels tool and no background monitor
-  (agent is request/response only; `COST_ALERT_PCT` / `ENTITLEMENT_ALERT_PCT` unused).
-- ✅ **R6 Access/identity governance** — **fully implemented** (44 write tools, gated by
-  `BTP_ALLOW_WRITES`). Requires BTP-side setup of `xsuaa apiaccess` instance and two
-  destinations before it is live.
-- ⚠️ **R3 Entitlement utilization** — assigned-quota only; missing the Entitlement
-  Consumptions API needed for the used/assigned ratio.
-- ⚠️ **Milestone logging (M1–M5)** — helper methods exist but are never called, so no
-  milestone logs fire. Wire them into the reasoning/answer path to activate.
+**Current state:** 403 persists. The `apiaccess` service key (`XSUAA_API_PLAN`) does not
+grant SCIM access in its current configuration. The `xs_authorization.read` authority would
+need to be added to the service instance — but user has chosen not to modify service instances.
 
-## 7. Constraints & Conventions
+**Impact:** "Who has admin roles" queries cannot return member users. `getRoleCollections`
+(Authorization API) still works and returns role collection names/roles, just not the member list.
+
+**Options to resolve (deferred):**
+- Add `xs_authorization.read` to `XSUAA_API_PLAN` authorities via `cf update-service`.
+- Use `OAuth2UserTokenExchange` destination auth (user-propagation) instead of client credentials.
+- Accept limitation and rely on `getRoleCollections` for role governance queries.
+
+### ❌ `BTP_PROVISIONING` — Bad credentials
+
+The Destination Service returns `authTokens` error (`Bad credentials`) for this destination.
+Provisioning tools (`getEnvironmentInstances`, `getEnvironmentInstance`, etc.) will fail.
+**Deferred** — needs the credential fixed on the BTP side.
+
+### ⚠️ `BTP_AUTHORIZATION` — Not yet verified
+
+The destination was corrected (URL: `api.authentication.eu10.hana.ondemand.com`, same
+`xsuaa apiaccess` key). No Authorization API tools have been successfully called yet against
+live data. Likely works since it uses the same credentials that the SCIM token was successfully
+fetched from — the 403 is endpoint-specific, not a token failure.
+
+### ⚠️ `BTP_AUDIT_LOGS` — Not yet deployed-verified
+
+Tool implemented and committed. Destination exists. Not yet exercised against the deployed CF app.
+
+### ⚠️ Message history window caveat
+
+`_trim_messages` keeps the last 40 non-system messages. On very long single-turn reasoning
+loops (agent calling 20+ tools in one turn), trimming mid-turn could in theory orphan a tool
+result. In practice gpt-4o rarely chains more than 10 tool calls per turn. If this becomes an
+issue, raise `BTP_MAX_HISTORY_MESSAGES` or implement per-turn windowing instead.
+
+## 7. Current Status Summary
+
+### ✅ Working
+- Account topology, entitlements, consumption, usage, cost queries against real BTP data.
+- Multi-turn conversation memory (MemorySaver checkpointer by A2A context_id).
+- Context overflow protection (message windowing + response shaping + char-cap backstop).
+- 64 read-only tools deployed (`BTP_ALLOW_WRITES=0`): 42 core + 22 Authorization/SCIM read.
+- Authorization API read tools (getRoleCollections, getIdentityProviders, getSecuritySettings, etc.) — deployed and available; not yet confirmed against live data.
+- Audit log retrieval (`getAuditLogRecords`).
+- 401 token-refresh retry in `api_client.py`.
+- Local dev harness + chat UI.
+
+### ❌ Not working
+- SCIM Groups/Users → 403 (scope issue on `xsuaa apiaccess` key, deferred).
+- Provisioning tools → Bad credentials on destination.
+
+### 🚫 Not yet built (PRD gaps)
+- R3: Entitlement Consumptions API (used/assigned ratio).
+- R4: Checks API / Monitor Log API.
+- R5: Proactive alerting (background monitor, Alerting Channels API).
+- Milestone logging M1–M5 (helpers exist but never called).
+- Extensibility layer (tool registry/plugin mechanism).
+
+## 8. Constraints & Conventions
 
 - Never make code changes that alter deployed CF/Joule runtime behaviour when the
   goal is local testing; keep local-only changes gated behind `IBD_TESTING`.
