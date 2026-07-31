@@ -7,6 +7,7 @@ __pycache__/
 .playwright-mcp/
 btp_account_admin_capabilities.md
 btp-guardian-architecture.drawio
+joule-ui-spec.md
 
 # Images (screenshots, etc.) — .svg kept as source
 *.png

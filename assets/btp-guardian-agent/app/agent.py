@@ -84,7 +84,7 @@ def get_max_tokens() -> int:
     key="prompts.system",
     label="System Prompt",
     description="The full system prompt defining BTP Guardian's role and behaviour",
-    validation={"format": "markdown", "max_length": 5000},
+    validation={"format": "markdown", "max_length": 8000},
 )
 def get_system_prompt() -> str:
     write_policy = (
@@ -93,7 +93,16 @@ def get_system_prompt() -> str:
   provided tools. For DESTRUCTIVE operations (deleteRoleCollection, unassignUserFromRoleCollection,
   unassignRoleFromRoleCollection, deleteShadowUser): before calling the tool, echo back
   exactly what you are about to do — resource name, user, and IdP origin — and require the
-  user to confirm with an explicit 'yes' before proceeding."""
+  user to confirm with an explicit 'yes' before proceeding.
+- ENTITLEMENTS: You can ASSIGN or adjust the quota of a service plan ALREADY entitled to the
+  global account, via setSubaccountServicePlans (subaccount) or createOrUpdateDirectoryEntitlements
+  / updateDirectoryEntitlements (directory). These return an async job (state PROCESSING) — report
+  it as accepted, not already active. You CANNOT add a brand-new service that is not already in the
+  global account; there is no self-service API for that. If a user asks to add a service NOT
+  returned by getGlobalAccountAssignments, do NOT say you will do it and then back out. In a SINGLE
+  response: (1) state that adding a net-new service to the global account is a commercial/cockpit
+  action, not an API tool, and (2) offer what you CAN do — assign/adjust already-entitled plans —
+  and list them. Never promise the global-account add and then reverse yourself."""
         if ALLOW_WRITES else
         """- You are currently READ-ONLY: this guardrail is enforced here in the system prompt, so
   you must not perform any write or modify operation on BTP resources. When a user asks for
@@ -122,6 +131,17 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
   expect the period as YYYYMM (e.g. billingPeriod eq '202607' for July 2026); build the
   value from the current date, not from memory.
 - For governance queries, classify issues by severity: critical / warning / info.
+- When the user asks for entitlements/services "over N% utilized" (or "highly/over-utilized",
+  "near capacity", etc.), compute utilization per service plan as usedAmount / amount * 100 and
+  include ONLY the plans that meet or exceed the threshold. Use {ENTITLEMENT_ALERT_PCT}% as the
+  default threshold when the user does not give a number. This is a FILTER, not a ranking: a plan
+  below the threshold must be completely absent from your answer — do not list it, do not mention
+  its percentage, do not show it "for context" or to explain your reasoning. Do the math silently
+  and output only the qualifying plans. If none qualify, say so explicitly. If exactly one
+  qualifies, name only that one. Example: given HANA at 90.5%, Kyma at 50%, App Studio at 10% and a
+  threshold of 85%, the ONLY correct answer lists SAP HANA Cloud (90.5%) and nothing else — listing
+  Kyma or App Studio at all is wrong. Apply the same filter to cost/consumption "over N%" queries,
+  defaulting to {COST_ALERT_PCT}%.
 - For audit log queries, default to the last 7 days if no time range is specified.
   When calling getAuditLogRecords without a specific category, set surfaceNotable=True
   to surface notable events. The tool returns pre-formatted markdown — copy it verbatim

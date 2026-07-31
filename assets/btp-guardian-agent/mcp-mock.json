@@ -101,15 +101,22 @@
             "value": [
               {
                 "guid": "dir-0001-mock",
-                "displayName": "Production Group",
+                "displayName": "Production Workloads",
                 "subdomain": "btp-guardian-prod-dir",
                 "parentGUID": "ga-0001-mock",
                 "state": "OK"
               },
               {
                 "guid": "dir-0002-mock",
-                "displayName": "Non-Production",
+                "displayName": "Non-Production Workloads",
                 "subdomain": "btp-guardian-nonprod-dir",
+                "parentGUID": "ga-0001-mock",
+                "state": "OK"
+              },
+              {
+                "guid": "dir-0003-eng",
+                "displayName": "Engineering",
+                "subdomain": "btp-guardian-eng-dir",
                 "parentGUID": "ga-0001-mock",
                 "state": "OK"
               }
@@ -956,6 +963,34 @@
                     "unitOfMeasure": "INSTANCES"
                   }
                 ]
+              },
+              {
+                "name": "integrationsuite",
+                "displayName": "SAP Integration Suite",
+                "servicePlans": [
+                  {
+                    "name": "enterprise_agreement",
+                    "displayName": "Enterprise Agreement",
+                    "amount": 5000000,
+                    "remainingAmount": 3750000,
+                    "usedAmount": 1250000,
+                    "unitOfMeasure": "MESSAGES"
+                  }
+                ]
+              },
+              {
+                "name": "xsuaa",
+                "displayName": "SAP Authorization and Trust Management",
+                "servicePlans": [
+                  {
+                    "name": "application",
+                    "displayName": "Application",
+                    "amount": 100,
+                    "remainingAmount": 58,
+                    "usedAmount": 42,
+                    "unitOfMeasure": "APPLICATION"
+                  }
+                ]
               }
             ]
           }
@@ -984,10 +1019,11 @@
                 "servicePlans": [
                   {
                     "name": "hana",
-                    "amount": 512,
-                    "remainingAmount": 0,
-                    "usedAmount": 512,
-                    "unitOfMeasure": "GIGABYTE",
+                    "displayName": "HANA",
+                    "amount": 10,
+                    "remainingAmount": 0.95,
+                    "usedAmount": 9.05,
+                    "unitOfMeasure": "INSTANCES",
                     "assignedDate": "2026-06-08T10:42:17Z",
                     "assignedBy": "michael.chen@example.com"
                   }
@@ -2196,7 +2232,7 @@
                 "subaccountId": "sa-0002-prod",
                 "metricName": "MESSAGES",
                 "quantity": "1250000.00",
-                "unitOfMeasure": "MESSAGE",
+                "unitOfMeasure": "MESSAGES",
                 "cost": "0.00",
                 "currency": "EUR",
                 "startDate": "/Date(1746316800000)/",
