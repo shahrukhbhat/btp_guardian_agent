@@ -7,3 +7,13 @@ __pycache__/
 .playwright-mcp/
 btp_account_admin_capabilities.md
 btp-guardian-architecture.drawio
+
+# Images (screenshots, etc.) — .svg kept as source
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+*.ico
+*.tiff

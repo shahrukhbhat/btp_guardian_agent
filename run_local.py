@@ -21,6 +21,8 @@ env = {
     "AICORE_RESOURCE_GROUP": os.environ.get("AICORE_RESOURCE_GROUP", "default"),
     # Mock BTP MCP tools locally (no Agent Gateway needed)
     "IBD_TESTING": "1",
+    # Local mock has no real resources, so enable write tools too.
+    "BTP_ALLOW_WRITES": "1",
 }
 
 port = sys.argv[1] if len(sys.argv) > 1 else "5000"

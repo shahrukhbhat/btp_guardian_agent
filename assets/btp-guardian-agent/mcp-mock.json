@@ -77,6 +77,15 @@
                 "state": "OK",
                 "parentGUID": "ga-0001-mock",
                 "parentType": "ROOT"
+              },
+              {
+                "guid": "sa-0007-dev-team-b",
+                "displayName": "Dev Team B",
+                "subdomain": "btp-guardian-dev-team-b",
+                "region": "us10",
+                "state": "OK",
+                "parentGUID": "dir-0003-eng",
+                "parentType": "FOLDER"
               }
             ]
           }
@@ -175,11 +184,19 @@
             ]
           },
           "mock_response": {
-            "guid": "sa-NEW-mock",
-            "displayName": "BTP Guardian",
-            "subdomain": "btp-guardian-new",
+            "guid": "sa-0006-preview",
+            "displayName": "Preview",
+            "subdomain": "btp-guardian-preview",
             "region": "eu10",
             "state": "CREATING",
+            "stateMessage": "Subaccount creation in progress.",
+            "parentGUID": "ga-0001-mock",
+            "parentType": "ROOT",
+            "betaEnabled": false,
+            "usedForProduction": "NOT_USED_FOR_PRODUCTION",
+            "createdBy": "admin@example.com",
+            "createdDate": 1753833600000,
+            "modifiedDate": 1753833600000,
             "jobInstanceId": "job-0001-mock"
           }
         },
@@ -202,7 +219,14 @@
           "mock_response": {
             "guid": "sa-0001-dev",
             "displayName": "Development (Updated)",
-            "entityState": "OK"
+            "subdomain": "btp-guardian-dev",
+            "region": "eu10",
+            "state": "OK",
+            "entityState": "OK",
+            "parentGUID": "ga-0001-mock",
+            "parentType": "ROOT",
+            "description": "Updated via BTP Guardian",
+            "modifiedDate": 1753833600000
           }
         },
         "deleteSubaccount": {
@@ -242,8 +266,14 @@
           },
           "mock_response": {
             "guid": "sa-0001-dev",
+            "displayName": "Development",
+            "subdomain": "btp-guardian-dev",
+            "region": "eu10",
+            "state": "OK",
+            "entityState": "OK",
             "parentGUID": "dir-0001-mock",
-            "entityState": "OK"
+            "parentType": "FOLDER",
+            "modifiedDate": 1753833600000
           }
         },
         "moveSubaccounts": {
@@ -358,7 +388,21 @@
             "customProperties": [
               {
                 "key": "costCenter",
-                "value": "CC-1234"
+                "value": "CC-1234",
+                "readOnly": false,
+                "accountLevel": "SUBACCOUNT"
+              },
+              {
+                "key": "owner",
+                "value": "alice@example.com",
+                "readOnly": false,
+                "accountLevel": "SUBACCOUNT"
+              },
+              {
+                "key": "dataClassification",
+                "value": "internal",
+                "readOnly": true,
+                "accountLevel": "SUBACCOUNT"
               }
             ]
           }
@@ -478,7 +522,24 @@
               {
                 "name": "default-binding",
                 "subaccountGUID": "sa-0001-dev",
-                "clientId": "sb-sm-v2-0001"
+                "clientId": "sb-sm-v2-0001",
+                "createdDate": 1740000000000,
+                "labels": {
+                  "purpose": [
+                    "automation"
+                  ]
+                }
+              },
+              {
+                "name": "terraform-binding",
+                "subaccountGUID": "sa-0001-dev",
+                "clientId": "sb-sm-v2-0002",
+                "createdDate": 1745000000000,
+                "labels": {
+                  "purpose": [
+                    "iac"
+                  ]
+                }
               }
             ]
           }
@@ -503,7 +564,9 @@
           "mock_response": {
             "name": "default-binding",
             "subaccountGUID": "sa-0001-dev",
-            "entityState": "OK"
+            "clientId": "sb-sm-v2-0001",
+            "entityState": "OK",
+            "createdDate": 1753833600000
           }
         },
         "getServiceManagerBindingV2": {
@@ -526,7 +589,11 @@
           "mock_response": {
             "name": "default-binding",
             "subaccountGUID": "sa-0001-dev",
-            "clientId": "sb-sm-v2-0001"
+            "clientId": "sb-sm-v2-0001",
+            "clientSecret": "***REDACTED***",
+            "smUrl": "https://service-manager.cfapps.eu10.hana.ondemand.com",
+            "url": "https://sa-0001-dev.authentication.eu10.hana.ondemand.com",
+            "createdDate": 1740000000000
           }
         },
         "deleteServiceManagerBindingV2": {
@@ -592,9 +659,18 @@
             ]
           },
           "mock_response": {
-            "guid": "dir-NEW-mock",
-            "displayName": "New Directory",
-            "entityState": "OK"
+            "guid": "dir-0002-mock",
+            "displayName": "Non-Production Workloads",
+            "description": "Created via BTP Guardian",
+            "subdomain": "nonprod-workloads",
+            "entityState": "OK",
+            "parentGUID": "ga-0001-mock",
+            "parentType": "ROOT",
+            "directoryFeatures": [
+              "DEFAULT"
+            ],
+            "createdBy": "admin@example.com",
+            "createdDate": 1753833600000
           }
         },
         "updateDirectory": {
@@ -747,7 +823,15 @@
             "customProperties": [
               {
                 "key": "billingGroup",
-                "value": "EMEA"
+                "value": "EMEA",
+                "readOnly": false,
+                "accountLevel": "DIRECTORY"
+              },
+              {
+                "key": "costCenter",
+                "value": "CC-9000",
+                "readOnly": false,
+                "accountLevel": "DIRECTORY"
               }
             ]
           }
@@ -891,6 +975,8 @@
             ]
           },
           "mock_response": {
+            "subaccountId": "sa-0007-dev-team-b",
+            "subaccountName": "Dev Team B",
             "entitledServices": [
               {
                 "name": "hana-cloud",
@@ -898,10 +984,25 @@
                 "servicePlans": [
                   {
                     "name": "hana",
-                    "amount": 5,
-                    "remainingAmount": 0.5,
-                    "usedAmount": 4.5,
-                    "unitOfMeasure": "INSTANCES"
+                    "amount": 512,
+                    "remainingAmount": 0,
+                    "usedAmount": 512,
+                    "unitOfMeasure": "GIGABYTE",
+                    "assignedDate": "2026-06-08T10:42:17Z",
+                    "assignedBy": "michael.chen@example.com"
+                  }
+                ]
+              },
+              {
+                "name": "application-runtime",
+                "displayName": "Application Runtime",
+                "servicePlans": [
+                  {
+                    "name": "MEMORY",
+                    "amount": 4,
+                    "remainingAmount": 1,
+                    "usedAmount": 3,
+                    "unitOfMeasure": "GIGABYTE"
                   }
                 ]
               }
@@ -960,7 +1061,16 @@
           },
           "mock_response": {
             "jobInstanceId": "job-ent-001",
-            "state": "PROCESSING"
+            "state": "PROCESSING",
+            "statusUrl": "/entitlements/v1/jobs/job-ent-001",
+            "requestedEntitlements": [
+              {
+                "servicePlanName": "hana",
+                "serviceName": "hana-cloud",
+                "amount": 4
+              }
+            ],
+            "createdDate": 1753833600000
           }
         },
         "createOrUpdateDirectoryEntitlements": {
@@ -982,7 +1092,16 @@
           },
           "mock_response": {
             "jobInstanceId": "job-ent-002",
-            "state": "PROCESSING"
+            "state": "PROCESSING",
+            "statusUrl": "/entitlements/v1/jobs/job-ent-002",
+            "requestedEntitlements": [
+              {
+                "servicePlanName": "standard",
+                "serviceName": "application-runtime",
+                "amount": 8
+              }
+            ],
+            "createdDate": 1753833600000
           }
         },
         "setSubaccountServicePlans": {
@@ -1000,7 +1119,17 @@
           },
           "mock_response": {
             "jobInstanceId": "job-ent-003",
-            "state": "PROCESSING"
+            "state": "PROCESSING",
+            "statusUrl": "/entitlements/v1/jobs/job-ent-003",
+            "requestedEntitlements": [
+              {
+                "subaccountGUID": "sa-0002-prod",
+                "servicePlanName": "hana",
+                "serviceName": "hana-cloud",
+                "amount": 2
+              }
+            ],
+            "createdDate": 1753833600000
           }
         }
       }
@@ -1028,22 +1157,216 @@
           "mock_response": {
             "content": [
               {
+                "subaccountId": "sa-0007-dev-team-b",
+                "subaccountName": "Dev Team B",
+                "directoryName": "Engineering",
+                "region": "us10",
+                "metricName": "SAP HANA Cloud",
+                "currency": "USD",
+                "cost": "4750.00",
+                "month": "2026-07"
+              },
+              {
+                "subaccountId": "sa-0007-dev-team-b",
+                "subaccountName": "Dev Team B",
+                "directoryName": "Engineering",
+                "region": "us10",
+                "metricName": "Application Runtime",
+                "currency": "USD",
+                "cost": "200.00",
+                "month": "2026-07"
+              },
+              {
+                "subaccountId": "sa-0007-dev-team-b",
+                "subaccountName": "Dev Team B",
+                "directoryName": "Engineering",
+                "region": "us10",
+                "metricName": "TOTAL",
+                "currency": "USD",
+                "cost": "4950.00",
+                "month": "2026-07"
+              },
+              {
                 "subaccountId": "sa-0002-prod",
                 "subaccountName": "Production",
+                "directoryName": "Production Workloads",
                 "region": "eu10",
                 "metricName": "TOTAL",
                 "currency": "EUR",
-                "cost": "18450.00",
-                "month": "2026-04"
+                "cost": "19200.00",
+                "month": "2026-07"
               },
               {
                 "subaccountId": "sa-0004-staging",
                 "subaccountName": "Staging",
+                "directoryName": "Production Workloads",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "4550.00",
+                "month": "2026-07"
+              },
+              {
+                "subaccountId": "sa-0001-dev",
+                "subaccountName": "Development",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "1975.00",
+                "month": "2026-07"
+              },
+              {
+                "subaccountId": "sa-0003-test",
+                "subaccountName": "Testing",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "840.00",
+                "month": "2026-07"
+              },
+              {
+                "subaccountId": "sa-0005-sandbox",
+                "subaccountName": "Sandbox",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "150.00",
+                "month": "2026-07"
+              },
+              {
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
+                "directoryName": "Production Workloads",
+                "region": "eu10",
+                "metricName": "SAP HANA Cloud",
+                "currency": "EUR",
+                "cost": "11200.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
+                "directoryName": "Production Workloads",
+                "region": "eu10",
+                "metricName": "SAP BTP, Kyma Runtime",
+                "currency": "EUR",
+                "cost": "5850.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
+                "directoryName": "Production Workloads",
+                "region": "eu10",
+                "metricName": "Application Runtime",
+                "currency": "EUR",
+                "cost": "1900.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
+                "directoryName": "Production Workloads",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "18950.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0004-staging",
+                "subaccountName": "Staging",
+                "directoryName": "Production Workloads",
+                "region": "eu10",
+                "metricName": "SAP HANA Cloud",
+                "currency": "EUR",
+                "cost": "2800.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0004-staging",
+                "subaccountName": "Staging",
+                "directoryName": "Production Workloads",
+                "region": "eu10",
+                "metricName": "Application Runtime",
+                "currency": "EUR",
+                "cost": "1600.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0004-staging",
+                "subaccountName": "Staging",
+                "directoryName": "Production Workloads",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "4400.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0001-dev",
+                "subaccountName": "Development",
+                "region": "eu10",
+                "metricName": "Application Runtime",
+                "currency": "EUR",
+                "cost": "1250.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0001-dev",
+                "subaccountName": "Development",
+                "region": "eu10",
+                "metricName": "SAP Business Application Studio",
+                "currency": "EUR",
+                "cost": "680.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0001-dev",
+                "subaccountName": "Development",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "1930.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0003-test",
+                "subaccountName": "Testing",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "820.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0005-sandbox",
+                "subaccountName": "Sandbox",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "145.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
+                "directoryName": "Production Workloads",
+                "region": "eu10",
+                "metricName": "TOTAL",
+                "currency": "EUR",
+                "cost": "18450.00",
+                "month": "2026-05"
+              },
+              {
+                "subaccountId": "sa-0004-staging",
+                "subaccountName": "Staging",
+                "directoryName": "Production Workloads",
                 "region": "eu10",
                 "metricName": "TOTAL",
                 "currency": "EUR",
                 "cost": "4200.00",
-                "month": "2026-04"
+                "month": "2026-05"
               },
               {
                 "subaccountId": "sa-0001-dev",
@@ -1052,7 +1375,7 @@
                 "metricName": "TOTAL",
                 "currency": "EUR",
                 "cost": "1890.00",
-                "month": "2026-04"
+                "month": "2026-05"
               },
               {
                 "subaccountId": "sa-0003-test",
@@ -1061,7 +1384,7 @@
                 "metricName": "TOTAL",
                 "currency": "EUR",
                 "cost": "750.00",
-                "month": "2026-04"
+                "month": "2026-05"
               },
               {
                 "subaccountId": "sa-0005-sandbox",
@@ -1070,7 +1393,57 @@
                 "metricName": "TOTAL",
                 "currency": "EUR",
                 "cost": "120.00",
-                "month": "2026-04"
+                "month": "2026-05"
+              },
+              {
+                "subaccountId": "sa-0007-dev-team-b",
+                "subaccountName": "Dev Team B",
+                "directoryName": "Engineering",
+                "region": "us10",
+                "metricName": "Application Runtime",
+                "currency": "USD",
+                "cost": "120.00",
+                "month": "2026-05"
+              },
+              {
+                "subaccountId": "sa-0007-dev-team-b",
+                "subaccountName": "Dev Team B",
+                "directoryName": "Engineering",
+                "region": "us10",
+                "metricName": "TOTAL",
+                "currency": "USD",
+                "cost": "120.00",
+                "month": "2026-05"
+              },
+              {
+                "subaccountId": "sa-0007-dev-team-b",
+                "subaccountName": "Dev Team B",
+                "directoryName": "Engineering",
+                "region": "us10",
+                "metricName": "SAP HANA Cloud",
+                "currency": "USD",
+                "cost": "4620.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0007-dev-team-b",
+                "subaccountName": "Dev Team B",
+                "directoryName": "Engineering",
+                "region": "us10",
+                "metricName": "Application Runtime",
+                "currency": "USD",
+                "cost": "180.00",
+                "month": "2026-06"
+              },
+              {
+                "subaccountId": "sa-0007-dev-team-b",
+                "subaccountName": "Dev Team B",
+                "directoryName": "Engineering",
+                "region": "us10",
+                "metricName": "TOTAL",
+                "currency": "USD",
+                "cost": "4800.00",
+                "month": "2026-06"
               }
             ]
           }
@@ -1092,23 +1465,68 @@
               {
                 "serviceName": "SAP HANA Cloud",
                 "planName": "hana",
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
                 "usage": "9.05",
                 "unit": "INSTANCES",
-                "measure": "AVERAGE"
+                "measure": "AVERAGE",
+                "cost": "11200.00",
+                "currency": "EUR"
               },
               {
                 "serviceName": "SAP BTP, Kyma Runtime",
                 "planName": "aws",
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
                 "usage": "2",
                 "unit": "CLUSTER",
-                "measure": "CURRENT"
+                "measure": "CURRENT",
+                "cost": "5850.00",
+                "currency": "EUR"
+              },
+              {
+                "serviceName": "Application Runtime",
+                "planName": "MEMORY",
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
+                "usage": "16",
+                "unit": "GB",
+                "measure": "PEAK",
+                "cost": "1900.00",
+                "currency": "EUR"
               },
               {
                 "serviceName": "SAP Business Application Studio",
                 "planName": "standard-edition",
+                "subaccountId": "sa-0001-dev",
+                "subaccountName": "Development",
                 "usage": "5",
                 "unit": "USER",
-                "measure": "PEAK"
+                "measure": "PEAK",
+                "cost": "680.00",
+                "currency": "EUR"
+              },
+              {
+                "serviceName": "SAP Integration Suite",
+                "planName": "enterprise_agreement",
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
+                "usage": "1250000",
+                "unit": "MESSAGES",
+                "measure": "SUM",
+                "cost": "0.00",
+                "currency": "EUR"
+              },
+              {
+                "serviceName": "SAP Authorization and Trust Management",
+                "planName": "application",
+                "subaccountId": "sa-0002-prod",
+                "subaccountName": "Production",
+                "usage": "42",
+                "unit": "APPLICATION",
+                "measure": "CURRENT",
+                "cost": "0.00",
+                "currency": "EUR"
               }
             ]
           }
@@ -1125,7 +1543,20 @@
             "availableCredits": "74890.50",
             "consumedCredits": "25109.50",
             "currency": "EUR",
-            "reportTime": "/Date(1747612800000)/"
+            "reportTime": "/Date(1747612800000)/",
+            "contractStartDate": "/Date(1735689600000)/",
+            "contractEndDate": "/Date(1767225600000)/",
+            "phases": [
+              {
+                "phaseStartDate": "/Date(1735689600000)/",
+                "phaseEndDate": "/Date(1767225600000)/",
+                "creditsInPhase": "100000.00",
+                "phaseAmountConsumed": "25109.50",
+                "phaseAmountRemaining": "74890.50"
+              }
+            ],
+            "forecastConsumption": "51780.00",
+            "forecastOverage": "0.00"
           }
         },
         "monthlyDirectoryUsage": {
@@ -1154,13 +1585,33 @@
               {
                 "directoryGUID": "dir-0001-mock",
                 "directoryName": "Production Workloads",
-                "reportYearMonth": 202607,
+                "reportYearMonth": 202606,
+                "cost": "23350.00",
+                "currency": "EUR",
                 "services": [
+                  {
+                    "serviceName": "SAP HANA Cloud",
+                    "metricName": "INSTANCES",
+                    "usage": 9.05,
+                    "measureName": "INSTANCES",
+                    "cost": "14000.00",
+                    "currency": "EUR"
+                  },
+                  {
+                    "serviceName": "SAP BTP, Kyma Runtime",
+                    "metricName": "NODE_HOURS",
+                    "usage": 720.0,
+                    "measureName": "HOURS",
+                    "cost": "5850.00",
+                    "currency": "EUR"
+                  },
                   {
                     "serviceName": "APPLICATION_RUNTIME",
                     "metricName": "MEMORY",
                     "usage": 2048.0,
-                    "measureName": "MB"
+                    "measureName": "MB",
+                    "cost": "3500.00",
+                    "currency": "EUR"
                   }
                 ]
               }
@@ -1199,7 +1650,55 @@
                     "serviceName": "APPLICATION_RUNTIME",
                     "metricName": "MEMORY",
                     "usage": 512.0,
-                    "measureName": "MB"
+                    "measureName": "MB",
+                    "cost": "41.00",
+                    "currency": "EUR"
+                  },
+                  {
+                    "serviceName": "SAP Business Application Studio",
+                    "metricName": "ACTIVE_USERS",
+                    "usage": 5.0,
+                    "measureName": "USER",
+                    "cost": "22.00",
+                    "currency": "EUR"
+                  }
+                ]
+              },
+              {
+                "subaccountGUID": "sa-0001-dev",
+                "subaccountName": "Development",
+                "reportDate": 20260702,
+                "services": [
+                  {
+                    "serviceName": "APPLICATION_RUNTIME",
+                    "metricName": "MEMORY",
+                    "usage": 640.0,
+                    "measureName": "MB",
+                    "cost": "51.00",
+                    "currency": "EUR"
+                  },
+                  {
+                    "serviceName": "SAP Business Application Studio",
+                    "metricName": "ACTIVE_USERS",
+                    "usage": 4.0,
+                    "measureName": "USER",
+                    "cost": "18.00",
+                    "currency": "EUR"
+                  }
+                ]
+              },
+              {
+                "subaccountGUID": "sa-0001-dev",
+                "subaccountName": "Development",
+                "reportDate": 20260703,
+                "services": [
+                  {
+                    "serviceName": "APPLICATION_RUNTIME",
+                    "metricName": "MEMORY",
+                    "usage": 480.0,
+                    "measureName": "MB",
+                    "cost": "38.00",
+                    "currency": "EUR"
                   }
                 ]
               }
@@ -1272,9 +1771,14 @@
             ]
           },
           "mock_response": {
+            "appName": "guardian-api",
             "state": "STARTED",
             "instances": 2,
-            "runningInstances": 2
+            "runningInstances": 2,
+            "crashedInstances": 0,
+            "diskQuotaMb": 1024,
+            "memoryQuotaMb": 512,
+            "lastUpdated": 1747612800000
           }
         },
         "GET_accounts-subaccountName-apps-appName-processes-processId-metrics": {
@@ -1299,11 +1803,16 @@
             ]
           },
           "mock_response": {
-            "subaccountName": "btp-guardian-dev",
-            "appName": "my-app",
-            "processId": "proc-0",
+            "subaccountName": "btp-guardian-prod",
+            "appName": "guardian-api",
+            "processId": "web",
             "cpu": 12.3,
-            "memory": 256
+            "memory": 256,
+            "memoryQuota": 512,
+            "disk": 180,
+            "diskQuota": 1024,
+            "uptimeSeconds": 864000,
+            "timestamp": 1747612800000
           }
         },
         "GET_accounts-subaccountName-apps-appName-processes-processId-state": {
@@ -1328,10 +1837,13 @@
             ]
           },
           "mock_response": {
-            "subaccountName": "btp-guardian-dev",
-            "appName": "my-app",
-            "processId": "proc-0",
-            "state": "RUNNING"
+            "subaccountName": "btp-guardian-prod",
+            "appName": "guardian-api",
+            "processId": "web",
+            "type": "web",
+            "state": "RUNNING",
+            "instances": 2,
+            "runningInstances": 2
           }
         },
         "GET_accounts-subaccountName-dbsystem-databaseSystem-metrics": {
@@ -1353,9 +1865,44 @@
           },
           "mock_response": {
             "databaseSystem": "HANA",
-            "cpu": 8.5,
-            "memory": 4096,
-            "diskUsed": 20480
+            "metrics": [
+              {
+                "name": "CPU_USAGE_PERCENT",
+                "value": 8.5,
+                "unit": "percent",
+                "timestamp": 1747612800000
+              },
+              {
+                "name": "MEMORY_USED_MB",
+                "value": 4096,
+                "unit": "MB",
+                "timestamp": 1747612800000
+              },
+              {
+                "name": "MEMORY_TOTAL_MB",
+                "value": 32768,
+                "unit": "MB",
+                "timestamp": 1747612800000
+              },
+              {
+                "name": "DISK_USED_MB",
+                "value": 20480,
+                "unit": "MB",
+                "timestamp": 1747612800000
+              },
+              {
+                "name": "DISK_TOTAL_MB",
+                "value": 122880,
+                "unit": "MB",
+                "timestamp": 1747612800000
+              },
+              {
+                "name": "CONNECTIONS_ACTIVE",
+                "value": 42,
+                "unit": "count",
+                "timestamp": 1747612800000
+              }
+            ]
           }
         },
         "GET_accounts-subaccountName-dbsystem-databaseSystem-state": {
@@ -1378,7 +1925,10 @@
           "mock_response": {
             "databaseSystem": "HANA",
             "state": "RUNNING",
-            "status": "OK"
+            "status": "OK",
+            "healthy": true,
+            "version": "2024.34",
+            "lastCheck": 1747612800000
           }
         },
         "GET_accounts-subaccountName-html5-apps-appName-metrics": {
@@ -1399,10 +1949,14 @@
             ]
           },
           "mock_response": {
-            "appName": "my-html5-app",
+            "appName": "guardian-ui",
             "requests": 1250,
             "errors": 3,
-            "avgResponseMs": 145
+            "avgResponseMs": 145,
+            "p95ResponseMs": 320,
+            "cacheHitRatio": 0.87,
+            "dataTransferMb": 512,
+            "timestamp": 1747612800000
           }
         },
         "GET_accounts-subaccountName-html5-apps-appName-state": {
@@ -1423,8 +1977,10 @@
             ]
           },
           "mock_response": {
-            "appName": "my-html5-app",
-            "state": "STARTED"
+            "appName": "guardian-ui",
+            "state": "STARTED",
+            "subscribedSubaccounts": 5,
+            "lastDeployed": 1747526400000
           }
         },
         "GET_accounts-subaccountName-instances-instanceName-metrics": {
@@ -1445,9 +2001,14 @@
             ]
           },
           "mock_response": {
-            "instanceName": "my-xs-instance",
+            "instanceName": "guardian-xs-instance",
             "cpu": 5.2,
-            "memory": 1024
+            "memory": 1024,
+            "memoryQuota": 2048,
+            "disk": 4096,
+            "diskQuota": 8192,
+            "uptimeSeconds": 1728000,
+            "timestamp": 1747612800000
           }
         },
         "GET_accounts-subaccountName-instances-instanceName-state": {
@@ -1468,8 +2029,10 @@
             ]
           },
           "mock_response": {
-            "instanceName": "my-xs-instance",
-            "state": "RUNNING"
+            "instanceName": "guardian-xs-instance",
+            "state": "RUNNING",
+            "status": "OK",
+            "appCount": 1
           }
         },
         "GET_accounts-subaccountName-instances-instanceName-apps-appName-metrics": {
@@ -1494,10 +2057,14 @@
             ]
           },
           "mock_response": {
-            "appName": "my-xs-app",
-            "instanceName": "my-xs-instance",
+            "appName": "guardian-xs-app",
+            "instanceName": "guardian-xs-instance",
             "cpu": 3.1,
-            "memory": 512
+            "memory": 512,
+            "memoryQuota": 1024,
+            "disk": 2048,
+            "diskQuota": 4096,
+            "timestamp": 1747612800000
           }
         },
         "GET_accounts-subaccountName-instances-instanceName-apps-appName-state": {
@@ -1522,9 +2089,11 @@
             ]
           },
           "mock_response": {
-            "appName": "my-xs-app",
-            "instanceName": "my-xs-instance",
-            "state": "STARTED"
+            "appName": "guardian-xs-app",
+            "instanceName": "guardian-xs-instance",
+            "state": "STARTED",
+            "instances": 1,
+            "runningInstances": 1
           }
         }
       }
@@ -1563,6 +2132,8 @@
                 "metricName": "STORAGE_GB",
                 "quantity": "512.00",
                 "unitOfMeasure": "GB",
+                "cost": "6400.00",
+                "currency": "EUR",
                 "startDate": "/Date(1746316800000)/",
                 "endDate": "/Date(1747612800000)/"
               },
@@ -1574,6 +2145,8 @@
                 "metricName": "NODE_HOURS",
                 "quantity": "720.00",
                 "unitOfMeasure": "HOURS",
+                "cost": "5850.00",
+                "currency": "EUR",
                 "startDate": "/Date(1746316800000)/",
                 "endDate": "/Date(1747612800000)/"
               },
@@ -1585,6 +2158,73 @@
                 "metricName": "ACTIVE_USERS",
                 "quantity": "5.00",
                 "unitOfMeasure": "USER",
+                "cost": "680.00",
+                "currency": "EUR",
+                "startDate": "/Date(1746316800000)/",
+                "endDate": "/Date(1747612800000)/"
+              },
+              {
+                "id": "ur-004",
+                "serviceName": "hana-cloud",
+                "planName": "hana",
+                "subaccountId": "sa-0004-staging",
+                "metricName": "STORAGE_GB",
+                "quantity": "128.00",
+                "unitOfMeasure": "GB",
+                "cost": "1600.00",
+                "currency": "EUR",
+                "startDate": "/Date(1746316800000)/",
+                "endDate": "/Date(1747612800000)/"
+              },
+              {
+                "id": "ur-005",
+                "serviceName": "application-runtime",
+                "planName": "MEMORY",
+                "subaccountId": "sa-0002-prod",
+                "metricName": "GB_HOURS",
+                "quantity": "11520.00",
+                "unitOfMeasure": "GB_HOUR",
+                "cost": "1900.00",
+                "currency": "EUR",
+                "startDate": "/Date(1746316800000)/",
+                "endDate": "/Date(1747612800000)/"
+              },
+              {
+                "id": "ur-006",
+                "serviceName": "integrationsuite",
+                "planName": "enterprise_agreement",
+                "subaccountId": "sa-0002-prod",
+                "metricName": "MESSAGES",
+                "quantity": "1250000.00",
+                "unitOfMeasure": "MESSAGE",
+                "cost": "0.00",
+                "currency": "EUR",
+                "startDate": "/Date(1746316800000)/",
+                "endDate": "/Date(1747612800000)/"
+              },
+              {
+                "id": "ur-007",
+                "serviceName": "application-runtime",
+                "planName": "MEMORY",
+                "subaccountId": "sa-0001-dev",
+                "metricName": "GB_HOURS",
+                "quantity": "5760.00",
+                "unitOfMeasure": "GB_HOUR",
+                "cost": "1250.00",
+                "currency": "EUR",
+                "startDate": "/Date(1746316800000)/",
+                "endDate": "/Date(1747612800000)/"
+              },
+              {
+                "id": "ur-008",
+                "serviceName": "hana-cloud",
+                "planName": "hana",
+                "subaccountId": "sa-0003-test",
+                "metricName": "STORAGE_GB",
+                "quantity": "64.00",
+                "unitOfMeasure": "GB",
+                "cost": "820.00",
+                "currency": "EUR",
                 "startDate": "/Date(1746316800000)/",
                 "endDate": "/Date(1747612800000)/"
               }
@@ -1711,9 +2351,15 @@
             ]
           },
           "mock_response": {
-            "id": "env-NEW-mock",
-            "name": "cf-dev-new",
+            "id": "env-004-cf",
+            "name": "test-cf-org",
+            "type": "cloudfoundry",
+            "planName": "standard",
             "state": "CREATING",
+            "stateMessage": "Environment creation in progress.",
+            "landscapeLabel": "cf-eu10",
+            "subaccountGUID": "sa-0003-test",
+            "createdDate": 1753833600000,
             "jobInstanceId": "job-prov-001"
           }
         },
@@ -1731,8 +2377,12 @@
             ]
           },
           "mock_response": {
-            "id": "env-0001-mock",
+            "id": "env-002-cf",
+            "name": "dev-cf-org",
+            "type": "cloudfoundry",
             "state": "UPDATING",
+            "stateMessage": "Environment update in progress.",
+            "modifiedDate": 1753833600000,
             "jobInstanceId": "job-prov-002"
           }
         },
@@ -1790,7 +2440,24 @@
               {
                 "id": "bind-0001",
                 "name": "cf-binding",
-                "credentialsType": "BINDING_SECRET"
+                "credentialsType": "BINDING_SECRET",
+                "createdDate": 1745000000000,
+                "credentials": {
+                  "apiEndpoint": "https://api.cf.eu10.hana.ondemand.com",
+                  "orgId": "org-0001",
+                  "orgName": "dev-cf-org"
+                }
+              },
+              {
+                "id": "bind-0002",
+                "name": "ci-binding",
+                "credentialsType": "BINDING_SECRET",
+                "createdDate": 1748000000000,
+                "credentials": {
+                  "apiEndpoint": "https://api.cf.eu10.hana.ondemand.com",
+                  "orgId": "org-0001",
+                  "orgName": "dev-cf-org"
+                }
               }
             ]
           }
@@ -1813,9 +2480,16 @@
             ]
           },
           "mock_response": {
-            "id": "bind-NEW",
-            "name": "my-binding",
-            "state": "OK"
+            "id": "bind-0003",
+            "name": "automation-binding",
+            "credentialsType": "BINDING_SECRET",
+            "state": "OK",
+            "createdDate": 1753833600000,
+            "credentials": {
+              "apiEndpoint": "https://api.cf.eu10.hana.ondemand.com",
+              "orgId": "org-0001",
+              "orgName": "dev-cf-org"
+            }
           }
         },
         "getEnvironmentInstanceBinding": {
@@ -1838,7 +2512,13 @@
           "mock_response": {
             "id": "bind-0001",
             "name": "cf-binding",
-            "credentialsType": "BINDING_SECRET"
+            "credentialsType": "BINDING_SECRET",
+            "createdDate": 1745000000000,
+            "credentials": {
+              "apiEndpoint": "https://api.cf.eu10.hana.ondemand.com",
+              "orgId": "org-0001",
+              "orgName": "dev-cf-org"
+            }
           }
         },
         "deleteEnvironmentInstanceBinding": {
@@ -2007,6 +2687,38 @@
           },
           "mock_response": {
             "value": [
+              {
+                "id": "log-0011",
+                "time": "2026-07-08T09:15:44Z",
+                "category": "audit.configuration",
+                "tenant": "sa-0007-dev-team-b",
+                "user": {
+                  "id": "michael.chen@example.com"
+                },
+                "object": {
+                  "type": "Entitlement",
+                  "id": "hana-cloud",
+                  "subaccountId": "sa-0007-dev-team-b",
+                  "subaccountName": "Dev Team B"
+                },
+                "attributes": [
+                  {
+                    "name": "servicePlan",
+                    "old": null,
+                    "new": "hana"
+                  },
+                  {
+                    "name": "quota",
+                    "old": "512 GB",
+                    "new": "768 GB"
+                  },
+                  {
+                    "name": "operation",
+                    "old": null,
+                    "new": "UPDATE"
+                  }
+                ]
+              },
               {
                 "id": "log-0001",
                 "time": "2026-07-25T08:12:34Z",
@@ -2206,6 +2918,74 @@
                     "new": "2026-07-01/2026-07-20"
                   }
                 ]
+              },
+              {
+                "id": "log-0009",
+                "time": "2026-06-08T10:42:17Z",
+                "category": "audit.configuration",
+                "tenant": "sa-0007-dev-team-b",
+                "user": {
+                  "id": "michael.chen@example.com"
+                },
+                "object": {
+                  "type": "Entitlement",
+                  "id": "hana-cloud",
+                  "subaccountId": "sa-0007-dev-team-b",
+                  "subaccountName": "Dev Team B"
+                },
+                "attributes": [
+                  {
+                    "name": "servicePlan",
+                    "old": null,
+                    "new": "hana"
+                  },
+                  {
+                    "name": "quota",
+                    "old": "0",
+                    "new": "512 GB"
+                  },
+                  {
+                    "name": "operation",
+                    "old": null,
+                    "new": "ASSIGN"
+                  }
+                ]
+              },
+              {
+                "id": "log-0010",
+                "time": "2026-06-08T10:41:03Z",
+                "category": "audit.configuration",
+                "tenant": "sa-0007-dev-team-b",
+                "user": {
+                  "id": "michael.chen@example.com"
+                },
+                "object": {
+                  "type": "ServiceInstance",
+                  "id": "hana-cloud-devb-01",
+                  "subaccountId": "sa-0007-dev-team-b"
+                },
+                "attributes": [
+                  {
+                    "name": "service",
+                    "old": null,
+                    "new": "hana-cloud"
+                  },
+                  {
+                    "name": "plan",
+                    "old": null,
+                    "new": "hana"
+                  },
+                  {
+                    "name": "memory",
+                    "old": null,
+                    "new": "512 GB"
+                  },
+                  {
+                    "name": "operation",
+                    "old": null,
+                    "new": "CREATE"
+                  }
+                ]
               }
             ]
           }
@@ -2329,7 +3109,10 @@
           },
           "mock_response": {
             "authorities": [
-              "cockpit!t0001.read"
+              "cockpit!t0001.read",
+              "cockpit!t0001.write",
+              "btpguardian!t9876.usage.read",
+              "uaa.resource"
             ]
           }
         },
@@ -2370,6 +3153,7 @@
             {
               "name": "Subaccount Administrator",
               "description": "Full subaccount administrator access",
+              "isReadOnly": false,
               "roleReferences": [
                 {
                   "roleTemplateAppId": "btpguardian!t9876",
@@ -2381,6 +3165,7 @@
             {
               "name": "Subaccount Viewer",
               "description": "Read-only subaccount viewer",
+              "isReadOnly": false,
               "roleReferences": [
                 {
                   "roleTemplateAppId": "btpguardian!t9876",
@@ -2392,7 +3177,26 @@
             {
               "name": "Cloud Connector Administrator",
               "description": "Manage Cloud Connector",
-              "roleReferences": []
+              "isReadOnly": false,
+              "roleReferences": [
+                {
+                  "roleTemplateAppId": "connectivity!t123",
+                  "roleTemplateName": "Cloud_Connector_Administrator",
+                  "name": "Cloud_Connector_Administrator"
+                }
+              ]
+            },
+            {
+              "name": "Usage Reporting Viewer",
+              "description": "Read-only access to usage and cost reports",
+              "isReadOnly": false,
+              "roleReferences": [
+                {
+                  "roleTemplateAppId": "btpguardian!t9876",
+                  "roleTemplateName": "Usage_Reporting_Viewer",
+                  "name": "Usage_Reporting_Viewer"
+                }
+              ]
             }
           ]
         },
@@ -2441,6 +3245,7 @@
           "mock_response": {
             "name": "My New Role Collection",
             "description": "Created via BTP Guardian",
+            "isReadOnly": false,
             "roleReferences": []
           }
         },
@@ -2466,7 +3271,14 @@
           "mock_response": {
             "name": "Subaccount Administrator",
             "description": "Updated description",
-            "roleReferences": []
+            "isReadOnly": false,
+            "roleReferences": [
+              {
+                "roleTemplateAppId": "btpguardian!t9876",
+                "roleTemplateName": "Subaccount_Admin",
+                "name": "Subaccount_Admin"
+              }
+            ]
           }
         },
         "deleteRoleCollection": {
@@ -2598,7 +3410,14 @@
           "mock_response": [
             {
               "name": "Subaccount Administrator",
-              "description": "Full subaccount administrator access"
+              "description": "Full subaccount administrator access",
+              "roleReferences": [
+                {
+                  "roleTemplateAppId": "btpguardian!t9876",
+                  "roleTemplateName": "Subaccount_Admin",
+                  "name": "Subaccount_Admin"
+                }
+              ]
             }
           ]
         },
@@ -2625,6 +3444,18 @@
               "roleTemplateName": "Subaccount_Viewer",
               "appId": "btpguardian!t9876",
               "description": "Read-only access to subaccount"
+            },
+            {
+              "name": "Usage_Reporting_Viewer",
+              "roleTemplateName": "Usage_Reporting_Viewer",
+              "appId": "btpguardian!t9876",
+              "description": "Read-only access to usage and cost reports"
+            },
+            {
+              "name": "Cloud_Connector_Administrator",
+              "roleTemplateName": "Cloud_Connector_Administrator",
+              "appId": "connectivity!t123",
+              "description": "Administer Cloud Connector configuration"
             }
           ]
         },
@@ -2975,11 +3806,13 @@
             ]
           },
           "mock_response": {
+            "id": "idp-0002-mock",
             "originKey": "new-idp-mock",
             "name": "New IdP",
             "type": "oidc1.0",
             "active": true,
-            "addShadowUserOnLogin": true
+            "addShadowUserOnLogin": true,
+            "createdDate": 1753833600000
           }
         },
         "updateIdentityProvider": {
@@ -3082,7 +3915,9 @@
           "mock_response": {
             "trustedDomains": [
               "*.example.com",
-              "btpguardian.cfapps.eu10.hana.ondemand.com"
+              "btpguardian.cfapps.eu10.hana.ondemand.com",
+              "*.eu10.hana.ondemand.com",
+              "partner.example.com"
             ]
           }
         },
@@ -3119,7 +3954,10 @@
             "required": []
           },
           "mock_response": {
-            "message": "Key rotation scheduled. New signing key will be active within 24-48 hours."
+            "message": "Key rotation scheduled. New signing key will be active within 24-48 hours.",
+            "status": "SCHEDULED",
+            "scheduledDate": 1753833600000,
+            "estimatedActivation": 1753920000000
           }
         }
       }
@@ -3150,9 +3988,9 @@
             "required": []
           },
           "mock_response": {
-            "totalResults": 2,
+            "totalResults": 4,
             "startIndex": 1,
-            "itemsPerPage": 2,
+            "itemsPerPage": 4,
             "schemas": [
               "urn:ietf:params:scim:api:messages:2.0:ListResponse"
             ],
@@ -3181,6 +4019,33 @@
                     "value": "a1b2c3d4-0002-0002-0002-000000000002",
                     "type": "USER",
                     "display": "bob@example.com"
+                  },
+                  {
+                    "value": "a1b2c3d4-0003-0003-0003-000000000003",
+                    "type": "USER",
+                    "display": "carol@example.com"
+                  }
+                ]
+              },
+              {
+                "id": "grp-0003-mock",
+                "displayName": "Cloud Connector Administrator",
+                "members": [
+                  {
+                    "value": "a1b2c3d4-0004-0004-0004-000000000004",
+                    "type": "USER",
+                    "display": "dave@partner.example.com"
+                  }
+                ]
+              },
+              {
+                "id": "grp-0004-mock",
+                "displayName": "Usage Reporting Viewer",
+                "members": [
+                  {
+                    "value": "a1b2c3d4-0006-0006-0006-000000000006",
+                    "type": "USER",
+                    "display": "svc-automation@example.com"
                   }
                 ]
               }
@@ -3339,9 +4204,9 @@
             "required": []
           },
           "mock_response": {
-            "totalResults": 2,
+            "totalResults": 6,
             "startIndex": 1,
-            "itemsPerPage": 2,
+            "itemsPerPage": 6,
             "schemas": [
               "urn:ietf:params:scim:api:messages:2.0:ListResponse"
             ],
@@ -3360,7 +4225,18 @@
                   }
                 ],
                 "active": true,
-                "origin": "sap.default"
+                "origin": "sap.default",
+                "groups": [
+                  {
+                    "value": "grp-0001-mock",
+                    "display": "Subaccount Administrator",
+                    "type": "DIRECT"
+                  }
+                ],
+                "meta": {
+                  "created": "2025-02-14T09:12:00Z",
+                  "lastModified": "2026-06-01T08:30:00Z"
+                }
               },
               {
                 "id": "a1b2c3d4-0002-0002-0002-000000000002",
@@ -3376,7 +4252,125 @@
                   }
                 ],
                 "active": true,
-                "origin": "sap.default"
+                "origin": "sap.default",
+                "groups": [
+                  {
+                    "value": "grp-0001-mock",
+                    "display": "Subaccount Administrator",
+                    "type": "DIRECT"
+                  },
+                  {
+                    "value": "grp-0002-mock",
+                    "display": "Subaccount Viewer",
+                    "type": "DIRECT"
+                  }
+                ],
+                "meta": {
+                  "created": "2025-03-20T11:05:00Z",
+                  "lastModified": "2026-05-18T14:22:00Z"
+                }
+              },
+              {
+                "id": "a1b2c3d4-0003-0003-0003-000000000003",
+                "userName": "carol@example.com",
+                "name": {
+                  "familyName": "Nguyen",
+                  "givenName": "Carol"
+                },
+                "emails": [
+                  {
+                    "value": "carol@example.com",
+                    "primary": true
+                  }
+                ],
+                "active": true,
+                "origin": "sap.ids",
+                "groups": [
+                  {
+                    "value": "grp-0002-mock",
+                    "display": "Subaccount Viewer",
+                    "type": "DIRECT"
+                  }
+                ],
+                "meta": {
+                  "created": "2025-09-01T07:45:00Z",
+                  "lastModified": "2026-06-25T09:00:00Z"
+                }
+              },
+              {
+                "id": "a1b2c3d4-0004-0004-0004-000000000004",
+                "userName": "dave@partner.example.com",
+                "name": {
+                  "familyName": "O'Brien",
+                  "givenName": "Dave"
+                },
+                "emails": [
+                  {
+                    "value": "dave@partner.example.com",
+                    "primary": true
+                  }
+                ],
+                "active": true,
+                "origin": "corp-ias",
+                "groups": [
+                  {
+                    "value": "grp-0003-mock",
+                    "display": "Cloud Connector Administrator",
+                    "type": "DIRECT"
+                  }
+                ],
+                "meta": {
+                  "created": "2026-01-10T13:30:00Z",
+                  "lastModified": "2026-01-10T13:30:00Z"
+                }
+              },
+              {
+                "id": "a1b2c3d4-0005-0005-0005-000000000005",
+                "userName": "erin@example.com",
+                "name": {
+                  "familyName": "Baker",
+                  "givenName": "Erin"
+                },
+                "emails": [
+                  {
+                    "value": "erin@example.com",
+                    "primary": true
+                  }
+                ],
+                "active": false,
+                "origin": "sap.default",
+                "groups": [],
+                "meta": {
+                  "created": "2024-11-02T10:00:00Z",
+                  "lastModified": "2026-04-30T16:10:00Z"
+                }
+              },
+              {
+                "id": "a1b2c3d4-0006-0006-0006-000000000006",
+                "userName": "svc-automation@example.com",
+                "name": {
+                  "familyName": "Account",
+                  "givenName": "Service"
+                },
+                "emails": [
+                  {
+                    "value": "svc-automation@example.com",
+                    "primary": true
+                  }
+                ],
+                "active": true,
+                "origin": "sap.default",
+                "groups": [
+                  {
+                    "value": "grp-0004-mock",
+                    "display": "Usage Reporting Viewer",
+                    "type": "DIRECT"
+                  }
+                ],
+                "meta": {
+                  "created": "2025-07-15T08:00:00Z",
+                  "lastModified": "2025-07-15T08:00:00Z"
+                }
               }
             ]
           }
@@ -3410,6 +4404,13 @@
                 "primary": true
               }
             ],
+            "phoneNumbers": [
+              {
+                "value": "+49-6227-747474",
+                "type": "work"
+              }
+            ],
+            "userType": "employee",
             "active": true,
             "origin": "sap.default",
             "groups": [
@@ -3418,7 +4419,17 @@
                 "display": "Subaccount Administrator",
                 "type": "DIRECT"
               }
-            ]
+            ],
+            "roles": [
+              {
+                "value": "Subaccount Administrator"
+              }
+            ],
+            "meta": {
+              "resourceType": "User",
+              "created": "2025-02-14T09:12:00Z",
+              "lastModified": "2026-06-01T08:30:00Z"
+            }
           }
         },
         "createShadowUser": {
@@ -3444,19 +4455,29 @@
             ]
           },
           "mock_response": {
-            "id": "a1b2c3d4-0099-0099-0099-000000000099",
-            "userName": "carol@example.com",
+            "id": "a1b2c3d4-0007-0007-0007-000000000007",
+            "userName": "frank@example.com",
             "schemas": [
               "urn:ietf:params:scim:schemas:core:2.0:User"
             ],
+            "name": {
+              "familyName": "Miller",
+              "givenName": "Frank"
+            },
             "active": true,
             "origin": "sap.default",
             "emails": [
               {
-                "value": "carol@example.com",
+                "value": "frank@example.com",
                 "primary": true
               }
-            ]
+            ],
+            "groups": [],
+            "meta": {
+              "resourceType": "User",
+              "created": "2026-07-30T10:00:00Z",
+              "lastModified": "2026-07-30T10:00:00Z"
+            }
           }
         },
         "updateShadowUser": {
@@ -3519,8 +4540,19 @@
           "mock_response": {
             "id": "a1b2c3d4-0001-0001-0001-000000000001",
             "userName": "alice@example.com",
+            "schemas": [
+              "urn:ietf:params:scim:schemas:core:2.0:User"
+            ],
+            "name": {
+              "familyName": "Smith",
+              "givenName": "Alice"
+            },
             "active": false,
-            "origin": "sap.default"
+            "origin": "sap.default",
+            "meta": {
+              "resourceType": "User",
+              "lastModified": "2026-07-30T10:00:00Z"
+            }
           }
         },
         "deleteShadowUser": {
@@ -3549,16 +4581,19 @@
     "created_for_agent": "btp-guardian-agent",
     "mock_mode": true,
     "deterministic": true,
-    "total_servers": 6,
-    "total_tools": 15,
+    "total_servers": 9,
+    "total_tools": 119,
     "generated_from": [
       "accounts-service/translation.json",
       "entitlements-service/translation.json",
       "resource-consumption/translation.json",
       "metrics-api/translation.json",
       "usage-records/translation.json",
-      "provisioning-service/translation.json"
+      "provisioning-service/translation.json",
+      "audit-logs/translation.json",
+      "xsuaa-authorization/translation.json",
+      "xsuaa-scim/translation.json"
     ],
-    "generation_date": "2026-05-19"
+    "generation_date": "2026-07-30"
   }
 }

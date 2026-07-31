@@ -96,6 +96,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(HERE), **kwargs)
 
+    def end_headers(self):
+        # Never let the browser cache the local UI — always serve fresh HTML/JS.
+        self.send_header("Cache-Control", "no-store, must-revalidate")
+        super().end_headers()
+
     def do_GET(self):
         if self.path == "/whoami":
             payload = json.dumps({"target": AGENT_URL, "isLocal": IS_LOCAL}).encode()
