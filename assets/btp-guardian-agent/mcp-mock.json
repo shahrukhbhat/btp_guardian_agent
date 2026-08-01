@@ -201,7 +201,7 @@
             "parentType": "ROOT",
             "betaEnabled": false,
             "usedForProduction": "NOT_USED_FOR_PRODUCTION",
-            "createdBy": "admin@example.com",
+            "createdBy": "victor.chan@sap.com",
             "createdDate": 1753833600000,
             "modifiedDate": 1753833600000,
             "jobInstanceId": "job-0001-mock"
@@ -401,7 +401,7 @@
               },
               {
                 "key": "owner",
-                "value": "alice@example.com",
+                "value": "shahrukh.bhat@sap.com",
                 "readOnly": false,
                 "accountLevel": "SUBACCOUNT"
               },
@@ -676,7 +676,7 @@
             "directoryFeatures": [
               "DEFAULT"
             ],
-            "createdBy": "admin@example.com",
+            "createdBy": "victor.chan@sap.com",
             "createdDate": 1753833600000
           }
         },
@@ -1025,7 +1025,7 @@
                     "usedAmount": 9.05,
                     "unitOfMeasure": "INSTANCES",
                     "assignedDate": "2026-06-08T10:42:17Z",
-                    "assignedBy": "michael.chen@example.com"
+                    "assignedBy": "haibo.huang@sap.com"
                   }
                 ]
               },
@@ -1766,27 +1766,139 @@
               "appName"
             ]
           },
-          "mock_response": {
-            "metrics": [
-              {
-                "name": "CPU_USAGE_PERCENT",
-                "value": 72.5,
-                "unit": "percent",
-                "timestamp": 1747612800000
+          "mock_responses_by": {
+            "param": "appName",
+            "values": {
+              "guardian-api": {
+                "appName": "guardian-api",
+                "metrics": [
+                  {
+                    "name": "CPU",
+                    "value": 93.0,
+                    "unit": "PERCENT"
+                  },
+                  {
+                    "name": "MEMORY",
+                    "value": 81.4,
+                    "unit": "PERCENT"
+                  },
+                  {
+                    "name": "DISK",
+                    "value": 44.2,
+                    "unit": "PERCENT"
+                  }
+                ],
+                "history": [
+                  {
+                    "timestamp": 1785581040000,
+                    "cpu": 41.0
+                  },
+                  {
+                    "timestamp": 1785581340000,
+                    "cpu": 58.0
+                  },
+                  {
+                    "timestamp": 1785581640000,
+                    "cpu": 74.0
+                  },
+                  {
+                    "timestamp": 1785582000000,
+                    "cpu": 88.0
+                  },
+                  {
+                    "timestamp": 1785582300000,
+                    "cpu": 91.0
+                  },
+                  {
+                    "timestamp": 1785582540000,
+                    "cpu": 93.0
+                  }
+                ],
+                "lastDeployment": {
+                  "version": "v2.8.1",
+                  "deployedAt": 1785580920000,
+                  "deployedAtLocal": "2026-08-01 10:42 UTC"
+                },
+                "lastDeploymentVersion": "v2.8.1",
+                "requestRatePerMin": 522,
+                "requestRateBaselinePerMin": 320,
+                "autoscalingEnabled": false,
+                "instances": 3,
+                "instanceQuota": 3,
+                "sampledAt": 1785582540000
               },
-              {
-                "name": "MEMORY_USAGE_PERCENT",
-                "value": 65.2,
-                "unit": "percent",
-                "timestamp": 1747612800000
+              "guardian-ui": {
+                "appName": "guardian-ui",
+                "metrics": [
+                  {
+                    "name": "CPU",
+                    "value": 18.6,
+                    "unit": "PERCENT"
+                  },
+                  {
+                    "name": "MEMORY",
+                    "value": 41.0,
+                    "unit": "PERCENT"
+                  },
+                  {
+                    "name": "DISK",
+                    "value": 22.0,
+                    "unit": "PERCENT"
+                  }
+                ],
+                "instances": 2,
+                "instanceQuota": 4,
+                "autoscalingEnabled": true,
+                "sampledAt": 1785582540000
               },
-              {
-                "name": "DISK_USAGE_PERCENT",
-                "value": 38.1,
-                "unit": "percent",
-                "timestamp": 1747612800000
+              "guardian-xs-app": {
+                "appName": "guardian-xs-app",
+                "metrics": [
+                  {
+                    "name": "CPU",
+                    "value": 26.3,
+                    "unit": "PERCENT"
+                  },
+                  {
+                    "name": "MEMORY",
+                    "value": 52.0,
+                    "unit": "PERCENT"
+                  },
+                  {
+                    "name": "DISK",
+                    "value": 28.0,
+                    "unit": "PERCENT"
+                  }
+                ],
+                "instances": 1,
+                "instanceQuota": 2,
+                "autoscalingEnabled": false,
+                "sampledAt": 1785582540000
               }
-            ]
+            },
+            "default": {
+              "appName": "unknown",
+              "metrics": [
+                {
+                  "name": "CPU",
+                  "value": 21.0,
+                  "unit": "PERCENT"
+                },
+                {
+                  "name": "MEMORY",
+                  "value": 39.0,
+                  "unit": "PERCENT"
+                },
+                {
+                  "name": "DISK",
+                  "value": 18.0,
+                  "unit": "PERCENT"
+                }
+              ],
+              "instances": 1,
+              "instanceQuota": 2,
+              "sampledAt": 1785582540000
+            }
           }
         },
         "GET_accounts-subaccountName-apps-appName-state": {
@@ -1809,12 +1921,13 @@
           "mock_response": {
             "appName": "guardian-api",
             "state": "STARTED",
-            "instances": 2,
-            "runningInstances": 2,
+            "instances": 3,
+            "runningInstances": 3,
             "crashedInstances": 0,
             "diskQuotaMb": 1024,
             "memoryQuotaMb": 512,
-            "lastUpdated": 1747612800000
+            "lastUpdated": 1785580920000,
+            "lastDeploymentVersion": "v2.8.1"
           }
         },
         "GET_accounts-subaccountName-apps-appName-processes-processId-metrics": {
@@ -2729,7 +2842,7 @@
                 "category": "audit.configuration",
                 "tenant": "sa-0007-dev-team-b",
                 "user": {
-                  "id": "michael.chen@example.com"
+                  "id": "haibo.huang@sap.com"
                 },
                 "object": {
                   "type": "Entitlement",
@@ -2761,7 +2874,7 @@
                 "category": "audit.security-events",
                 "tenant": "coe-na-subaccount",
                 "user": {
-                  "id": "john.doe@example.com"
+                  "id": "robby.mains@sap.com"
                 },
                 "object": {
                   "type": "XSUAA",
@@ -2786,7 +2899,7 @@
                 "category": "audit.configuration",
                 "tenant": "coe-na-subaccount",
                 "user": {
-                  "id": "admin@example.com"
+                  "id": "victor.chan@sap.com"
                 },
                 "object": {
                   "type": "RoleCollection",
@@ -2796,7 +2909,7 @@
                   {
                     "name": "roleBinding",
                     "old": null,
-                    "new": "user:jane.doe@example.com"
+                    "new": "user:jarod.durkin@sap.com"
                   },
                   {
                     "name": "scope",
@@ -2811,7 +2924,7 @@
                 "category": "audit.configuration",
                 "tenant": "coe-na-subaccount",
                 "user": {
-                  "id": "admin@example.com"
+                  "id": "victor.chan@sap.com"
                 },
                 "object": {
                   "type": "Subaccount",
@@ -2836,7 +2949,7 @@
                 "category": "audit.data-access",
                 "tenant": "coe-na-subaccount",
                 "user": {
-                  "id": "svc-account@example.com"
+                  "id": "svc-account@sap.com"
                 },
                 "object": {
                   "type": "ServiceInstance",
@@ -2861,7 +2974,7 @@
                 "category": "audit.configuration",
                 "tenant": "coe-na-subaccount",
                 "user": {
-                  "id": "admin@example.com"
+                  "id": "victor.chan@sap.com"
                 },
                 "object": {
                   "type": "TrustConfiguration",
@@ -2936,7 +3049,7 @@
                 "category": "audit.data-access",
                 "tenant": "coe-na-subaccount",
                 "user": {
-                  "id": "monitor@example.com"
+                  "id": "monitor@sap.com"
                 },
                 "object": {
                   "type": "AuditLog",
@@ -2961,7 +3074,7 @@
                 "category": "audit.configuration",
                 "tenant": "sa-0007-dev-team-b",
                 "user": {
-                  "id": "michael.chen@example.com"
+                  "id": "haibo.huang@sap.com"
                 },
                 "object": {
                   "type": "Entitlement",
@@ -2993,7 +3106,7 @@
                 "category": "audit.configuration",
                 "tenant": "sa-0007-dev-team-b",
                 "user": {
-                  "id": "michael.chen@example.com"
+                  "id": "haibo.huang@sap.com"
                 },
                 "object": {
                   "type": "ServiceInstance",
@@ -4038,12 +4151,12 @@
                   {
                     "value": "a1b2c3d4-0001-0001-0001-000000000001",
                     "type": "USER",
-                    "display": "alice@example.com"
+                    "display": "shahrukh.bhat@sap.com"
                   },
                   {
                     "value": "a1b2c3d4-0002-0002-0002-000000000002",
                     "type": "USER",
-                    "display": "bob@example.com"
+                    "display": "archit.goel@sap.com"
                   }
                 ]
               },
@@ -4054,12 +4167,12 @@
                   {
                     "value": "a1b2c3d4-0002-0002-0002-000000000002",
                     "type": "USER",
-                    "display": "bob@example.com"
+                    "display": "archit.goel@sap.com"
                   },
                   {
                     "value": "a1b2c3d4-0003-0003-0003-000000000003",
                     "type": "USER",
-                    "display": "carol@example.com"
+                    "display": "ashok.kumar@sap.com"
                   }
                 ]
               },
@@ -4070,7 +4183,7 @@
                   {
                     "value": "a1b2c3d4-0004-0004-0004-000000000004",
                     "type": "USER",
-                    "display": "dave@partner.example.com"
+                    "display": "brady.zhou@sap.com"
                   }
                 ]
               },
@@ -4081,7 +4194,7 @@
                   {
                     "value": "a1b2c3d4-0006-0006-0006-000000000006",
                     "type": "USER",
-                    "display": "svc-automation@example.com"
+                    "display": "svc-automation@sap.com"
                   }
                 ]
               }
@@ -4111,12 +4224,12 @@
               {
                 "value": "a1b2c3d4-0001-0001-0001-000000000001",
                 "type": "USER",
-                "display": "alice@example.com"
+                "display": "shahrukh.bhat@sap.com"
               },
               {
                 "value": "a1b2c3d4-0002-0002-0002-000000000002",
                 "type": "USER",
-                "display": "bob@example.com"
+                "display": "archit.goel@sap.com"
               }
             ]
           }
@@ -4175,7 +4288,7 @@
               {
                 "value": "a1b2c3d4-0001-0001-0001-000000000001",
                 "type": "USER",
-                "display": "alice@example.com"
+                "display": "shahrukh.bhat@sap.com"
               }
             ]
           }
@@ -4207,17 +4320,17 @@
               {
                 "value": "a1b2c3d4-0001-0001-0001-000000000001",
                 "type": "USER",
-                "display": "alice@example.com"
+                "display": "shahrukh.bhat@sap.com"
               },
               {
                 "value": "a1b2c3d4-0002-0002-0002-000000000002",
                 "type": "USER",
-                "display": "bob@example.com"
+                "display": "archit.goel@sap.com"
               },
               {
                 "value": "a1b2c3d4-0003-0003-0003-000000000003",
                 "type": "USER",
-                "display": "carol@example.com"
+                "display": "ashok.kumar@sap.com"
               }
             ]
           }
@@ -4249,14 +4362,14 @@
             "Resources": [
               {
                 "id": "a1b2c3d4-0001-0001-0001-000000000001",
-                "userName": "alice@example.com",
+                "userName": "shahrukh.bhat@sap.com",
                 "name": {
-                  "familyName": "Smith",
-                  "givenName": "Alice"
+                  "familyName": "Bhat",
+                  "givenName": "Shahrukh"
                 },
                 "emails": [
                   {
-                    "value": "alice@example.com",
+                    "value": "shahrukh.bhat@sap.com",
                     "primary": true
                   }
                 ],
@@ -4276,14 +4389,14 @@
               },
               {
                 "id": "a1b2c3d4-0002-0002-0002-000000000002",
-                "userName": "bob@example.com",
+                "userName": "archit.goel@sap.com",
                 "name": {
-                  "familyName": "Jones",
-                  "givenName": "Bob"
+                  "familyName": "Goel",
+                  "givenName": "Archit"
                 },
                 "emails": [
                   {
-                    "value": "bob@example.com",
+                    "value": "archit.goel@sap.com",
                     "primary": true
                   }
                 ],
@@ -4308,14 +4421,14 @@
               },
               {
                 "id": "a1b2c3d4-0003-0003-0003-000000000003",
-                "userName": "carol@example.com",
+                "userName": "ashok.kumar@sap.com",
                 "name": {
-                  "familyName": "Nguyen",
-                  "givenName": "Carol"
+                  "familyName": "Kumar",
+                  "givenName": "Ashok"
                 },
                 "emails": [
                   {
-                    "value": "carol@example.com",
+                    "value": "ashok.kumar@sap.com",
                     "primary": true
                   }
                 ],
@@ -4335,14 +4448,14 @@
               },
               {
                 "id": "a1b2c3d4-0004-0004-0004-000000000004",
-                "userName": "dave@partner.example.com",
+                "userName": "brady.zhou@sap.com",
                 "name": {
-                  "familyName": "O'Brien",
-                  "givenName": "Dave"
+                  "familyName": "Zhou",
+                  "givenName": "Brady"
                 },
                 "emails": [
                   {
-                    "value": "dave@partner.example.com",
+                    "value": "brady.zhou@sap.com",
                     "primary": true
                   }
                 ],
@@ -4362,14 +4475,14 @@
               },
               {
                 "id": "a1b2c3d4-0005-0005-0005-000000000005",
-                "userName": "erin@example.com",
+                "userName": "sead.david@sap.com",
                 "name": {
-                  "familyName": "Baker",
-                  "givenName": "Erin"
+                  "familyName": "David",
+                  "givenName": "Sead"
                 },
                 "emails": [
                   {
-                    "value": "erin@example.com",
+                    "value": "sead.david@sap.com",
                     "primary": true
                   }
                 ],
@@ -4383,14 +4496,14 @@
               },
               {
                 "id": "a1b2c3d4-0006-0006-0006-000000000006",
-                "userName": "svc-automation@example.com",
+                "userName": "svc-automation@sap.com",
                 "name": {
                   "familyName": "Account",
                   "givenName": "Service"
                 },
                 "emails": [
                   {
-                    "value": "svc-automation@example.com",
+                    "value": "svc-automation@sap.com",
                     "primary": true
                   }
                 ],
@@ -4426,17 +4539,17 @@
           },
           "mock_response": {
             "id": "a1b2c3d4-0001-0001-0001-000000000001",
-            "userName": "alice@example.com",
+            "userName": "shahrukh.bhat@sap.com",
             "schemas": [
               "urn:ietf:params:scim:schemas:core:2.0:User"
             ],
             "name": {
-              "familyName": "Smith",
-              "givenName": "Alice"
+              "familyName": "Bhat",
+              "givenName": "Shahrukh"
             },
             "emails": [
               {
-                "value": "alice@example.com",
+                "value": "shahrukh.bhat@sap.com",
                 "primary": true
               }
             ],
@@ -4492,19 +4605,19 @@
           },
           "mock_response": {
             "id": "a1b2c3d4-0007-0007-0007-000000000007",
-            "userName": "frank@example.com",
+            "userName": "aarya.deshmukh@sap.com",
             "schemas": [
               "urn:ietf:params:scim:schemas:core:2.0:User"
             ],
             "name": {
-              "familyName": "Miller",
-              "givenName": "Frank"
+              "familyName": "Deshmukh",
+              "givenName": "Aarya"
             },
             "active": true,
             "origin": "sap.default",
             "emails": [
               {
-                "value": "frank@example.com",
+                "value": "aarya.deshmukh@sap.com",
                 "primary": true
               }
             ],
@@ -4547,12 +4660,12 @@
           },
           "mock_response": {
             "id": "a1b2c3d4-0001-0001-0001-000000000001",
-            "userName": "alice@example.com",
+            "userName": "shahrukh.bhat@sap.com",
             "active": true,
             "origin": "sap.default",
             "name": {
-              "familyName": "Smith-Updated",
-              "givenName": "Alice"
+              "familyName": "Bhat",
+              "givenName": "Shahrukh"
             }
           }
         },
@@ -4575,13 +4688,13 @@
           },
           "mock_response": {
             "id": "a1b2c3d4-0001-0001-0001-000000000001",
-            "userName": "alice@example.com",
+            "userName": "shahrukh.bhat@sap.com",
             "schemas": [
               "urn:ietf:params:scim:schemas:core:2.0:User"
             ],
             "name": {
-              "familyName": "Smith",
-              "givenName": "Alice"
+              "familyName": "Bhat",
+              "givenName": "Shahrukh"
             },
             "active": false,
             "origin": "sap.default",
@@ -4610,6 +4723,1005 @@
           }
         }
       }
+    },
+    "cf-controller": {
+      "mcp_server_name": "cf-controller",
+      "description": "Cloud Foundry v3 Cloud Controller API (mock). Inspect and operate apps deployed in the CF runtime: list/inspect apps, check CPU/memory stats and logs/events, and start/stop/restart/scale/deploy (stateful in local mock).",
+      "_seed": {
+        "organizations": [
+          {
+            "guid": "org-guardian-0001",
+            "name": "guardian-ga",
+            "created_at": "2026-01-15T09:00:00Z",
+            "updated_at": "2026-08-01T10:42:00Z"
+          }
+        ],
+        "spaces": [
+          {
+            "guid": "space-guardian-prod",
+            "name": "prod",
+            "organization_guid": "org-guardian-0001",
+            "created_at": "2026-01-15T09:05:00Z",
+            "updated_at": "2026-08-01T10:42:00Z"
+          }
+        ],
+        "apps": [
+          {
+            "guid": "app-guardian-api-0001",
+            "name": "guardian-api",
+            "state": "STARTED",
+            "lifecycle": {
+              "type": "buildpack",
+              "data": {
+                "buildpacks": [
+                  "nodejs_buildpack"
+                ],
+                "stack": "cflinuxfs4"
+              }
+            },
+            "current_version": "v2.8.1",
+            "space_guid": "space-guardian-prod",
+            "instances": 3,
+            "memory_in_mb": 512,
+            "disk_in_mb": 1024,
+            "created_at": "2026-01-20T10:00:00Z",
+            "updated_at": "2026-08-01T10:42:00Z",
+            "processes": [
+              {
+                "guid": "proc-app-guardian-api-0001-web",
+                "type": "web",
+                "instances": 3,
+                "memory_in_mb": 512,
+                "disk_in_mb": 1024,
+                "command": "node server.js"
+              }
+            ],
+            "stats": {
+              "web": [
+                {
+                  "index": 0,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:42:00Z",
+                    "cpu": 0.93,
+                    "cpu_pct": 93.0,
+                    "mem": 437012922,
+                    "disk": 474593886
+                  },
+                  "mem_quota": 512,
+                  "disk_quota": 1024,
+                  "uptime": 1620,
+                  "isolation_segment": null
+                },
+                {
+                  "index": 1,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:42:00Z",
+                    "cpu": 0.915,
+                    "cpu_pct": 91.5,
+                    "mem": 437012922,
+                    "disk": 474593886
+                  },
+                  "mem_quota": 512,
+                  "disk_quota": 1024,
+                  "uptime": 1620,
+                  "isolation_segment": null
+                },
+                {
+                  "index": 2,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:42:00Z",
+                    "cpu": 0.924,
+                    "cpu_pct": 92.4,
+                    "mem": 437012922,
+                    "disk": 474593886
+                  },
+                  "mem_quota": 512,
+                  "disk_quota": 1024,
+                  "uptime": 1620,
+                  "isolation_segment": null
+                }
+              ]
+            },
+            "recent_logs": [
+              {
+                "timestamp": 1785580940000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "[web:0] Server listening on :8080"
+              },
+              {
+                "timestamp": 1785580980000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "[web:1] Server listening on :8080"
+              },
+              {
+                "timestamp": 1785581220000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "WARN event-loop lag 210ms; heap 78% of limit"
+              },
+              {
+                "timestamp": 1785581640000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "WARN GC pause 140ms (major)"
+              },
+              {
+                "timestamp": 1785582420000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "WARN request queue depth 47 (threshold 20)"
+              },
+              {
+                "timestamp": 1785582540000,
+                "source_type": "RTR",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "GET /api/scan 200 1180ms host=guardian-api"
+              },
+              {
+                "timestamp": 1785582600000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "ERR",
+                "message": "ERROR upstream timeout to entitlements-svc after 5000ms"
+              }
+            ],
+            "events": [
+              {
+                "guid": "evt-api-2",
+                "type": "audit.app.update",
+                "actor": "ci-pipeline",
+                "created_at": "2026-08-01T10:42:00Z",
+                "metadata": {
+                  "version": "v2.8.1"
+                }
+              },
+              {
+                "guid": "evt-api-1",
+                "type": "audit.app.deployment.create",
+                "actor": "ci-pipeline",
+                "created_at": "2026-08-01T10:42:00Z",
+                "metadata": {
+                  "version": "v2.8.1",
+                  "strategy": "rolling"
+                }
+              }
+            ]
+          },
+          {
+            "guid": "app-guardian-ui-0002",
+            "name": "guardian-ui",
+            "state": "STARTED",
+            "lifecycle": {
+              "type": "buildpack",
+              "data": {
+                "buildpacks": [
+                  "nodejs_buildpack"
+                ],
+                "stack": "cflinuxfs4"
+              }
+            },
+            "current_version": "v1.9.0",
+            "space_guid": "space-guardian-prod",
+            "instances": 1,
+            "memory_in_mb": 256,
+            "disk_in_mb": 512,
+            "created_at": "2026-01-20T10:00:00Z",
+            "updated_at": "2026-07-28T00:53:20Z",
+            "processes": [
+              {
+                "guid": "proc-app-guardian-ui-0002-web",
+                "type": "web",
+                "instances": 1,
+                "memory_in_mb": 256,
+                "disk_in_mb": 512,
+                "command": "node server.js"
+              }
+            ],
+            "stats": {
+              "web": [
+                {
+                  "index": 0,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:55:00Z",
+                    "cpu": 0.12,
+                    "cpu_pct": 12.0,
+                    "mem": 110100480,
+                    "disk": 117440512
+                  },
+                  "mem_quota": 256,
+                  "disk_quota": 512,
+                  "uptime": 1206000,
+                  "isolation_segment": null
+                }
+              ]
+            },
+            "recent_logs": [
+              {
+                "timestamp": 1785580930000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "[web:0] Static server ready on :8080"
+              },
+              {
+                "timestamp": 1785581320000,
+                "source_type": "RTR",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "GET / 200 42ms host=guardian-ui"
+              }
+            ],
+            "events": [
+              {
+                "guid": "evt-ui-1",
+                "type": "audit.app.deployment.create",
+                "actor": "ci-pipeline",
+                "created_at": "2026-07-25T14:10:00Z",
+                "metadata": {
+                  "version": "v1.9.0"
+                }
+              }
+            ]
+          },
+          {
+            "guid": "app-guardian-xs-0003",
+            "name": "guardian-xs-app",
+            "state": "STARTED",
+            "lifecycle": {
+              "type": "buildpack",
+              "data": {
+                "buildpacks": [
+                  "nodejs_buildpack"
+                ],
+                "stack": "cflinuxfs4"
+              }
+            },
+            "current_version": "v3.2.1",
+            "space_guid": "space-guardian-prod",
+            "instances": 1,
+            "memory_in_mb": 256,
+            "disk_in_mb": 512,
+            "created_at": "2026-01-20T10:00:00Z",
+            "updated_at": "2026-07-23T09:46:40Z",
+            "processes": [
+              {
+                "guid": "proc-app-guardian-xs-0003-web",
+                "type": "web",
+                "instances": 1,
+                "memory_in_mb": 256,
+                "disk_in_mb": 512,
+                "command": "node server.js"
+              }
+            ],
+            "stats": {
+              "web": [
+                {
+                  "index": 0,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-07-23T09:46:40Z",
+                    "cpu": 0.263,
+                    "cpu_pct": 26.3,
+                    "mem": 139586437,
+                    "disk": 150323855
+                  },
+                  "mem_quota": 256,
+                  "disk_quota": 512,
+                  "uptime": 2200000,
+                  "isolation_segment": null
+                }
+              ]
+            },
+            "recent_logs": [
+              {
+                "timestamp": 1785580925000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "[web:0] xsuaa approuter started"
+              },
+              {
+                "timestamp": 1785581420000,
+                "source_type": "RTR",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "GET /xsapp 200 31ms host=guardian-xs-app"
+              }
+            ],
+            "events": [
+              {
+                "guid": "evt-xs-1",
+                "type": "audit.app.deployment.create",
+                "actor": "ci-pipeline",
+                "created_at": "2026-07-20T11:00:00Z",
+                "metadata": {
+                  "version": "v3.2.1"
+                }
+              }
+            ]
+          },
+          {
+            "guid": "app-guardian-orders-0004",
+            "name": "guardian-orders-api",
+            "state": "STARTED",
+            "lifecycle": {
+              "type": "buildpack",
+              "data": {
+                "buildpacks": [
+                  "python_buildpack"
+                ],
+                "stack": "cflinuxfs4"
+              }
+            },
+            "current_version": "v4.1.0",
+            "space_guid": "space-guardian-prod",
+            "instances": 2,
+            "memory_in_mb": 512,
+            "disk_in_mb": 1024,
+            "created_at": "2026-01-20T10:00:00Z",
+            "updated_at": "2026-08-01T10:55:00Z",
+            "processes": [
+              {
+                "guid": "proc-app-guardian-orders-0004-web",
+                "type": "web",
+                "instances": 2,
+                "memory_in_mb": 512,
+                "disk_in_mb": 1024,
+                "command": "python app.py"
+              }
+            ],
+            "stats": {
+              "web": [
+                {
+                  "index": 0,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:55:00Z",
+                    "cpu": 0.182,
+                    "cpu_pct": 18.2,
+                    "mem": 225443840,
+                    "disk": 247463936
+                  },
+                  "mem_quota": 512,
+                  "disk_quota": 1024,
+                  "uptime": 864000,
+                  "isolation_segment": null
+                },
+                {
+                  "index": 1,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:55:00Z",
+                    "cpu": 0.178,
+                    "cpu_pct": 17.8,
+                    "mem": 225443840,
+                    "disk": 247463936
+                  },
+                  "mem_quota": 512,
+                  "disk_quota": 1024,
+                  "uptime": 864000,
+                  "isolation_segment": null
+                }
+              ]
+            },
+            "recent_logs": [
+              {
+                "timestamp": 1785581700000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "[web:0] orders API ready on :8080"
+              },
+              {
+                "timestamp": 1785581720000,
+                "source_type": "RTR",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "GET / 200 38ms host=guardian-orders-api"
+              }
+            ],
+            "events": [
+              {
+                "guid": "evt-guardian-orders-api-1",
+                "type": "audit.app.deployment.create",
+                "actor": "ci-pipeline",
+                "created_at": "2026-07-25T14:10:00Z",
+                "metadata": {
+                  "version": "v4.1.0"
+                }
+              }
+            ]
+          },
+          {
+            "guid": "app-guardian-catalog-0005",
+            "name": "guardian-catalog-svc",
+            "state": "STARTED",
+            "lifecycle": {
+              "type": "buildpack",
+              "data": {
+                "buildpacks": [
+                  "java_buildpack"
+                ],
+                "stack": "cflinuxfs4"
+              }
+            },
+            "current_version": "v2.3.4",
+            "space_guid": "space-guardian-prod",
+            "instances": 1,
+            "memory_in_mb": 1024,
+            "disk_in_mb": 1024,
+            "created_at": "2026-01-20T10:00:00Z",
+            "updated_at": "2026-08-01T10:55:00Z",
+            "processes": [
+              {
+                "guid": "proc-app-guardian-catalog-0005-web",
+                "type": "web",
+                "instances": 1,
+                "memory_in_mb": 1024,
+                "disk_in_mb": 1024,
+                "command": "java -jar app.jar"
+              }
+            ],
+            "stats": {
+              "web": [
+                {
+                  "index": 0,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:55:00Z",
+                    "cpu": 0.42,
+                    "cpu_pct": 42.0,
+                    "mem": 450887680,
+                    "disk": 247463936
+                  },
+                  "mem_quota": 1024,
+                  "disk_quota": 1024,
+                  "uptime": 1728000,
+                  "isolation_segment": null
+                }
+              ]
+            },
+            "recent_logs": [
+              {
+                "timestamp": 1785581700000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "[web:0] catalog service started"
+              },
+              {
+                "timestamp": 1785581720000,
+                "source_type": "RTR",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "GET / 200 38ms host=guardian-catalog-svc"
+              }
+            ],
+            "events": [
+              {
+                "guid": "evt-guardian-catalog-svc-1",
+                "type": "audit.app.deployment.create",
+                "actor": "ci-pipeline",
+                "created_at": "2026-07-25T14:10:00Z",
+                "metadata": {
+                  "version": "v2.3.4"
+                }
+              }
+            ]
+          },
+          {
+            "guid": "app-guardian-inventory-0006",
+            "name": "guardian-inventory-api",
+            "state": "STARTED",
+            "lifecycle": {
+              "type": "buildpack",
+              "data": {
+                "buildpacks": [
+                  "nodejs_buildpack"
+                ],
+                "stack": "cflinuxfs4"
+              }
+            },
+            "current_version": "v1.6.2",
+            "space_guid": "space-guardian-prod",
+            "instances": 2,
+            "memory_in_mb": 512,
+            "disk_in_mb": 512,
+            "created_at": "2026-01-20T10:00:00Z",
+            "updated_at": "2026-08-01T10:55:00Z",
+            "processes": [
+              {
+                "guid": "proc-app-guardian-inventory-0006-web",
+                "type": "web",
+                "instances": 2,
+                "memory_in_mb": 512,
+                "disk_in_mb": 512,
+                "command": "node index.js"
+              }
+            ],
+            "stats": {
+              "web": [
+                {
+                  "index": 0,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:55:00Z",
+                    "cpu": 0.665,
+                    "cpu_pct": 66.5,
+                    "mem": 225443840,
+                    "disk": 123731968
+                  },
+                  "mem_quota": 512,
+                  "disk_quota": 512,
+                  "uptime": 432000,
+                  "isolation_segment": null
+                },
+                {
+                  "index": 1,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:55:00Z",
+                    "cpu": 0.675,
+                    "cpu_pct": 67.5,
+                    "mem": 225443840,
+                    "disk": 123731968
+                  },
+                  "mem_quota": 512,
+                  "disk_quota": 512,
+                  "uptime": 432000,
+                  "isolation_segment": null
+                }
+              ]
+            },
+            "recent_logs": [
+              {
+                "timestamp": 1785581700000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "[web:0] inventory API listening"
+              },
+              {
+                "timestamp": 1785581720000,
+                "source_type": "RTR",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "GET / 200 38ms host=guardian-inventory-api"
+              }
+            ],
+            "events": [
+              {
+                "guid": "evt-guardian-inventory-api-1",
+                "type": "audit.app.deployment.create",
+                "actor": "ci-pipeline",
+                "created_at": "2026-07-25T14:10:00Z",
+                "metadata": {
+                  "version": "v1.6.2"
+                }
+              }
+            ]
+          },
+          {
+            "guid": "app-guardian-workflow-0007",
+            "name": "guardian-workflow-svc",
+            "state": "STARTED",
+            "lifecycle": {
+              "type": "buildpack",
+              "data": {
+                "buildpacks": [
+                  "java_buildpack"
+                ],
+                "stack": "cflinuxfs4"
+              }
+            },
+            "current_version": "v3.0.9",
+            "space_guid": "space-guardian-prod",
+            "instances": 2,
+            "memory_in_mb": 1024,
+            "disk_in_mb": 2048,
+            "created_at": "2026-01-20T10:00:00Z",
+            "updated_at": "2026-08-01T10:55:00Z",
+            "processes": [
+              {
+                "guid": "proc-app-guardian-workflow-0007-web",
+                "type": "web",
+                "instances": 2,
+                "memory_in_mb": 1024,
+                "disk_in_mb": 2048,
+                "command": "java -jar workflow.jar"
+              }
+            ],
+            "stats": {
+              "web": [
+                {
+                  "index": 0,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:55:00Z",
+                    "cpu": 0.82,
+                    "cpu_pct": 82.0,
+                    "mem": 450887680,
+                    "disk": 493879296
+                  },
+                  "mem_quota": 1024,
+                  "disk_quota": 2048,
+                  "uptime": 259200,
+                  "isolation_segment": null
+                },
+                {
+                  "index": 1,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:55:00Z",
+                    "cpu": 0.8,
+                    "cpu_pct": 80.0,
+                    "mem": 450887680,
+                    "disk": 493879296
+                  },
+                  "mem_quota": 1024,
+                  "disk_quota": 2048,
+                  "uptime": 259200,
+                  "isolation_segment": null
+                }
+              ]
+            },
+            "recent_logs": [
+              {
+                "timestamp": 1785581700000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "[web:0] workflow engine up"
+              },
+              {
+                "timestamp": 1785581720000,
+                "source_type": "RTR",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "GET / 200 38ms host=guardian-workflow-svc"
+              }
+            ],
+            "events": [
+              {
+                "guid": "evt-guardian-workflow-svc-1",
+                "type": "audit.app.deployment.create",
+                "actor": "ci-pipeline",
+                "created_at": "2026-07-25T14:10:00Z",
+                "metadata": {
+                  "version": "v3.0.9"
+                }
+              }
+            ]
+          },
+          {
+            "guid": "app-guardian-notify-0008",
+            "name": "guardian-notify-api",
+            "state": "STARTED",
+            "lifecycle": {
+              "type": "buildpack",
+              "data": {
+                "buildpacks": [
+                  "nodejs_buildpack"
+                ],
+                "stack": "cflinuxfs4"
+              }
+            },
+            "current_version": "v1.2.0",
+            "space_guid": "space-guardian-prod",
+            "instances": 1,
+            "memory_in_mb": 256,
+            "disk_in_mb": 512,
+            "created_at": "2026-01-20T10:00:00Z",
+            "updated_at": "2026-08-01T10:55:00Z",
+            "processes": [
+              {
+                "guid": "proc-app-guardian-notify-0008-web",
+                "type": "web",
+                "instances": 1,
+                "memory_in_mb": 256,
+                "disk_in_mb": 512,
+                "command": "node notify.js"
+              }
+            ],
+            "stats": {
+              "web": [
+                {
+                  "index": 0,
+                  "state": "RUNNING",
+                  "usage": {
+                    "time": "2026-08-01T10:55:00Z",
+                    "cpu": 0.09,
+                    "cpu_pct": 9.0,
+                    "mem": 113246208,
+                    "disk": 123731968
+                  },
+                  "mem_quota": 256,
+                  "disk_quota": 512,
+                  "uptime": 2592000,
+                  "isolation_segment": null
+                }
+              ]
+            },
+            "recent_logs": [
+              {
+                "timestamp": 1785581700000,
+                "source_type": "APP/PROC/WEB",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "[web:0] notification API ready"
+              },
+              {
+                "timestamp": 1785581720000,
+                "source_type": "RTR",
+                "instance_id": "0",
+                "message_type": "OUT",
+                "message": "GET / 200 38ms host=guardian-notify-api"
+              }
+            ],
+            "events": [
+              {
+                "guid": "evt-guardian-notify-api-1",
+                "type": "audit.app.deployment.create",
+                "actor": "ci-pipeline",
+                "created_at": "2026-07-25T14:10:00Z",
+                "metadata": {
+                  "version": "v1.2.0"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "tools": {
+        "getCfOrganizations": {
+          "description": "List Cloud Foundry organizations in the global account.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          }
+        },
+        "getCfSpaces": {
+          "description": "List Cloud Foundry spaces, optionally filtered by organization.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "organizationGuid": {
+                "type": "string",
+                "description": "Filter spaces by this CF organization GUID."
+              }
+            },
+            "required": []
+          }
+        },
+        "getCfApps": {
+          "description": "List Cloud Foundry apps in a space (or all apps). Returns app GUID, name, state (STARTED/STOPPED), instance count, memory/disk, and current version. Use this first to resolve an app name to its GUID before calling other CF tools.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "spaceGuid": {
+                "type": "string",
+                "description": "Filter apps by this CF space GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "Filter apps by exact app name."
+              }
+            },
+            "required": []
+          }
+        },
+        "getCfApp": {
+          "description": "Get one Cloud Foundry app's details by GUID or name.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appGuid": {
+                "type": "string",
+                "description": "The CF app GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The CF app name (alternative to appGuid)."
+              }
+            },
+            "required": []
+          }
+        },
+        "getCfAppProcesses": {
+          "description": "List the processes (e.g. 'web', 'worker') of a CF app with their instance count and memory/disk allocation.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appGuid": {
+                "type": "string",
+                "description": "The CF app GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The CF app name."
+              }
+            },
+            "required": []
+          }
+        },
+        "getCfAppProcessStats": {
+          "description": "Get per-instance runtime stats for a CF app process: CPU %, memory and disk usage, instance state, and uptime. Use to check whether an app is under CPU/memory pressure.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appGuid": {
+                "type": "string",
+                "description": "The CF app GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The CF app name."
+              },
+              "processType": {
+                "type": "string",
+                "description": "Process type to inspect (default 'web')."
+              }
+            },
+            "required": []
+          }
+        },
+        "getCfAppRecentLogs": {
+          "description": "Fetch recent log lines for a CF app (Log Cache). Returns envelopes with timestamp, source, and message. Use to diagnose errors/warnings.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appGuid": {
+                "type": "string",
+                "description": "The CF app GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The CF app name."
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Max number of recent log lines to return."
+              }
+            },
+            "required": []
+          }
+        },
+        "getCfAppEvents": {
+          "description": "List recent audit events for a CF app (deploys, updates, restarts, scales).",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appGuid": {
+                "type": "string",
+                "description": "The CF app GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The CF app name."
+              }
+            },
+            "required": []
+          }
+        },
+        "startCfApp": {
+          "description": "Start a CF app (sets desired state STARTED). Lifecycle write - confirm first.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appGuid": {
+                "type": "string",
+                "description": "The CF app GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The CF app name."
+              }
+            },
+            "required": []
+          }
+        },
+        "stopCfApp": {
+          "description": "Stop a CF app (sets desired state STOPPED). Lifecycle write - confirm first.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appGuid": {
+                "type": "string",
+                "description": "The CF app GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The CF app name."
+              }
+            },
+            "required": []
+          }
+        },
+        "restartCfApp": {
+          "description": "Restart a CF app (rolling). Lifecycle write - confirm first.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appGuid": {
+                "type": "string",
+                "description": "The CF app GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The CF app name."
+              }
+            },
+            "required": []
+          }
+        },
+        "scaleCfAppProcess": {
+          "description": "Scale a CF app process: change instance count and/or per-instance memory/disk. Write - confirm first. Stats reflect the new instance count afterward.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appGuid": {
+                "type": "string",
+                "description": "The CF app GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The CF app name."
+              },
+              "processType": {
+                "type": "string",
+                "description": "Process type to scale (default 'web')."
+              },
+              "instances": {
+                "type": "integer",
+                "description": "New desired instance count."
+              },
+              "memory_in_mb": {
+                "type": "integer",
+                "description": "New per-instance memory in MB."
+              },
+              "disk_in_mb": {
+                "type": "integer",
+                "description": "New per-instance disk in MB."
+              }
+            },
+            "required": []
+          }
+        },
+        "createCfAppDeployment": {
+          "description": "Create a metadata-only rolling deployment for a CF app (bumps the app's current version and marks it STARTED). Write - confirm first.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "appGuid": {
+                "type": "string",
+                "description": "The CF app GUID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The CF app name."
+              },
+              "version": {
+                "type": "string",
+                "description": "The new version label to deploy (e.g. v2.8.2)."
+              }
+            },
+            "required": []
+          }
+        }
+      }
     }
   },
   "metadata": {
@@ -4617,8 +5729,8 @@
     "created_for_agent": "btp-guardian-agent",
     "mock_mode": true,
     "deterministic": true,
-    "total_servers": 9,
-    "total_tools": 119,
+    "total_servers": 10,
+    "total_tools": 132,
     "generated_from": [
       "accounts-service/translation.json",
       "entitlements-service/translation.json",
@@ -4628,7 +5740,8 @@
       "provisioning-service/translation.json",
       "audit-logs/translation.json",
       "xsuaa-authorization/translation.json",
-      "xsuaa-scim/translation.json"
+      "xsuaa-scim/translation.json",
+      "cf-controller/v3-cloud-controller"
     ],
     "generation_date": "2026-07-30"
   }

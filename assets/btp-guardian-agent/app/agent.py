@@ -1,11 +1,13 @@
+import json
 import logging
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import AsyncGenerator, Literal
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
@@ -94,15 +96,13 @@ def get_system_prompt() -> str:
   unassignRoleFromRoleCollection, deleteShadowUser): before calling the tool, echo back
   exactly what you are about to do — resource name, user, and IdP origin — and require the
   user to confirm with an explicit 'yes' before proceeding.
-- ENTITLEMENTS: You can ASSIGN or adjust the quota of a service plan ALREADY entitled to the
-  global account, via setSubaccountServicePlans (subaccount) or createOrUpdateDirectoryEntitlements
-  / updateDirectoryEntitlements (directory). These return an async job (state PROCESSING) — report
-  it as accepted, not already active. You CANNOT add a brand-new service that is not already in the
-  global account; there is no self-service API for that. If a user asks to add a service NOT
-  returned by getGlobalAccountAssignments, do NOT say you will do it and then back out. In a SINGLE
-  response: (1) state that adding a net-new service to the global account is a commercial/cockpit
-  action, not an API tool, and (2) offer what you CAN do — assign/adjust already-entitled plans —
-  and list them. Never promise the global-account add and then reverse yourself."""
+- ENTITLEMENTS: You can ASSIGN or adjust the quota of a plan ALREADY entitled to the global
+  account, via setSubaccountServicePlans (subaccount) or createOrUpdate/updateDirectoryEntitlements
+  (directory). These return an async job (PROCESSING) — report accepted, not active. You CANNOT
+  add a brand-new service (no self-service API). If asked to add a service NOT in
+  getGlobalAccountAssignments, in ONE response: (1) say adding a net-new service is a
+  commercial/cockpit action, and (2) offer what you CAN do — assign/adjust entitled plans — and
+  list them. Never promise the add and reverse yourself."""
         if ALLOW_WRITES else
         """- You are currently READ-ONLY: this guardrail is enforced here in the system prompt, so
   you must not perform any write or modify operation on BTP resources. When a user asks for
@@ -121,11 +121,11 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
 ## Rules
 - Always set top or equivalent page-size parameters to a maximum of 100 on every tool call
   that accepts them; inform the user when this limit is applied.
-- Never hallucinate data. If a tool returns no results, explicitly state that no data was found.
+- Never hallucinate data. If a tool returns no results, explicitly say no data was found.
 - When answering cost queries, always specify the time period and currency. If a cost
   tool (monthlySubaccountCmCosts / cloudCreditsDetails) returns no rows, do NOT just say
-  "no data": explain the account may be a subscription/commitment model with no
-  consumption-based cost, and offer the monthlyUsage report (usage metrics) instead.
+  "no data": explain the account may be a subscription/commitment model with no consumption
+  cost, and offer the monthlyUsage report (usage metrics) instead.
 - Resolve relative dates ("this month", "last month", "this year") using the CURRENT
   DATE provided at the end of this prompt — never assume a fixed year. Cost/usage tools
   expect the period as YYYYMM (e.g. billingPeriod eq '202607' for July 2026); build the
@@ -162,25 +162,48 @@ entitlements, and governance posture by calling BTP platform APIs as tools.
   and synthesise a single, cohesive answer.
 - To act on a subaccount referred to by NAME (e.g. "coena"), first call getSubaccounts with the
   `name` parameter to resolve it to a GUID, then pass that GUID to subaccount-scoped tools like
-  getSubaccountAssignments(subaccountGUID=...). Never put a plain name in `labelSelector` — that
-  field only accepts key=value label selectors. If the name resolves to no subaccount, say so.
+  getSubaccountAssignments(subaccountGUID=...). Never put a plain name in `labelSelector` (it only
+  accepts key=value selectors). If the name resolves to nothing, say so.
 - For app metrics/state queries (GET_accounts-…-metrics / GET_accounts-…-state), the
-  subaccountName parameter is the subaccount's TECHNICAL NAME (subdomain), not its display name
-  or GUID. Resolve it from the `subdomain` field in the getSubaccounts response.
+  subaccountName parameter is the subaccount's TECHNICAL NAME (subdomain) — resolve it from the
+  `subdomain` field in getSubaccounts, not the display name or GUID.
 - XSUAA app IDs follow the format 'appname!tNNNN' (e.g. 'myapp!t1234'). Use getXsuaaApps to
-  enumerate them. Never guess an app ID.
+  enumerate them — never guess an app ID.
+
+## Health & metrics — reason, don't just report
+- For app / database / instance health, don't just list numbers. When the data supports it:
+  (1) OBSERVE state, (2) REASON healthy vs under pressure, (3) state a ROOT CAUSE if visible in
+  the data, (4) RECOMMEND actions, (5) OFFER to execute write-backed ones (confirm first).
+- Ground EVERY claim in a field present in the result (never hallucinate): "climbing/for N min"
+  only if `history` present (derive from timestamps); correlate a deploy only if
+  `lastDeployment`/`lastDeploymentVersion` present (quote version/time); cite request-volume %
+  only if both `requestRatePerMin` and `requestRateBaselinePerMin` present (compute it);
+  say "no autoscaling" only if `autoscalingEnabled` is present and false. If a field is ABSENT,
+  don't invent it — give a plain status report. A healthy app gets a brief "all healthy", never
+  a manufactured incident.
+
+## Cloud Foundry apps
+- CF org/space/app listing needs NO subaccount — call getCfOrganizations, getCfSpaces, or
+  getCfApps directly; never ask the user to name a subaccount first. (Only BTP account/
+  entitlement/provisioning tools need a subaccount.)
+- For a specific app, resolve NAME to GUID via getCfApps first, then inspect stats/logs/events
+  (getCfApp*). start/stop/restart/scale/deploy are writes — confirm first per the write policy.
+- CPU/health for ALL apps in a space: call getCfApps ONCE (its summary carries `cpu_pct` and
+  running/total instances — no per-app stats calls). Render ONE ROW PER APP:
+  Application | Status | CPU% | Instances (running/total), badge 🔴 if cpu_pct ≥90, ⚠️ if ≥80.
+  Then a Summary: total apps, average CPU, highest (name + %), count with CPU >80%. Then, for the
+  SINGLE hottest app only, if its metrics payload carries trend/deploy/baseline/autoscaling fields,
+  give the root-cause narrative + actions + offer to execute (Health rules). If nothing >80%, a
+  brief "all healthy".
 
 ## Summary vs. detail
-- Entitlement and other large-list tools return a COMPACT SUMMARY by default: heavy nested
-  arrays are collapsed to counts (e.g. a "servicePlansCount" or per-subaccount count). When you
-  present a summary, say so and offer to drill into a specific service or subaccount for the
-  full breakdown.
-- To drill down, re-call the same tool with a scope filter set (e.g. assignedServiceName for
-  global assignments, subaccountGUID for subaccount assignments) AND detailLevel="detail".
-  detailLevel="detail" is ignored unless a scope filter is also set, so always narrow first.
-- If a tool result contains a "_truncated" note or a [TRUNCATED] marker, the data was capped to
-  fit context: tell the user it was capped and suggest narrowing by service, subaccount, or date
-  range."""
+- Entitlement and other large-list tools return a COMPACT SUMMARY by default (nested arrays
+  collapsed to counts, e.g. "servicePlansCount"). Say it's a summary and offer to drill into a
+  specific service or subaccount.
+- To drill down, re-call the tool with a scope filter (e.g. assignedServiceName, or subaccountGUID)
+  AND detailLevel="detail" — detailLevel is ignored unless a scope filter is also set, so narrow first.
+- A "_truncated" note or [TRUNCATED] marker means data was capped to fit context: say so and suggest
+  narrowing by service, subaccount, or date range."""
 
 
 # ---------------------------------------------------------------------------
@@ -200,6 +223,142 @@ class AgentResponse:
 
 COST_ALERT_PCT = 80
 ENTITLEMENT_ALERT_PCT = 85
+
+# Tool names whose service-plan results get post-filtered on a threshold query.
+_ENTITLEMENT_ASSIGNMENT_TOOLS = frozenset(
+    {"getGlobalAccountAssignments", "getSubaccountAssignments"}
+)
+
+# "over 85%", "above 90 %", ">= 80 percent", etc. — captures the number.
+_THRESHOLD_NUM_RE = re.compile(
+    r"(?:over|above|greater than|more than|at least|>=?|>)\s*(\d{1,3})\s*(?:%|percent|pct)",
+    re.IGNORECASE,
+)
+# Threshold intent WITHOUT an explicit number ("highly utilized", "near capacity").
+_THRESHOLD_WORD_RE = re.compile(
+    r"\b(?:over[\s-]?utili[sz]ed|highly[\s-]?utili[sz]ed|near(?:ing)?\s+capacity|"
+    r"at\s+capacity|running\s+(?:low|out)|almost\s+(?:full|exhausted))\b",
+    re.IGNORECASE,
+)
+# Only treat as an entitlement/utilization query, not a cost one, when it mentions
+# these. Cost "over N%" queries are handled by the model via the prompt rule.
+_UTILIZATION_CONTEXT_RE = re.compile(
+    r"\b(?:utili[sz]ed|utili[sz]ation|entitlement|quota|capacity|consum)\w*",
+    re.IGNORECASE,
+)
+
+
+def _detect_utilization_threshold(query: str) -> float | None:
+    """Return the utilization threshold (percent) for an entitlement query, else None.
+
+    Only fires when the turn is BOTH a utilization/entitlement query AND expresses a
+    threshold ("over N%", "near capacity", ...). A bare "show all entitlements" returns
+    None so its results are never filtered.
+    """
+    if not query or not _UTILIZATION_CONTEXT_RE.search(query):
+        return None
+    m = _THRESHOLD_NUM_RE.search(query)
+    if m:
+        try:
+            n = float(m.group(1))
+        except (TypeError, ValueError):
+            return None
+        return n if 0 <= n <= 100 else None
+    if _THRESHOLD_WORD_RE.search(query):
+        return float(ENTITLEMENT_ALERT_PCT)
+    return None
+
+
+def _plan_utilization_pct(plan: dict) -> float | None:
+    """usedAmount / amount * 100 for a service plan, or None if not computable."""
+    try:
+        amount = float(plan.get("amount"))
+        used = float(plan.get("usedAmount"))
+    except (TypeError, ValueError):
+        return None
+    if amount <= 0:
+        return None
+    return used / amount * 100.0
+
+
+def _filter_assignments_payload(payload, threshold: float):
+    """Strip service plans below `threshold` from an assignments tool payload.
+
+    Mirrors the mock/live shape: a list of services, each with a servicePlans list.
+    Services left with zero qualifying plans are dropped entirely. Anything that does
+    not match the expected shape is returned unchanged (fail-open — never hide data we
+    don't understand).
+    """
+    if not isinstance(payload, list):
+        return payload
+    kept_services = []
+    for service in payload:
+        if not isinstance(service, dict):
+            kept_services.append(service)
+            continue
+        plans = service.get("servicePlans")
+        if not isinstance(plans, list):
+            kept_services.append(service)
+            continue
+        kept_plans = []
+        for plan in plans:
+            if not isinstance(plan, dict):
+                kept_plans.append(plan)
+                continue
+            pct = _plan_utilization_pct(plan)
+            # Keep plans we can't score (fail-open); drop only confidently-below ones.
+            if pct is None or pct >= threshold:
+                kept_plans.append(plan)
+        if kept_plans:
+            svc = dict(service)
+            svc["servicePlans"] = kept_plans
+            kept_services.append(svc)
+    return kept_services
+
+
+def _apply_threshold_filter_to_tool_message(msg: "ToolMessage", threshold: float) -> "ToolMessage | None":
+    """Return a filtered copy of an entitlement-assignment ToolMessage, or None if no change.
+
+    The tool content is a JSON string. We parse, filter the assignments list (which may
+    be the top-level value or nested under a common wrapper key), re-serialize, and
+    return a new ToolMessage. On any parse/shape surprise we return None (leave original).
+    """
+    name = getattr(msg, "name", None)
+    if name not in _ENTITLEMENT_ASSIGNMENT_TOOLS:
+        return None
+    content = msg.content
+    if not isinstance(content, str):
+        return None
+    try:
+        data = json.loads(content)
+    except (ValueError, TypeError):
+        return None
+
+    if isinstance(data, list):
+        filtered = _filter_assignments_payload(data, threshold)
+        new_data = filtered
+    elif isinstance(data, dict):
+        # Find the assignments list under a plausible wrapper key.
+        wrapper_key = None
+        for key in ("entitledServices", "assignedServices", "services", "value", "assignments"):
+            if isinstance(data.get(key), list):
+                wrapper_key = key
+                break
+        if wrapper_key is None:
+            return None
+        new_data = dict(data)
+        new_data[wrapper_key] = _filter_assignments_payload(data[wrapper_key], threshold)
+    else:
+        return None
+
+    new_content = json.dumps(new_data)
+    if new_content == content:
+        return None
+    return ToolMessage(
+        content=new_content,
+        tool_call_id=msg.tool_call_id,
+        name=name,
+    )
 
 
 def _enforce_page_size(params: dict, key: str = "$top") -> dict:
@@ -2869,6 +3028,9 @@ class BTPGuardianAgent:
         self._llm: BaseChatModel | None = None
         self._tools: list | None = None
         self._graph = None
+        # Per-turn utilization threshold for the deterministic entitlement filter.
+        # Set in _run_agent before graph invoke, cleared after. None = no filtering.
+        self._turn_utilization_threshold: float | None = None
 
     # ------------------------------------------------------------------
     # Client properties (for testing / injection)
@@ -2963,6 +3125,19 @@ class BTPGuardianAgent:
 
         async def call_model(state: MessagesState):
             trimmed = _trim_messages(state["messages"], MAX_HISTORY_MESSAGES)
+            # Deterministic entitlement filter: on a utilization-threshold turn, strip
+            # sub-threshold service plans from entitlement tool results BEFORE the model
+            # sees them. Applied to a transient copy only — never written back to the
+            # checkpointer — so a later "show all" turn on the same thread still replays
+            # the full, unfiltered tool output.
+            threshold = self._turn_utilization_threshold
+            if threshold is not None:
+                trimmed = [
+                    _apply_threshold_filter_to_tool_message(m, threshold) or m
+                    if isinstance(m, ToolMessage)
+                    else m
+                    for m in trimmed
+                ]
             response = await llm_with_tools.ainvoke(trimmed)
             return {"messages": [response]}
 
@@ -3012,7 +3187,14 @@ class BTPGuardianAgent:
             turn_messages.append(SystemMessage(content=system_prompt))
         turn_messages.append(HumanMessage(content=query))
 
-        result = await graph.ainvoke({"messages": turn_messages}, config=config)
+        # Deterministic entitlement filter: detect a utilization-threshold intent for
+        # THIS turn only. Set before invoke, cleared in finally so it never leaks to a
+        # later "show all" turn on the same checkpointer thread.
+        self._turn_utilization_threshold = _detect_utilization_threshold(query)
+        try:
+            result = await graph.ainvoke({"messages": turn_messages}, config=config)
+        finally:
+            self._turn_utilization_threshold = None
         response = result["messages"][-1].content
         logger.info("btp-guardian.run-agent completed for context_id=%s", context_id)
         return response

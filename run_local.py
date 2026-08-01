@@ -23,6 +23,9 @@ env = {
     "IBD_TESTING": "1",
     # Local mock has no real resources, so enable write tools too.
     "BTP_ALLOW_WRITES": "1",
+    # Use Claude 4.6 Opus (deployed in the tenant) — routes via Bedrock, so no
+    # 128-tool cap like gpt-4o. Override with AGENT_LLM_MODEL if desired.
+    "AGENT_LLM_MODEL": os.environ.get("AGENT_LLM_MODEL", "anthropic--claude-4.6-opus"),
 }
 
 port = sys.argv[1] if len(sys.argv) > 1 else "5000"

@@ -135,6 +135,240 @@ class _ScimGroupStore:
         return json.dumps(g)
 
 
+class _CfAppStore:
+    """In-memory, mutable Cloud Foundry app state for local mock mode.
+
+    Seeded from the cf-controller `_seed` block in mcp-mock.json. Models a single
+    CF org/space with a set of apps. Lifecycle (start/stop/restart), scale, and
+    metadata-only deploy actually mutate the in-process state, so a follow-up
+    "list apps" / "get app" reflects the change within the session (like the SCIM
+    store). Read shapes mirror the CF v3 Cloud Controller API. Local-only
+    (IBD_TESTING); never used in prod.
+    """
+
+    def __init__(self, seed: dict):
+        seed = seed or {}
+        self._orgs = _deepcopy(seed.get("organizations", []))
+        self._spaces = _deepcopy(seed.get("spaces", []))
+        # {app_guid: app_dict}; each app carries process/stats/logs/events inline.
+        self._apps: dict[str, dict] = {}
+        for app in seed.get("apps", []):
+            gid = app.get("guid")
+            if gid:
+                self._apps[gid] = _deepcopy(app)
+
+    # -- resolution helpers --------------------------------------------------
+    def _find_app(self, guid=None, name=None):
+        if guid and guid in self._apps:
+            return self._apps[guid]
+        if guid:  # a guid was given but not found — also allow guid==name match
+            for a in self._apps.values():
+                if a.get("guid") == guid:
+                    return a
+        if name:
+            for a in self._apps.values():
+                if a.get("name") == name:
+                    return a
+        return None
+
+    @staticmethod
+    def _now_ms():
+        import time
+        return int(time.time() * 1000)
+
+    def _app_summary(self, app: dict) -> dict:
+        # The list/get shape: CF v3 app resource core fields.
+        web = (app.get("stats") or {}).get("web") or []
+        cpus = [s.get("usage", {}).get("cpu_pct") for s in web
+                if isinstance(s.get("usage", {}).get("cpu_pct"), (int, float))]
+        cpu_pct = round(sum(cpus) / len(cpus), 1) if cpus else None
+        running = sum(1 for s in web if s.get("state") == "RUNNING")
+        return {
+            "guid": app.get("guid"),
+            "name": app.get("name"),
+            "state": app.get("state"),
+            "lifecycle": app.get("lifecycle", {"type": "buildpack"}),
+            "current_version": app.get("current_version"),
+            "space_guid": app.get("space_guid"),
+            "instances": app.get("instances"),
+            "cpu_pct": cpu_pct,
+            "running_instances": running,
+            "total_instances": app.get("instances"),
+            "memory_in_mb": app.get("memory_in_mb"),
+            "disk_in_mb": app.get("disk_in_mb"),
+            "created_at": app.get("created_at"),
+            "updated_at": app.get("updated_at"),
+        }
+
+    # -- reads ---------------------------------------------------------------
+    def list_orgs(self, **_) -> str:
+        return json.dumps({"pagination": {"total_results": len(self._orgs)},
+                           "resources": self._orgs})
+
+    def list_spaces(self, organizationGuid=None, **_) -> str:
+        spaces = self._spaces
+        if organizationGuid:
+            spaces = [s for s in spaces if s.get("organization_guid") == organizationGuid]
+        return json.dumps({"pagination": {"total_results": len(spaces)},
+                           "resources": spaces})
+
+    def list_apps(self, spaceGuid=None, name=None, **_) -> str:
+        apps = list(self._apps.values())
+        if spaceGuid:
+            apps = [a for a in apps if a.get("space_guid") == spaceGuid]
+        if name:
+            apps = [a for a in apps if a.get("name") == name]
+        resources = [self._app_summary(a) for a in apps]
+        return json.dumps({"pagination": {"total_results": len(resources)},
+                           "resources": resources})
+
+    def get_app(self, appGuid=None, name=None, **_) -> str:
+        app = self._find_app(appGuid, name)
+        if app is None:
+            return json.dumps({"errors": [{"detail": "App not found",
+                                           "title": "CF-ResourceNotFound", "code": 10010}]})
+        return json.dumps(self._app_summary(app))
+
+    def get_app_processes(self, appGuid=None, name=None, **_) -> str:
+        app = self._find_app(appGuid, name)
+        if app is None:
+            return json.dumps({"errors": [{"detail": "App not found", "code": 10010}]})
+        return json.dumps({"pagination": {"total_results": len(app.get("processes", []))},
+                           "resources": _deepcopy(app.get("processes", []))})
+
+    def get_process_stats(self, appGuid=None, name=None, processType="web", **_) -> str:
+        app = self._find_app(appGuid, name)
+        if app is None:
+            return json.dumps({"errors": [{"detail": "App not found", "code": 10010}]})
+        stats = app.get("stats", {}).get(processType or "web", [])
+        return json.dumps({"resources": _deepcopy(stats)})
+
+    def get_recent_logs(self, appGuid=None, name=None, limit=None, **_) -> str:
+        app = self._find_app(appGuid, name)
+        if app is None:
+            return json.dumps({"errors": [{"detail": "App not found", "code": 10010}]})
+        logs = app.get("recent_logs", [])
+        if isinstance(limit, int) and limit > 0:
+            logs = logs[-limit:]
+        return json.dumps({"app": app.get("name"), "envelopes": _deepcopy(logs)})
+
+    def get_app_events(self, appGuid=None, name=None, **_) -> str:
+        app = self._find_app(appGuid, name)
+        if app is None:
+            return json.dumps({"errors": [{"detail": "App not found", "code": 10010}]})
+        events = app.get("events", [])
+        return json.dumps({"pagination": {"total_results": len(events)},
+                           "resources": _deepcopy(events)})
+
+    # -- writes (stateful) ---------------------------------------------------
+    def _set_state(self, app, state):
+        app["state"] = state
+        app["updated_at"] = self._nowiso()
+        # reflect on the web process stats
+        for st in app.get("stats", {}).get("web", []):
+            st["state"] = "RUNNING" if state == "STARTED" else "DOWN"
+
+    @staticmethod
+    def _nowiso():
+        from datetime import datetime, timezone
+        return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    def start_app(self, appGuid=None, name=None, **_) -> str:
+        app = self._find_app(appGuid, name)
+        if app is None:
+            return json.dumps({"errors": [{"detail": "App not found", "code": 10010}]})
+        self._set_state(app, "STARTED")
+        return json.dumps(self._app_summary(app))
+
+    def stop_app(self, appGuid=None, name=None, **_) -> str:
+        app = self._find_app(appGuid, name)
+        if app is None:
+            return json.dumps({"errors": [{"detail": "App not found", "code": 10010}]})
+        self._set_state(app, "STOPPED")
+        return json.dumps(self._app_summary(app))
+
+    def restart_app(self, appGuid=None, name=None, **_) -> str:
+        app = self._find_app(appGuid, name)
+        if app is None:
+            return json.dumps({"errors": [{"detail": "App not found", "code": 10010}]})
+        self._set_state(app, "STARTED")
+        app.setdefault("events", []).insert(0, {
+            "type": "audit.app.restart", "actor": "guardian-agent",
+            "created_at": self._nowiso(),
+        })
+        return json.dumps(self._app_summary(app))
+
+    def scale_process(self, appGuid=None, name=None, processType="web",
+                      instances=None, memory_in_mb=None, disk_in_mb=None, **_) -> str:
+        app = self._find_app(appGuid, name)
+        if app is None:
+            return json.dumps({"errors": [{"detail": "App not found", "code": 10010}]})
+        if instances is not None:
+            app["instances"] = instances
+        if memory_in_mb is not None:
+            app["memory_in_mb"] = memory_in_mb
+        if disk_in_mb is not None:
+            app["disk_in_mb"] = disk_in_mb
+        app["updated_at"] = self._nowiso()
+        # rebuild web process stats to match the new instance count
+        proc_type = processType or "web"
+        template = None
+        existing = app.get("stats", {}).get(proc_type, [])
+        if existing:
+            template = _deepcopy(existing[0])
+        new_stats = []
+        for i in range(int(app.get("instances") or 0)):
+            inst = _deepcopy(template) if template else {"state": "RUNNING"}
+            inst["index"] = i
+            inst["state"] = "RUNNING" if app.get("state") == "STARTED" else "DOWN"
+            if memory_in_mb is not None:
+                inst["mem_quota"] = memory_in_mb
+            if disk_in_mb is not None:
+                inst["disk_quota"] = disk_in_mb
+            new_stats.append(inst)
+        app.setdefault("stats", {})[proc_type] = new_stats
+        # update the matching process resource's instance count too
+        for p in app.get("processes", []):
+            if p.get("type") == proc_type:
+                if instances is not None:
+                    p["instances"] = instances
+                if memory_in_mb is not None:
+                    p["memory_in_mb"] = memory_in_mb
+                if disk_in_mb is not None:
+                    p["disk_in_mb"] = disk_in_mb
+        return json.dumps({
+            "guid": app.get("guid"), "name": app.get("name"), "type": proc_type,
+            "instances": app.get("instances"), "memory_in_mb": app.get("memory_in_mb"),
+            "disk_in_mb": app.get("disk_in_mb"), "state": app.get("state"),
+        })
+
+    def create_deployment(self, appGuid=None, name=None, version=None,
+                          droplet_guid=None, **_) -> str:
+        app = self._find_app(appGuid, name)
+        if app is None:
+            return json.dumps({"errors": [{"detail": "App not found", "code": 10010}]})
+        new_version = version or f"v-{uuid.uuid4().hex[:6]}"
+        app["current_version"] = new_version
+        app["state"] = "STARTED"
+        app["updated_at"] = self._nowiso()
+        app.setdefault("events", []).insert(0, {
+            "type": "audit.app.deployment.create", "actor": "guardian-agent",
+            "created_at": self._nowiso(), "metadata": {"version": new_version},
+        })
+        return json.dumps({
+            "guid": f"deployment-{uuid.uuid4().hex[:12]}",
+            "state": "DEPLOYED",
+            "status": {"value": "FINALIZED", "reason": "DEPLOYED"},
+            "app": {"guid": app.get("guid"), "name": app.get("name")},
+            "new_version": new_version,
+            "strategy": "rolling",
+        })
+
+
+def _deepcopy(obj):
+    return json.loads(json.dumps(obj))
+
+
 def _build_mock_tools() -> list:
     """Build LangChain StructuredTool instances from mcp-mock.json.
 
@@ -170,6 +404,30 @@ def _build_mock_tools() -> list:
         "getSCIMGroup": lambda **kw: scim_store.get_group(**kw),
         "patchSCIMGroup": lambda **kw: scim_store.patch_group(**kw),
         "updateSCIMGroup": lambda **kw: scim_store.update_group(**kw),
+    }
+
+    # Seed the stateful Cloud Foundry app store from the cf-controller `_seed`
+    # block so start/stop/scale/deploy persist in-process (local mock only).
+    _cf_seed = (
+        mock_data.get("servers", {})
+        .get("cf-controller", {})
+        .get("_seed", {})
+    )
+    cf_store = _CfAppStore(_cf_seed)
+    _cf_handlers = {
+        "getCfOrganizations": lambda **kw: cf_store.list_orgs(**kw),
+        "getCfSpaces": lambda **kw: cf_store.list_spaces(**kw),
+        "getCfApps": lambda **kw: cf_store.list_apps(**kw),
+        "getCfApp": lambda **kw: cf_store.get_app(**kw),
+        "getCfAppProcesses": lambda **kw: cf_store.get_app_processes(**kw),
+        "getCfAppProcessStats": lambda **kw: cf_store.get_process_stats(**kw),
+        "getCfAppRecentLogs": lambda **kw: cf_store.get_recent_logs(**kw),
+        "getCfAppEvents": lambda **kw: cf_store.get_app_events(**kw),
+        "startCfApp": lambda **kw: cf_store.start_app(**kw),
+        "stopCfApp": lambda **kw: cf_store.stop_app(**kw),
+        "restartCfApp": lambda **kw: cf_store.restart_app(**kw),
+        "scaleCfAppProcess": lambda **kw: cf_store.scale_process(**kw),
+        "createCfAppDeployment": lambda **kw: cf_store.create_deployment(**kw),
     }
 
     for _server_slug, server in mock_data.get("servers", {}).items():
@@ -209,6 +467,27 @@ def _build_mock_tools() -> list:
 
                 async def _coroutine(_h=_handler, **kwargs) -> str:
                     return _h(**kwargs)
+            elif _server_slug == "cf-controller" and tool_name in _cf_handlers:
+                # Stateful CF app store: reads + lifecycle/scale/deploy mutations.
+                _handler = _cf_handlers[tool_name]
+
+                async def _coroutine(_h=_handler, **kwargs) -> str:
+                    return _h(**kwargs)
+            elif isinstance(tool_def.get("mock_responses_by"), dict):
+                # Parameter-aware mock: return a different payload depending on the
+                # value of one call parameter (e.g. appName). Falls back to `default`
+                # (or the tool's plain `mock_response`) for unlisted/absent values.
+                # Local mock only — the production path is unaffected.
+                _by = tool_def["mock_responses_by"]
+                _param = _by.get("param")
+                _variants = {
+                    str(k): json.dumps(v) for k, v in (_by.get("values") or {}).items()
+                }
+                _fallback = json.dumps(_by.get("default", mock_response))
+
+                async def _coroutine(_param=_param, _variants=_variants, _fallback=_fallback, **kwargs) -> str:
+                    key = kwargs.get(_param)
+                    return _variants.get(str(key), _fallback)
             else:
                 _response = json.dumps(mock_response)
 

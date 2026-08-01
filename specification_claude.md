@@ -1,6 +1,32 @@
 # BTP Guardian Agent — Project Specification & Current Status
 
-_Last updated: 2026-07-29 (session 2)_
+_Last updated: 2026-08-01 (session 4)_
+
+> ## ⚡ Local vs. Deployed — read this first
+>
+> The codebase runs identically in all modes, but two recent demo-prep changes are
+> **LOCAL-ONLY** and are **NOT** in the deployed/deployable artifacts. See §4.12 for the full
+> matrix. In one line:
+>
+> | Concern | Local (`run_local.py`, this repo's `.venv`) | Deployable to BTP CF / SAP-managed runtime |
+> |---------|---------------------------------------------|--------------------------------------------|
+> | **LLM** | **Claude 4.6 Opus** (`anthropic--claude-4.6-opus`, Bedrock) | **gpt-4o** (`agent.py:67` default; `requirements.txt` still pins the old SDK) |
+> | **AI SDK** | `sap-ai-sdk-gen[amazon,google]==7.2.0` (venv only) | `sap-ai-sdk-gen==6.6.0` (`requirements.txt`) |
+> | **Cloud Foundry app-ops tools** | **13 CF v3 tools (mocked, stateful)** via `mcp-mock.json` | **None** — no real CF Controller client exists |
+> | **Tool count** | **132 mock tools** (incl. CF) | **64 read-only / 119 with writes** (real REST clients, no CF) |
+> | **Everything else** (accounts/entitlements/cost/usage/auth/audit) | Mocked | Real BTP REST clients — unchanged |
+>
+> Nothing above changes deployed CF/Joule behaviour: the CF tools only exist in the mock JSON
+> (loaded solely under `IBD_TESTING=1`), and the Claude path in `aicore.py` is guarded to only
+> trigger for `anthropic--*` model names — `gpt-4o` still flows through the stock `init_llm`.
+> The uncommitted changes as of this update: `agent.py`, `aicore.py`, `mcp_tools.py`,
+> `mcp-mock.json`, `run_local.py`.
+>
+> **Session 4 (2026-08-01) demo-prep, LOCAL-ONLY, uncommitted:** the CF "all apps in a space"
+> answer was reshaped into a fleet table + Summary + hottest-app root-cause narrative (the SAP
+> Joule mockup shape); the CF mock seed grew 3 → 8 apps with a tuned CPU spread; `_app_summary`
+> now returns `cpu_pct` + running/total instances so the fleet table needs one call; and all
+> mock user placeholders were renamed to the real team on `@sap.com`. See §4.11.
 
 ## 1. Overview
 
@@ -17,7 +43,8 @@ SAP BTP platform REST APIs as tools and synthesising the results.
 - **Repo root:** `btp_guardian_agent/`
 - **Deployable asset:** `assets/btp-guardian-agent/`
 - **Agent card / A2A version:** `1.0.0`
-- **Model:** SAP AI Core `gpt-4o` (temperature `0.0`), resolved at runtime.
+- **Model:** deployable default SAP AI Core `gpt-4o` (temperature `0.0`, resolved at
+  runtime); **locally** overridden to Claude 4.6 Opus (see §4.12).
 
 ## 2. Runtime Modes
 
@@ -26,9 +53,9 @@ the single most important architectural fact about the project.
 
 | Mode | Gate | Tool source | LLM / auth |
 |------|------|-------------|-----------|
-| **Cloud Foundry (production)** | `JOULE_RUNTIME` unset | Direct BTP REST clients (`api_client.py`) via the Destination Service | AI Core resolved from `aicore` destination |
-| **Joule / Kyma** | `JOULE_RUNTIME=1` | MCP tools loaded from Agent Gateway over mTLS (`mcp_client.py`) | AI Core via `sap_cloud_sdk` |
-| **Local / test** | `IBD_TESTING=1` | Mock MCP tools from `mcp-mock.json` | Real AI Core via `config.json` creds |
+| **Cloud Foundry (production)** | `JOULE_RUNTIME` unset | Direct BTP REST clients (`api_client.py`) via the Destination Service | AI Core `gpt-4o` resolved from `aicore` destination |
+| **Joule / Kyma (SAP-managed)** | `JOULE_RUNTIME=1` | MCP tools loaded from Agent Gateway over mTLS (`mcp_client.py`) | AI Core `gpt-4o` via `sap_cloud_sdk` |
+| **Local / test** | `IBD_TESTING=1` | Mock MCP tools from `mcp-mock.json` (incl. 13 CF tools) | Real AI Core via `config.json` creds; model = Claude 4.6 Opus (§4.12) |
 
 Gating rules to preserve:
 - CF path must never import `sap_cloud_sdk` (not in CF `requirements.txt`).
@@ -171,6 +198,12 @@ turn** of a thread (detected via `graph.aget_state`).
   session 2 — previously they were mistakenly gated behind `ALLOW_WRITES`, which caused all
   Authorization/SCIM read tools to be silently absent in read-only mode).
 - Write tools (create/update/delete operations) remain gated by `ALLOW_WRITES`.
+
+> **Tool-count reconciliation (deployed vs local).** The 64/119 counts above are the
+> **deployable** tool set (real BTP REST clients, `_build_domain_tools`). The **local mock**
+> (`mcp-mock.json`, `IBD_TESTING=1`) exposes **132 tools** because it additionally includes
+> the 13 mocked Cloud Foundry app-ops tools (§4.11) and mirrors every read/write REST tool as
+> a mock. The CF tools have **no** real-client counterpart, so they exist only locally.
 
 ### 4.1 Read-only tools (42 core — always registered)
 
@@ -492,6 +525,157 @@ categories (2 security, 3 configuration incl. role binding + trust change, 2 dat
 **BTP-side prerequisite (user action):** create `BTP_AUDIT_LOGS` destination in the
 Destination Service pointing to the existing `auditlog-management` service key.
 Not yet `cf push`-ed.
+
+### 4.11 Cloud Foundry app-ops tools (2026-07-30) — **LOCAL MOCK ONLY**
+
+Added a 10th mock server `cf-controller` to `mcp-mock.json` so the demo agent can show and
+manage apps deployed in a CF runtime (list apps, check CPU/memory, tail logs, view events,
+start/stop/restart, scale, deploy). Modeled on the **CF v3 Cloud Controller REST API**
+(`{pagination:{total_results}, resources:[...]}` shapes).
+
+**⚠️ This is mock-only and has NO deployable counterpart.** There is no real CF Cloud
+Controller client in `api_client.py`; `_build_domain_tools()` does not register these. They
+load only under `IBD_TESTING=1`. A deployed BTP CF / SAP-managed agent will **not** have any
+CF app-ops capability today — building that would require a real CF API client + destination
++ OAuth, which has not been done.
+
+**13 tools** (`mcp_tools.py` `_cf_handlers`, backed by the stateful in-memory `_CfAppStore`):
+
+| Tool | CF v3 shape | Read/Write |
+|------|-------------|-----------|
+| `getCfOrganizations` | `GET /v3/organizations` | read |
+| `getCfSpaces` | `GET /v3/spaces` (by `organizationGuid`) | read |
+| `getCfApps` | `GET /v3/apps` (by `spaceGuid`/`name`) | read |
+| `getCfApp` | `GET /v3/apps/{guid}` | read |
+| `getCfAppProcesses` | `GET /v3/apps/{guid}/processes` | read |
+| `getCfAppProcessStats` | `GET /v3/processes/{type}/stats` (CPU/mem/disk per instance) | read |
+| `getCfAppRecentLogs` | recent log lines (by `limit`) | read |
+| `getCfAppEvents` | `GET /v3/audit_events` for the app | read |
+| `startCfApp` | `POST /v3/apps/{guid}/actions/start` | **write** |
+| `stopCfApp` | `POST /v3/apps/{guid}/actions/stop` | **write** |
+| `restartCfApp` | restart action | **write** |
+| `scaleCfAppProcess` | `POST /v3/processes/{type}/actions/scale` (instances/mem/disk) | **write** |
+| `createCfAppDeployment` | `POST /v3/deployments` (metadata-only, bumps `version`) | **write** |
+
+**Stateful mock:** `_CfAppStore` (in `mcp_tools.py`) is seeded from
+`servers["cf-controller"]["_seed"]` and mutates in-process — start/stop flips `state`, scale
+rebuilds per-instance web stats to the new instance count and persists, deploy bumps
+`current_version`. Mutations survive across turns within one agent process (lost on restart).
+
+**`_app_summary()` carries CPU + instances (session 4).** The list/get shape returned by
+`getCfApps`/`getCfApp` now includes three derived fields computed from `app["stats"]["web"]`:
+`cpu_pct` (average of per-instance `usage.cpu_pct`, 1dp, `None` if no stats),
+`running_instances` (count of web stats in `RUNNING`), and `total_instances` (= `instances`).
+This lets a **fleet CPU table for a whole space come back in ONE `getCfApps` call** — no
+per-app `getCfAppProcessStats` fan-out. Minor, deliberate deviation from strict CF v3 (which
+exposes CPU only under per-process stats) — acceptable because it's a mock.
+
+**Seed topology (session 4 — expanded 3 → 8 apps):** 1 org (`org-guardian-0001`/guardian-ga),
+1 space (`space-guardian-prod`/prod). The CPU spread is tuned so the "all apps in prod"
+question yields a realistic fleet: **avg ≈ 43.4%**, **highest guardian-api 92.3%**, **2 apps
+>80%** (guardian-api 🔴 + guardian-workflow-svc ⚠️). Invariant per app:
+`instances == len(stats.web) == processes[0].instances`.
+
+| App | guid slug | Instances | Avg CPU% | Badge | Role |
+|-----|-----------|-----------|----------|-------|------|
+| **guardian-api** (HERO/hot) | `app-guardian-api-0001` | 3/3 | 92.3 (93/91.5/92.4) | 🔴 | v2.8.1; logs show event-loop lag / GC pause / queue depth / upstream timeout; deploy event 27 min ago. Grounds the root-cause story. |
+| guardian-ui | `app-guardian-ui-0002` | 1/1 | 12.0 | — | healthy, v1.9.0 (retuned from 2 inst → 1 this session) |
+| guardian-xs-app | `app-guardian-xs-0003` | 1/1 | 26.3 | — | healthy, v3.2.1 |
+| guardian-orders-api | `app-guardian-orders-0004` | 2/2 | 18.0 | — | NEW this session |
+| guardian-catalog-svc | `app-guardian-catalog-0005` | 1/1 | 42.0 | — | NEW this session |
+| guardian-inventory-api | `app-guardian-inventory-0006` | 2/2 | 67.0 | — | NEW this session |
+| guardian-workflow-svc | `app-guardian-workflow-0007` | 2/2 | 81.0 (82/80) | ⚠️ | NEW — elevated-but-running, no incident story |
+| guardian-notify-api | `app-guardian-notify-0008` | 1/1 | 9.0 | — | NEW this session |
+
+**System prompt (session 4 — fleet-view rule added to "## Cloud Foundry apps"):** in addition
+to the app-NAME → GUID resolution rule, the block now instructs the agent, for a "CPU/health
+for ALL apps in space X" query, to call `getCfApps` **once** and render **one row per app**
+(Application | Status | CPU% | Instances running/total) with **🔴 ≥90 / ⚠️ ≥80** badges, then a
+**Summary** (total apps, average CPU, highest name + %, count >80%), then — for the SINGLE
+hottest app only, if its metrics payload carries trend/deploy/baseline/autoscaling fields — the
+root-cause narrative + actions + offer to execute (per the §Health & metrics grounding rules). A
+fleet with nothing >80% gets a brief "all healthy", never a manufactured incident. **Prompt
+budget:** adding this rule pushed the write-enabled `get_system_prompt()` render over the 8000
+`max_length`; it was offset by condensing several existing bullets (Health & metrics, write
+policy ENTITLEMENTS paragraph, Summary-vs-detail, cost/subaccount/XSUAA bullets). Final render
+measured **7979 / 8000** write-enabled, **7537** read-only (re-measure with the ast char-count
+snippet after ANY prompt edit — this is a hard gate).
+
+**Observed result quality (session 4).** Running locally on **Claude 4.6 Opus**, the "all apps
+in prod" query renders the fleet table + Summary + hottest-app narrative cleanly; a focused
+"why is guardian-api CPU so high?" query pulls the full grounded incident story (deploy v2.8.1
+correlation, heap/GC/event-loop/queue/upstream-timeout log evidence) + a confirm-gated scale
+offer. **What drove the improvement is two things, not just the model:** (1) the model swap
+(gpt-4o → Claude) does the *presentation* lift — markdown tables, the observe→reason→root-cause
+→recommend→offer structure, and the "ground every claim in a present field" discipline; (2) the
+prompt rules + the richer mock (8-app spread, `_app_summary` CPU, grounded hero logs/deploy) do
+the *substance* lift and would benefit gpt-4o too. Note: **gpt-4o cannot run this build locally
+at all** — 132 mock tools exceed its 128-tool array cap (400 `array_above_max_length`), which is
+exactly why local runs on Claude via Bedrock. If demoing against the *deployed* runtime (still
+gpt-4o, and with no CF tools), you get gpt-4o's rendering — plan the demo from local 8080.
+
+**Mock user identities renamed to real team (session 4).** The placeholder users
+(`alice`/`bob`/`carol`/`dave`/`erin`/`frank`/`michael.chen`/`john.doe`/`jane.doe`/`admin` @
+`example.com`) were replaced across `mcp-mock.json` with 10 real team members on the
+**`@sap.com`** domain (Shahrukh Bhat, Archit Goel, Ashok Kumar, Brady Zhou, Sead David, Aarya
+Deshmukh, Haibo Huang, Robby Mains, Jarod Durkin, Victor Chan) — emails updated across
+`userName`/`value`/`display`/`id`/`createdBy`/`assignedBy`/`user:` fields plus paired
+`givenName`/`familyName`. Service accounts moved to `@sap.com` too but kept as service accounts
+(`svc-automation`, `svc-account`, `monitor`). One human placeholder (`developer@example.com`) was
+left untouched by design (only 10 of 11 slots replaced), so "Anthony Siluk" is not yet used.
+Haibo/Robby/Jarod appear only in audit/event-log entries (no user-record blocks), so they show
+in audit-log answers but not in a "list subaccount users" table.
+
+### 4.12 Local vs. deployable state (model, SDK, CF tools)
+
+This section is the authoritative record of what diverges between **local demo** and the
+**deployable artifact** as of 2026-08-01. All divergences are demo-prep; the deployed
+CF/Joule runtime is byte-for-byte unaffected.
+
+### 4.12.1 What is available LOCALLY only (this repo's `.venv` + `run_local.py`)
+
+- **Claude 4.6 Opus** as the LLM (`AGENT_LLM_MODEL=anthropic--claude-4.6-opus`, set in
+  `run_local.py`). Routes via `ChatBedrock`, which has **no 128-tool cap** — required because
+  the 132 mock tools exceed gpt-4o's hard 128-tool array limit (gpt-4o 400s with
+  `array_above_max_length`).
+- **`sap-ai-sdk-gen[amazon,google]==7.2.0`** installed in the venv (pulls `langchain-aws`,
+  `boto3`, `langchain-google-genai`, etc.; also bumped langchain→1.3.14 / langgraph→1.2.10).
+  The `[google]` extra is required even for Claude — 7.2.0's `init_models.py` hard-imports
+  amazon+google_genai+openai with no try/except.
+- **13 CF app-ops tools** (§4.11), mock+stateful.
+- **All writes enabled** (`BTP_ALLOW_WRITES=1`, set in `run_local.py`).
+- **`aicore.py` anthropic branch:** for `model_name.startswith("anthropic")` it bypasses
+  `init_llm` and constructs `ChatBedrock` directly with a temperature-only `model_kwargs`.
+  Reason: Bedrock/Claude rejects `temperature`+`top_p` together, but `init_llm` always injects
+  both. Also passes `proxy_client=get_proxy_client()` explicitly (7.x no longer lazily inits
+  it). The branch is **guarded** — `gpt-4o` still uses the stock `init_llm` path, so this file
+  is safe to deploy even against the older SDK.
+
+### 4.12.2 What is available for DEPLOYMENT (BTP CF + SAP-managed / Joule)
+
+- **LLM = gpt-4o.** `agent.py:67` `AGENT_LLM_MODEL` default is still `"gpt-4o"`; nothing in
+  the deployable config overrides it.
+- **`sap-ai-sdk-gen==6.6.0`** — `requirements.txt` is **unchanged** (still pins 6.6.0 without
+  the amazon/google extras). The deployed runtime therefore **cannot** run Claude/Bedrock even
+  if asked: 6.6.0 has no Bedrock deps registered and doesn't know 4.6-opus.
+- **Real BTP REST tools only** — 64 read-only (`BTP_ALLOW_WRITES=0`, manifest default) or 119
+  with writes. **No CF app-ops tools.**
+- Everything in §4 (accounts, entitlements, cost, usage, provisioning, audit, auth, SCIM)
+  against real BTP data via destinations (subject to the §6 known issues).
+
+### 4.12.3 To promote Claude 4.6 Opus / CF tools to deployment (NOT yet done — needs approval)
+
+Per the runtime-safety preference these were intentionally left undone:
+1. **Claude for deployed runtime:** bump `requirements.txt` to
+   `sap-ai-sdk-gen[amazon,google]==7.2.0` (or the CF equivalent), re-vendor/repackage, verify
+   the larger dep set fits the buildpack + 512M/1G limits, and set `AGENT_LLM_MODEL` in the
+   manifest. Confirm the tenant deployment `anthropic--claude-4.6-opus` is reachable from the
+   deployed `aicore` destination's resource group.
+2. **CF app-ops for real:** implement a real CF Cloud Controller v3 client (auth via a CF API
+   destination/OAuth), register the 13 tools in `_build_domain_tools`, and remove the
+   mock-only assumption. Substantial new work — not a config flip.
+
+Both are **separate, explicitly-approved changes**; do not ship them as part of the demo prep.
 
 ## 5. Deployment (Cloud Foundry, eu10)
 

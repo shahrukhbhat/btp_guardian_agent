@@ -14,6 +14,7 @@ from typing import Any
 
 import httpx
 from gen_ai_hub.proxy import set_proxy_version
+from gen_ai_hub.proxy.core import get_proxy_client
 from gen_ai_hub.proxy.langchain.init_models import init_llm
 
 from api_client import _DestinationResolver, _first_binding
@@ -88,4 +89,26 @@ async def init_llm_from_destination(
     kwargs: dict[str, Any] = {"temperature": temperature}
     if max_tokens is not None:
         kwargs["max_tokens"] = max_tokens
-    return init_llm(model_name, **kwargs)
+    # SDK 7.x's init_llm no longer lazily initializes the proxy client when the
+    # proxy_client kwarg is omitted (it passes None straight through and crashes).
+    # Pass it explicitly — harmless on older SDKs that accepted the kwarg too.
+    proxy_client = get_proxy_client()
+
+    # Anthropic/Claude models on Bedrock reject `temperature` and `top_p` together,
+    # but the SDK's init_llm always injects BOTH (top_p defaults to 1.0 with no way
+    # to suppress it). Construct ChatBedrock directly with a single sampling param.
+    if model_name.startswith("anthropic"):
+        from gen_ai_hub.proxy.langchain.amazon import ChatBedrock
+
+        deployment = proxy_client.select_deployment(model_name=model_name)
+        model_kwargs: dict[str, Any] = {"temperature": temperature}
+        if max_tokens is not None:
+            model_kwargs["max_tokens"] = max_tokens
+        return ChatBedrock(
+            model_name=deployment.model_name,
+            deployment_id=deployment.deployment_id,
+            proxy_client=proxy_client,
+            model_kwargs=model_kwargs,
+        )
+
+    return init_llm(model_name, proxy_client=proxy_client, **kwargs)
